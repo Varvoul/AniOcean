@@ -13,7 +13,59 @@
       </a>
       <nav class="main-nav" id="mainNav" style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <a href="/" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;position:relative;">Home</a>
-        <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Genre ▾<div class="nav-dropdown" id="genreDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:520px;grid-template-columns:repeat(4,1fr);gap:4px;z-index:300;"></div></div>
+        <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Genre ▾<div class="nav-dropdown" id="genreDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:520px;grid-template-columns:repeat(4,1fr);gap:4px;z-index:300;">
+        <a href="/genre/action" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Action</a>
+<a href="/genre/adventure" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Adventure</a>
+<a href="/genre/animation" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Animation</a>
+<a href="/genre/apocalyptic" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Apocalyptic</a>
+<a href="/genre/avant-garde" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Avant Garde</a>
+<a href="/genre/biography" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Biography</a>
+<a href="/genre/boys-love" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Boys Love</a>
+<a href="/genre/comedy" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Comedy</a>
+<a href="/genre/cult" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Cult</a>
+<a href="/genre/demons" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Demons</a>
+<a href="/genre/documentary" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Documentary</a>
+<a href="/genre/drama" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Drama</a>
+<a href="/genre/ecchi" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Ecchi</a>
+<a href="/genre/family" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Family</a>
+<a href="/genre/fantasy" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Fantasy</a>
+<a href="/genre/film-noir" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Film-Noir</a>
+<a href="/genre/girls-love" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Girls Love</a>
+<a href="/genre/gourmet" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Gourmet</a>
+<a href="/genre/harem" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Harem</a>
+<a href="/genre/horror" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Horror</a>
+<a href="/genre/isekai" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Isekai</a>
+<a href="/genre/iyashikei" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Iyashikei</a>
+<a href="/genre/josei" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Josei</a>
+<a href="/genre/kids" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Kids</a>
+<a href="/genre/kodomomuke" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Kodomomuke</a>
+<a href="/genre/magic" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Magic</a>
+<a href="/genre/mahou-shoujo" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Mahou Shoujo</a>
+<a href="/genre/martial-arts" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Martial Arts</a>
+<a href="/genre/mecha" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Mecha</a>
+<a href="/genre/military" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Military</a>
+<a href="/genre/music" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Music</a>
+<a href="/genre/music-musical" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Music &amp; Musical</a>
+<a href="/genre/mystery" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Mystery</a>
+<a href="/genre/parody" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Parody</a>
+<a href="/genre/psychological" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Psychological</a>
+<a href="/genre/reverse-harem" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Reverse Harem</a>
+<a href="/genre/rom-com" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Rom-Com</a>
+<a href="/genre/romance" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Romance</a>
+<a href="/genre/school" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">School</a>
+<a href="/genre/sci-fi" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Sci-Fi</a>
+<a href="/genre/seinen" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Seinen</a>
+<a href="/genre/shoujo" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Shoujo</a>
+<a href="/genre/shounen" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Shounen</a>
+<a href="/genre/slice-of-life" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Slice of Life</a>
+<a href="/genre/space" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Space</a>
+<a href="/genre/sports" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Sports</a>
+<a href="/genre/super-power" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Super Power</a>
+<a href="/genre/supernatural" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Supernatural</a>
+<a href="/genre/suspense" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Suspense</a>
+<a href="/genre/thriller" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Thriller</a>
+<a href="/genre/vampire" class="genre-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Vampire</a>
+        </div></div>
            <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Country ▾<div class="nav-dropdown" id="countryDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:520px;grid-template-columns:repeat(4,1fr);gap:4px;z-index:300;">
            <a href="/search?country=argentina" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Argentina</a>
 <a href="/search?country=australia" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Australia</a>
