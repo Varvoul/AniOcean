@@ -167,8 +167,8 @@
           <a href="https://tumblr.com" target="_blank" style="width:32px;height:32px;border-radius:50%;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:#fff;"><svg fill="currentColor" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="23px" height="23px" viewBox="0 0 512 512" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g id="7935ec95c421cee6d86eb22ecd12e94e"> <path style="display: inline;" d="M412.904,405.777c0.123-0.088,0.225-0.213,0.324-0.313v0.313v89.785 c-17.043,9.107-31.264,15.932-105.418,15.932c-10.729,0-20.66-0.074-31.713,0c-48.542,0.324-119.016-13.697-119.016-92.305v-185.1 v-22.767h-58.31v-84.222H109.5c17.278,0,33.491-6.362,47.582-17.44c8.745-6.862,16.623-15.606,23.447-25.774 c14.858-22.157,24.502-51.187,26.254-83.386h69.527v126.601h121.422v62.453v21.769H276.311v84.658v107.514 c0,10.779,36.314,26.859,62.775,26.859S391.496,419.414,412.904,405.777z"> </path> </g> </g></svg></a>
         </div>
         <div class="footer-links" style="display:flex;flex-wrap:wrap;gap:10px;font-size:0.7rem;">
-          <a href="/" style="color:#fff;">Home</a><a href="#" style="color:var(--text-muted);">Blog</a>
-          <a href="#" style="color:#fff;">Forum</a><a href="#" style="color:var(--text-muted);">Report</a>
+          <a href="/" style="color:#fff;">Home</a><a href="#" style="color:#fff;">Blog</a>
+          <a href="#" style="color:#fff;">Forum</a><a href="#" style="color:#fff;">Report</a>
           <a href="#" style="color:#fff;">Send Request</a>
           <a href="#" style="color:#fff;">Terms & Conditions</a>
           <a href="#" style="color:#fff;">Support</a>
