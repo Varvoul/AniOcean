@@ -15,7 +15,46 @@
         <a href="/" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;position:relative;">Home</a>
         <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Genre ▾<div class="nav-dropdown" id="genreDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:520px;grid-template-columns:repeat(4,1fr);gap:4px;z-index:300;"></div></div>
         <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Country ▾<div class="nav-dropdown" id="countryDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:520px;grid-template-columns:repeat(4,1fr);gap:4px;z-index:300;">
-        
+        <a href="/search?country=argentina" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Argentina</a>
+<a href="/search?country=australia" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Australia</a>
+<a href="/search?country=austria" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Austria</a>
+<a href="/search?country=belgium" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Belgium</a>
+<a href="/search?country=brazil" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Brazil</a>
+<a href="/search?country=canada" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Canada</a>
+<a href="/search?country=china" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">China</a>
+<a href="/search?country=colombia" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Colombia</a>
+<a href="/search?country=czech-republic" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Czech Republic</a>
+<a href="/search?country=denmark" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Denmark</a>
+<a href="/search?country=finland" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Finland</a>
+<a href="/search?country=france" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">France</a>
+<a href="/search?country=germany" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Germany</a>
+<a href="/search?country=hong-kong" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Hong Kong</a>
+<a href="/search?country=hungary" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Hungary</a>
+<a href="/search?country=india" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">India</a>
+<a href="/search?country=ireland" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Ireland</a>
+<a href="/search?country=israel" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Israel</a>
+<a href="/search?country=italy" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Italy</a>
+<a href="/search?country=japan" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Japan</a>
+<a href="/search?country=luxembourg" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Luxembourg</a>
+<a href="/search?country=mexico" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Mexico</a>
+<a href="/search?country=netherlands" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Netherlands</a>
+<a href="/search?country=new-zealand" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">New Zealand</a>
+<a href="/search?country=nigeria" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Nigeria</a>
+<a href="/search?country=norway" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Norway</a>
+<a href="/search?country=philippines" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Philippines</a>
+<a href="/search?country=poland" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Poland</a>
+<a href="/search?country=romania" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Romania</a>
+<a href="/search?country=russia" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Russia</a>
+<a href="/search?country=south-africa" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">South Africa</a>
+<a href="/search?country=south-korea" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">South Korea</a>
+<a href="/search?country=spain" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Spain</a>
+<a href="/search?country=sweden" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Sweden</a>
+<a href="/search?country=switzerland" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Switzerland</a>
+<a href="/search?country=taiwan" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Taiwan</a>
+<a href="/search?country=thailand" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Thailand</a>
+<a href="/search?country=turkey" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Turkey</a>
+<a href="/search?country=united-kingdom" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">United Kingdom</a>
+<a href="/search?country=united-states" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">United States</a>
         </div></div>
         <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Type ▾<div class="nav-dropdown" id="typeDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:160px;z-index:300;">
           <a href="/search?type=anime" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Anime</a>
