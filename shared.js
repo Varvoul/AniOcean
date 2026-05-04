@@ -177,7 +177,7 @@
         <p class="footer-disclaimer" style="font-size:0.67rem;color:var(--text-muted);">Copyright © ${new Date().getFullYear()} AniOcean. All Rights Reserved</p>
       </div>
       <div class="footer-right">
-        <img src="https://i.postimg.cc/hPqN8Q8v/Chisato-bow-Lycoris-Recoil-01-removebg-preview.png" alt="Mascot" style="height:180px;object-fit:contain;">
+        <img src="https://i.postimg.cc/hPqN8Q8v/Chisato-bow-Lycoris-Recoil-01-removebg-preview.png" alt="Mascot" style="height:100%;  width:auto; object-fit:contain;">
       </div>
     </footer>
   `;
