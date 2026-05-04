@@ -56,16 +56,21 @@
 <a href="/search?country=united-kingdom" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">United Kingdom</a>
 <a href="/search?country=united-states" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">United States</a>
         </div></div>
-        <div class="nav-dropdown-trigger" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">Type ▾<div class="nav-dropdown" id="typeDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:160px;z-index:300;">
-          <a href="/search?type=anime" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Anime</a>
-          <a href="/search?type=drama" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Drama</a>
-          <a href="/search?type=movie" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Movie</a>
-          <a href="/search?type=tv-show" class="country-link" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">TV Show</a>
-        </div></div>
-        <a href="/search?q=ongoing" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Ongoing</a>
-        <a href="/search?q=new+releases" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Updates</a>
-        <a href="#" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">News</a>
-        <a href="#" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Forum</a>
+  <div class="nav-dropdown-trigger nav-link-item" style="position:relative;cursor:pointer;padding:8px 10px;font-size:0.8rem;color:#fff;border-radius:6px;">
+    Type ▾
+    <div class="nav-dropdown" id="typeDropdown" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-body);border:1px solid var(--border-medium);border-radius:12px;padding:12px;min-width:160px;z-index:300;">
+      <a href="/search?type=anime" class="nav-link-item" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Anime</a>
+      <a href="/search?type=drama" class="nav-link-item" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Drama</a>
+      <a href="/search?type=movie" class="nav-link-item" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Movie</a>
+      <a href="/search?type=tv-show" class="nav-link-item" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">TV Show</a>
+    </div>
+  </div>
+
+  <a href="/search?q=ongoing" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Ongoing</a>
+  <a href="/search?q=new+releases" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Updates</a>
+  <a href="#" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">News</a>
+  <a href="#" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Forum</a>
+</nav>
       </nav>
       <div class="header-search-wrap" style="flex:1;max-width:340px;margin:0 8px;position:relative;">
         <div class="header-search-bar" style="display:flex;align-items:center;background:var(--bg-surface);border:1px solid var(--border-medium);border-radius:50px;overflow:hidden;">
