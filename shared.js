@@ -168,7 +168,7 @@
           <a href="#" style="color:var(--text-muted);">Terms & Conditions</a>
           <a href="#" style="color:var(--text-muted);">Support</a>
         </div>
-        <p class="footer-disclaimer" style="font-size:0.62rem;color:var(--text-muted);margin-top:6px;">This site does not store any files on its server. All contents are provided by non‑affiliated third parties.</p>
+        <p class="footer-disclaimer" style="font-size:0.62rem;color:var(--text-muted);margin-top:6px;">This site does not store any files on its server. All contents are provided by non‑affiliated third parties.</p><br/>
         <p class="footer-disclaimer" style="font-size:0.62rem;color:var(--text-muted);">Copyright © ${new Date().getFullYear()} AniOcean. All Rights Reserved</p>
       </div>
       <div class="footer-right">
