@@ -152,7 +152,7 @@
     <footer class="site-footer" style="background:var(--bg-header);padding:28px 16px;margin-top:50px;border-top:1px solid var(--border-subtle);display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:flex-start;">
       <div class="footer-left" style="flex:1;min-width:250px;">
         <div class="footer-logo" style="font-family:var(--font-title);font-size:1.4rem;color:#fff;margin-bottom:6px;">◈ Muvix‑VQ</div>
-        <p class="footer-desc" style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;">Stream free anime, movies, and TV shows on Aniocean. Enjoy fast, high-quality streaming with multi-language subtitles and real-time updates. Watch now!</p>
+        <p class="footer-desc" style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">Stream free anime, movies, and TV shows on Aniocean. Enjoy fast, high-quality streaming with multi-language subtitles and real-time updates. Watch now!</p>
         <div class="footer-socials" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <a href="https://t.me" target="_blank" style="width:32px;height:32px;border-radius:50%;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12..."/></svg></a>
           <a href="https://bsky.app" target="_blank" style="width:32px;height:32px;border-radius:50%;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12..."/></svg></a>
@@ -172,7 +172,7 @@
         <p class="footer-disclaimer" style="font-size:0.62rem;color:var(--text-muted);">Copyright © ${new Date().getFullYear()} AnimeKAI. All Rights Reserved</p>
       </div>
       <div class="footer-right">
-        <img src="https://i.postimg.cc/hPqN8Q8v/Chisato-bow-Lycoris-Recoil-01-removebg-preview.png" alt="Mascot" style="height:280px;object-fit:contain;">
+        <img src="https://i.postimg.cc/hPqN8Q8v/Chisato-bow-Lycoris-Recoil-01-removebg-preview.png" alt="Mascot" style="height:180px;object-fit:contain;">
       </div>
     </footer>
   `;
