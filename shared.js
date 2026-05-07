@@ -9,7 +9,7 @@
     <header class="site-header" style="background:var(--bg-header);padding:8px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-subtle);position:sticky;top:0;z-index:200;min-height:54px;">
       <div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div>
       <a href="/" class="header-logo" style="flex-shrink:0;font-family:var(--font-title);font-size:1.35rem;color:#fff;display:flex;align-items:center;gap:6px;cursor:pointer;">
-        <img src="https://i.postimg.cc/X7d0fPtJ/1778142012237-removebg-preview.png" alt="logo" id="siteLogo" style="width:300px;height:150px;">
+        <img src="https://i.postimg.cc/X7d0fPtJ/1778142012237-removebg-preview.png" alt="logo" id="siteLogo" style="width:100px;height:100px;">
       </a>
       <nav class="main-nav" id="mainNav" style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <a href="/" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;position:relative;">Home</a>
