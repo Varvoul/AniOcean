@@ -114,10 +114,12 @@
           <a href="/search?type=movie" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">Movie</a>
           <a href="/search?type=tv-show" style="display:block;padding:6px 10px;font-size:0.75rem;color:var(--text-secondary);">TV Show</a>
         </div></div>
-        <a href="/search?q=ongoing" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Ongoing</a>
-        <a href="/search?q=new+releases" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Updates</a>
-        <a href="#" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">News</a>
-        <a href="#" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Forum</a>
+        
+  <a href="/status/ongoing" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Ongoing</a>
+  <a href="/search?q=new+releases" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Updates</a>
+  <a href="#" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">News</a>
+  <a href="#" class="nav-link-item" style="padding:8px 10px;font-size:0.8rem;font-weight:500;color:#fff;border-radius:6px;">Forum</a>
+ 
       </nav>
       <div class="header-search-wrap" style="flex:1;max-width:340px;margin:0 8px;position:relative;">
         <div class="header-search-bar" style="display:flex;align-items:center;background:var(--bg-surface);border:1px solid var(--border-medium);border-radius:50px;overflow:hidden;">
