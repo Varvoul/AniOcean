@@ -661,6 +661,7 @@
   <div class="header-socials">
     <a href="https://discord.com" target="_blank" class="social-icon-btn" title="Discord">${SVG.discord}</a>
     <a href="https://tumblr.com" target="_blank" class="social-icon-btn" title="Tumblr">${SVG.tumblr}</a>
+    <a href="https://bsky.app" target="_blank" class="social-icon-btn" title="Bluesky">${SVG.bluesky}</a>
   </div>
 
   <!-- Desktop Login / Avatar (RIGHT EDGE) -->
@@ -687,6 +688,7 @@
   <div class="mobile-right" id="mobileRight">
     <a href="https://discord.com" target="_blank" class="mob-icon-btn">${SVG.discord}</a>
     <a href="https://tumblr.com" target="_blank" class="mob-icon-btn">${SVG.tumblr}</a>
+    <a href="https://bsky.app" target="_blank" class="mob-icon-btn">${SVG.bluesky}</a>
     <button class="mob-icon-btn" id="mobSearchBtn" aria-label="Search">${SVG.search}</button>
     <!-- Mobile profile / avatar -->
     <button class="mob-icon-btn" id="mobProfileBtn" aria-label="Profile">${SVG.user}</button>
