@@ -1,3 +1,4 @@
+// shared.js – Complete header, footer, search, and authentication system
 (function () {
   'use strict';
 
@@ -7,8 +8,6 @@
   const SUPABASE_URL      = 'https://msazwxqbyxctdnwqrreb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zYXp3eHFieXhjdGRud3FycmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDkzMzYsImV4cCI6MjA5MzEyNTMzNn0.jfaA3HMRabWWPJkPGK34HM-suUhde_L9JEU0YfGkpLY';
   const supabase          = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  /* ── Your Cloudflare Worker handles TMDB API key securely ── */
   const CF_WORKER_URL     = 'https://aniocen.bionmovies47.workers.dev';
   const PROFILE_BUCKET_URL= `${SUPABASE_URL}/storage/v1/object/public/Profile%20Images/`;
   const DEFAULT_AVATAR    = 'https://msazwxqbyxctdnwqrreb.supabase.co/storage/v1/object/public/Profile%20Images/flower.jpg';
