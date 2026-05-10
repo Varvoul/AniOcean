@@ -246,13 +246,27 @@
       display:flex;align-items:center;justify-content:center;
     }
     .mob-forum-item{
-      padding:10px 14px;margin-bottom:10px;border-radius:12px;
-      border:1px solid rgba(255,255,255,0.12);
-      background:rgba(255,255,255,0.04);
-      font-size:0.82rem;color:#fff;display:block;
-      transition:background .18s;
-    }
-    .mob-forum-item:hover{background:rgba(255,255,255,0.08);}
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:12px 14px;
+  margin-bottom:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  font-size:0.84rem;
+  font-weight:600;
+  color:#fff;
+  transition:background .18s, border-color .18s;
+  text-align:center;
+}
+.mob-forum-item:hover{
+  background:rgba(255,255,255,0.15);
+  border-color:rgba(255,255,255,0.3);
+}   
     .mob-nav-item{
       display:block;padding:9px 10px;font-size:0.82rem;
       color:var(--text-secondary,#ccc);border-radius:8px;
