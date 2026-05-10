@@ -61,7 +61,7 @@
 
     /* ── LOGO ── */
     .header-logo{flex-shrink:0;display:flex;align-items:center;}
-    .header-logo img{width:clamp(90px,13vw,190px);height:auto;object-fit:contain;max-height:52px;}
+    .header-logo img{width:clamp(90px,13vw,200px);height:auto;object-fit:contain;max-height:58px;}
 
     /* ── DESKTOP NAV (hover-only) ── */
     .main-nav{display:flex;align-items:center;gap:2px;flex-shrink:0;}
