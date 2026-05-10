@@ -532,10 +532,11 @@
 
     /* ── RESPONSIVE BREAKPOINTS ── */
     @media(max-width:900px){
-      .main-nav,.header-search-wrap,.header-socials,.btn-login{display:none!important;}
-      .hamburger-btn{display:flex!important;}
-      .mobile-right{display:flex!important;}
-    }
+  .main-nav,.header-search-wrap,.header-socials,.btn-login,#desktopAvatarWrap{display:none!important;}
+  .hamburger-btn{display:flex!important;}
+  .mobile-right{display:flex!important;}
+}
+    
     @media(min-width:901px){
       .hamburger-btn,.mobile-right{display:none!important;}
     }
