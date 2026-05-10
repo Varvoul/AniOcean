@@ -1114,7 +1114,9 @@
         title:    item.title_english || item.title || '—',
         original: item.title_japanese || item.title || '',
         meta:     `${monthYear} · ${item.type||'—'} · ${dur}`,
-        score:    item.score ? `★ MAL ${item.score}` : null
+        score:    item.score ? `★ MAL ${item.score}` : null,
+        id:       item.mal_id,        // ← add
+        source:   'jikan'             // ← add
       };
     });
   }
@@ -1149,38 +1151,50 @@ async function fetchTMDB(q) {
       title:    item.title || item.name || '—',
       original: item.original_title || item.original_name || '',
       meta:     `${monthYear} · ${typeLabel}`,
-      score
+      score,
+      id:       item.id,                    // ← add
+      source:   'tmdb',                    // ← add
+      mediaType: item.media_type           // ← add (to build the right URL)
     };
   });
 }
 
   function renderSuggestions(results, q, container) {
-    if (!results.length) {
-      container.innerHTML = `<div style="padding:14px 12px;font-size:0.76rem;color:var(--text-muted,#888);">No results for "${esc(q)}"</div>`;
-      return;
-    }
-    const html = results.map(r => {
-      const img = r.poster
-        ? `<img class="suggestion-poster" src="${esc(r.poster)}" alt="" loading="lazy" onerror="this.style.background='#1e2633';">`
-        : `<div class="suggestion-poster"></div>`;
-      const orig = r.original && r.original !== r.title
-        ? `<div class="sug-orig">${esc(r.original)}</div>` : '';
-      const score = r.score
-        ? `<span class="sug-score">${esc(r.score)}</span>` : '';
-      const meta = [r.meta, score].filter(Boolean).join(' · ');
-      return `<div class="suggestion-item">
-        ${img}
-        <div class="suggestion-info">
-          <div class="sug-title">${esc(r.title)}</div>
-          ${orig}
-          <div class="sug-meta">${meta}</div>
-        </div>
-      </div>`;
-    }).join('');
-    container.innerHTML = html
-      + `<button class="view-all-btn" onclick="location.href='/search?q=${encodeURIComponent(q)}&type=${currentSearchMode}'">${SVG.arrow} View all results</button>`;
-    container.style.display = 'block';
+  if (!results.length) {
+    container.innerHTML = `<div style="padding:14px 12px;font-size:0.76rem;color:var(--text-muted,#888);">No results for "${esc(q)}"</div>`;
+    return;
   }
+  const html = results.map(r => {
+    // Build the details URL based on source
+    let detailsUrl = '#';
+    if (r.source === 'jikan') {
+      detailsUrl = `/details/jikan-${r.id}`;
+    } else if (r.source === 'tmdb') {
+      const prefix = r.mediaType === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+      detailsUrl = `/details/${prefix}-${r.id}`;
+    }
+
+    const img = r.poster
+      ? `<img class="suggestion-poster" src="${esc(r.poster)}" alt="" loading="lazy" onerror="this.style.background='#1e2633';">`
+      : `<div class="suggestion-poster"></div>`;
+    const orig = r.original && r.original !== r.title
+      ? `<div class="sug-orig">${esc(r.original)}</div>` : '';
+    const score = r.score
+      ? `<span class="sug-score">${esc(r.score)}</span>` : '';
+    const meta = [r.meta, score].filter(Boolean).join(' · ');
+    return `<a href="${detailsUrl}" class="suggestion-item">
+      ${img}
+      <div class="suggestion-info">
+        <div class="sug-title">${esc(r.title)}</div>
+        ${orig}
+        <div class="sug-meta">${meta}</div>
+      </div>
+    </a>`;
+  }).join('');
+  container.innerHTML = html
+    + `<button class="view-all-btn" onclick="location.href='/search?q=${encodeURIComponent(q)}&type=${currentSearchMode}'">${SVG.arrow} View all results</button>`;
+  container.style.display = 'block';
+}
 
   /* ═══════════════════════════════════════════════════════════
      AUTH MODAL
