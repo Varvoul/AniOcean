@@ -1120,35 +1120,39 @@
   }
 
   /* ── TMDB via Cloudflare Worker ── */
-  async function fetchTMDB(q) {
-    // Your worker exposes: GET /tmdb/search?query=...&type=multi
-    // It fetches both movies and TV shows and returns combined results
-    const url = `${CF_WORKER_URL}/tmdb/search?query=${encodeURIComponent(q)}&type=multi`;
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error(`Worker error: ${res.status}`);
-    const data = await res.json();
+async function fetchTMDB(q) {
+  // Worker expects the full TMDB path, e.g. /3/search/movie?query=...
+  const [movieRes, tvRes] = await Promise.all([
+    fetch(`${CF_WORKER_URL}/3/search/movie?query=${encodeURIComponent(q)}&language=en-US&page=1`),
+    fetch(`${CF_WORKER_URL}/3/search/tv?query=${encodeURIComponent(q)}&language=en-US&page=1`)
+  ]);
 
-    // Handle both {results:[]} and direct array responses
-    const items = Array.isArray(data) ? data : (data.results || []);
+  const movieData = await movieRes.json();
+  const tvData    = await tvRes.json();
 
-    return items
-      .filter(r => r.media_type === 'movie' || r.media_type === 'tv')
-      .slice(0, 6)
-      .map(item => {
-        const date      = item.release_date || item.first_air_date || '';
-        const monthYear = date ? new Date(date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '—';
-        const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV';
-        const poster    = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
-        const score     = item.vote_average ? `★ TMDB ${Number(item.vote_average).toFixed(1)}` : null;
-        return {
-          poster,
-          title:    item.title || item.name || '—',
-          original: item.original_title || item.original_name || '',
-          meta:     `${monthYear} · ${typeLabel}`,
-          score
-        };
-      });
-  }
+  const movieResults = (movieData.results || []).map(r => ({ ...r, media_type: 'movie' }));
+  const tvResults    = (tvData.results    || []).map(r => ({ ...r, media_type: 'tv' }));
+
+  // Combine, sort by popularity (higher first), take top 6
+  const combined = [...movieResults, ...tvResults]
+    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+    .slice(0, 6);
+
+  return combined.map(item => {
+    const date      = item.release_date || item.first_air_date || '';
+    const monthYear = date ? new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
+    const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV';
+    const poster    = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
+    const score     = item.vote_average ? `★ TMDB ${Number(item.vote_average).toFixed(1)}` : null;
+    return {
+      poster,
+      title:    item.title || item.name || '—',
+      original: item.original_title || item.original_name || '',
+      meta:     `${monthYear} · ${typeLabel}`,
+      score
+    };
+  });
+}
 
   function renderSuggestions(results, q, container) {
     if (!results.length) {
