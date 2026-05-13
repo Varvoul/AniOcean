@@ -347,7 +347,18 @@
     .sidebar-list-item:hover { background:var(--bg-surface); }
     .sidebar-rank { font-size:1.4rem; font-weight:700; color:rgba(255,255,255,0.12); width:30px; text-align:center; flex-shrink:0; font-family:var(--font-title); }
     .sidebar-poster { width:50px; height:70px; object-fit:cover; border-radius:var(--radius-sm); flex-shrink:0; background:var(--bg-card); }
-    .sidebar-info h4 { font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar-info h4 
+    { 
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 1.3;
+     }
     .side-meta { font-size:0.6875rem; color:var(--text-muted); margin-top:2px; }
 
     /* popup – redesigned with meta pills */
