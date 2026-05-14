@@ -335,8 +335,22 @@
     @media (min-width:768px){ .grid-container{ grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); } }
     .show-card-grid { border-radius:var(--radius-md); overflow:hidden; cursor:pointer; transition:transform var(--transition-fast); position:relative; }
     .show-card-grid:hover { transform:translateY(-3px); }
-    .show-card-grid .card-poster { aspect-ratio:3/4.5; border-radius:var(--radius-md) var(--radius-md) 0 0; margin-bottom:0; }
-    .card-info-grid { padding:6px 8px; background:var(--bg-card); border-radius:0 0 var(--radius-md) var(--radius-md); }
+    .show-card-grid .card-poster {
+  aspect-ratio: 3/4.5;
+  border-radius: 0;          /* <-- change this (was var(--radius-md) var(--radius-md) 0 0) */
+  margin-bottom: 0;
+}
+    .card-info-grid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 8px 8px;     /* top padding pushes gradient up */
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  color: #fff;
+  pointer-events: none;       /* allow click through to the link */
+}
 
     .toggle-tabs { display:flex; gap:4px; }
     .toggle-tab { padding:5px 12px; border-radius:var(--radius-pill); background:rgba(255,255,255,0.04); border:1px solid var(--border-medium); font-size:0.72rem; cursor:pointer; transition:all var(--transition-fast); color:var(--text-secondary); font-weight:500; }
