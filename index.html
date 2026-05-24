@@ -545,6 +545,18 @@
       const tmdbImg = (p,s='w500') => p ? `${TMDB_IMAGE}/${s}${p}` : '';
       const tmdbBack = (p) => p ? `${TMDB_IMAGE}/w1280${p}` : '';
 
+      /* ── INFO URL BUILDER ── */
+      function infoUrl(show) {
+        const id = show.id;
+        if (!id) return '#';
+        if (id.startsWith('jikan-'))          return `/info/anime/${id}`;
+        if (id.startsWith('tmdb-mv') || id.startsWith('tmdb-movie')) return `/info/movie/${id}`;
+        if (id.startsWith('tmdb-tv'))          return `/info/tv/${id}`;
+        if (id.startsWith('tmdb-up'))          return `/info/movie/${id}`; // upcoming movies
+        if (id.startsWith('anilist-'))          return `/info/anime/${id}`;
+        return `/info/other/${id}`;
+      }
+
       const GENRE_MAP = {
         28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',99:'Documentary',
         18:'Drama',10751:'Family',14:'Fantasy',36:'History',27:'Horror',10402:'Music',
@@ -639,7 +651,7 @@
               <p class="slide-synopsis">${s.synopsis?.slice(0,250)||''}</p>
               <div class="slide-actions">
                 <a href="/watch/${s.id}" class="btn-watch">▶ Watch Now</a>
-                <a href="/details/${s.id}" class="btn-heart-slide">♡</a>
+                <a href="${infoUrl(s)}" class="btn-heart-slide">♡</a>
               </div>
             </div>
           </div>`).join('');
@@ -679,7 +691,7 @@
       function renderTopAiring(shows) {
         const container = document.getElementById('topAiringScroll');
         container.innerHTML = shows.map(s => `
-          <a href="/details/${s.id}" class="show-card-horiz">
+          <a href="${infoUrl(s)}" class="show-card-horiz">
             <div class="card-poster" style="background-image:url('${s.poster}');">
               <span class="ranking-badge">EP ${s.episodes||'?'}</span>
               <span class="score-badge">⭐ ${s.score}</span>
@@ -722,7 +734,7 @@
         grid.innerHTML = data.map(s => {
           if (s.type==='Anime') {
             const ratingText = RATING_EXPLAIN[s.rating] || s.rating;
-            return `<a href="/details/${s.id}" class="show-card-grid">
+            return `<a href="${infoUrl(s)}" class="show-card-grid">
               <div class="card-poster" style="background-image:url('${s.poster}');">
                 <span class="poster-status-badge">${s.status}</span>
                 <span class="poster-rating-badge" title="${ratingText}">⭐ ${s.score}</span>
@@ -734,7 +746,7 @@
               </div>
             </a>`;
           } else if (s.type==='Movie') {
-            return `<a href="/details/${s.id}" class="show-card-grid">
+            return `<a href="${infoUrl(s)}" class="show-card-grid">
               <div class="card-poster" style="background-image:url('${s.poster}');">
                 <span class="quality-badge">${s.quality}</span>
                 <span class="score-badge">⭐ ${s.score}</span>
@@ -746,7 +758,7 @@
               </div>
             </a>`;
           } else {
-            return `<a href="/details/${s.id}" class="show-card-grid">
+            return `<a href="${infoUrl(s)}" class="show-card-grid">
               <div class="card-poster" style="background-image:url('${s.poster}');">
                 <span class="quality-badge">${s.quality}</span>
                 <span class="score-badge">⭐ ${s.score}</span>
@@ -798,7 +810,7 @@
       }
       function renderUpcoming() {
         document.getElementById('upcomingScroll').innerHTML = upcomingShows.map(s => `
-          <div class="show-card-horiz" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
+          <a href="${infoUrl(s)}" class="show-card-horiz" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
             <div class="card-poster" style="background-image:url('${s.poster}');">
               <span class="poster-status-badge">HD</span>
               <span class="poster-rating-badge">⭐ ${s.score}</span>
@@ -806,7 +818,7 @@
             </div>
             <h3 class="card-title">${s.title}</h3>
             <div class="card-meta-sm">⭐ ${s.score} · ${s.type} · ${s.releaseDate||'TBA'}</div>
-          </div>`).join('');
+          </a>`).join('');
       }
       document.getElementById('upcomingLeft').addEventListener('click', ()=> document.getElementById('upcomingScroll').scrollBy({left:-400}));
       document.getElementById('upcomingRight').addEventListener('click', ()=> document.getElementById('upcomingScroll').scrollBy({left:400}));
@@ -825,7 +837,7 @@
           ...(anime.data||[]).slice(0,10).map(a => ({id:`jikan-comp-${a.mal_id}`,title:a.title,poster:a.images?.jpg?.large_image_url||'',type:'Anime',year:(a.aired?.from||'').slice(0,4),score:(a.score||0).toFixed(1),quality:'HD'}))
         ].slice(0,20);
         document.getElementById('completedGrid').innerHTML = list.map(s => `
-          <a href="/details/${s.id}" class="show-card-grid">
+          <a href="${infoUrl(s)}" class="show-card-grid">
             <div class="card-poster" style="background-image:url('${s.poster}');">
               <span class="quality-badge">${s.quality}</span>
               <div class="play-overlay"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg></div>
@@ -875,11 +887,11 @@
         ].sort((a,b)=>b.score-a.score).slice(0,20);
         trendingData.forEach((item,i)=>item.rank=i+1);
         document.getElementById('trendingList').innerHTML = trendingData.map(s => `
-          <div class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
+          <a href="${infoUrl(s)}" class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
             <span class="sidebar-rank">${s.rank}</span>
             <img class="sidebar-poster" src="${s.poster}" onerror="this.style.display='none'">
             <div class="sidebar-info"><h4>${s.title}</h4><div class="side-meta">⭐ ${s.score} · ${s.type}</div></div>
-          </div>`).join('');
+          </a>`).join('');
       }
       document.getElementById('trendingTabs').addEventListener('click', e => {
         if(e.target.classList.contains('toggle-tab')) {
@@ -909,11 +921,11 @@
         ].sort((a,b)=>b.members-a.members).slice(0,13);
         data.forEach((item,i)=>item.rank=i+1);
         document.getElementById('popularList').innerHTML = data.map(s => `
-          <div class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
+          <a href="${infoUrl(s)}" class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
             <span class="sidebar-rank">${s.rank}</span>
             <img class="sidebar-poster" src="${s.poster}">
             <div class="sidebar-info"><h4>${s.title}</h4><div class="side-meta">⭐ ${s.score} · ${s.members} members</div></div>
-          </div>`).join('');
+          </a>`).join('');
       }
 
       /* ── POPUP (redesigned with meta pills & original title) ── */
@@ -961,7 +973,7 @@
           const query = `{ Page(page:1,perPage:50){ airingSchedules(notYetAired:true,sort:EPISODE){ id episode airingAt media{ title{ romaji english } } } } }`;
           const res = await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})});
           const json = await res.json();
-          eswData = (json?.data?.Page?.airingSchedules||[]).map(s=>({title:s.media?.title?.english||s.media?.title?.romaji||'?',url:`/details/anilist-${s.id}`,airDate:new Date(s.airingAt*1000),episode:s.episode}));
+          eswData = (json?.data?.Page?.airingSchedules||[]).map(s=>({title:s.media?.title?.english||s.media?.title?.romaji||'?',url:`/info/anime/anilist-${s.id}`,airDate:new Date(s.airingAt*1000),episode:s.episode}));
         } catch(e){ eswData=[]; }
         updateScheduleUI();
       }
