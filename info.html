@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>Aniocean · Show Info</title>
-  <meta name="description" content="Detailed information about your favourite anime, movies and TV shows.">
-  <!-- Supabase & shared components -->
+  <meta name="description" content="Detailed information about your favorite anime, movies and TV shows.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="shared.js"></script>
-  <!-- Font Awesome (for icons) -->
+  <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
@@ -53,86 +52,99 @@
       color: var(--text-primary);
       line-height: 1.5;
       overflow-x: hidden;
+      min-height: 100vh;
     }
     a { text-decoration: none; color: inherit; cursor: pointer; }
     img { max-width: 100%; display: block; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+    button, .btn-heart, .btn-watch { cursor: pointer; font-family: inherit; }
+
+    .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 16px; }
 
     /* Breadcrumbs */
-    .breadcrumbs { padding: 12px 0; font-size: 0.85rem; display: flex; align-items: center; flex-wrap: wrap; color: var(--text-muted); }
+    .breadcrumbs { padding: 12px 0; display: flex; align-items: center; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); }
     .breadcrumbs a { color: var(--text-secondary); }
     .breadcrumbs .separator { margin: 0 6px; color: var(--text-muted); }
     .breadcrumbs .current { color: #fff; }
 
-    /* Main layout: main body + right sidebar on desktop */
-    .main-layout { display: flex; gap: 20px; }
-    .main-content { flex: 0 0 68%; max-width: 68%; }
-    .right-sidebar { flex: 0 0 32%; max-width: 32%; }
-
-    /* Backdrop & Poster overlap */
-    .backdrop-wrap { width: 100%; aspect-ratio: 16 / 6; overflow: hidden; position: relative; border-radius: var(--radius-md); }
+    /* Backdrop & Poster */
+    .backdrop-wrap { width: 100%; aspect-ratio: 16 / 6; overflow: hidden; border-radius: var(--radius-md); position: relative; }
     .backdrop-wrap img { width: 100%; height: 100%; object-fit: cover; }
     .poster-overlap { display: flex; margin-top: -60px; position: relative; z-index: 10; align-items: flex-end; }
-    .poster-img { width: 180px; aspect-ratio: 2/3; border-radius: var(--radius-md); border: 3px solid #fff; box-shadow: var(--shadow-lg); background: var(--bg-card); }
+    .poster-img { width: 200px; aspect-ratio: 2/3; border-radius: var(--radius-md); border: 3px solid #fff; box-shadow: var(--shadow-lg); background: var(--bg-card); }
     .title-metadata { flex: 1; margin-left: 20px; padding-bottom: 10px; }
     .show-title { font-family: var(--font-title); font-size: 2rem; margin-bottom: 8px; color: #fff; }
     .meta-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.85rem; color: var(--text-secondary); align-items: center; }
-    .meta-row span { display: flex; align-items: center; gap: 4px; }
-    .badge-sub, .badge-dub { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 600; }
-    .badge-sub { background: #2b6cb0; color: #fff; }
-    .badge-dub { background: #5c6ac4; color: #fff; }
+    .badge-sub, .badge-dub { display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 600; }
+    .badge-sub { background: var(--btn-primary); color: #fff; }
+    .badge-dub { background: var(--popup-btn); color: #fff; }
+    .poster-bottom-left { position: absolute; bottom: 8px; left: 8px; display: flex; gap: 4px; }
+    .poster-bottom-right { position: absolute; bottom: 8px; right: 8px; }
 
     /* Buttons */
     .btn-row { display: flex; gap: 12px; margin: 16px 0; align-items: center; }
-    .btn-watch { background: var(--btn-primary); color: #fff; padding: 10px 22px; border-radius: var(--radius-pill); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: all var(--transition-fast); }
+    .btn-watch { background: var(--btn-primary); color: #fff; padding: 10px 24px; border-radius: var(--radius-pill); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: all var(--transition-fast); }
     .btn-watch:hover { background: var(--btn-primary-hover); }
     .btn-addlist { position: relative; }
-    .btn-addlist button { background: var(--bg-surface); color: #fff; padding: 10px 22px; border-radius: var(--radius-pill); font-weight: 600; border: 1px solid var(--border-medium); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all var(--transition-fast); }
+    .btn-addlist button { background: var(--bg-surface); color: #fff; padding: 10px 24px; border-radius: var(--radius-pill); font-weight: 600; border: 1px solid var(--border-medium); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all var(--transition-fast); }
     .btn-addlist button:hover { background: rgba(255,255,255,0.1); }
-    .status-dropdown { display: none; position: absolute; top: 100%; left: 0; background: var(--bg-popup); border: 1px solid var(--border-medium); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 50; }
+    .status-dropdown { display: none; position: absolute; top: 100%; left: 0; background: var(--bg-popup); border: 1px solid var(--border-medium); border-radius: var(--radius-md); padding: 8px; min-width: 220px; z-index: 50; }
     .status-dropdown.open { display: block; }
     .status-dropdown label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; }
     .status-dropdown label:hover { background: rgba(255,255,255,0.06); }
     .status-dropdown input[type="checkbox"] { accent-color: var(--btn-primary); }
-
-    /* Share button */
-    .share-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border-medium); transition: all var(--transition-fast); }
+    .share-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border-medium); transition: all var(--transition-fast); }
     .share-btn:hover { background: rgba(255,255,255,0.15); }
 
-    /* Horizontal container for score/format/duration */
+    /* Info box (score/format/duration) */
     .info-box { display: flex; justify-content: space-around; background: var(--bg-surface); border-radius: var(--radius-md); padding: 14px; margin: 16px 0; flex-wrap: wrap; }
     .info-box .item { text-align: center; }
-    .info-box .item .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-    .info-box .item .value { font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
+    .info-box .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+    .info-box .value { font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
 
-    /* Synopsis container */
+    /* Synopsis */
     .synopsis-box { background: var(--bg-surface); border-radius: var(--radius-md); padding: 14px; margin: 16px 0; max-height: 300px; overflow-y: auto; }
-    .synopsis-box .toggle { text-align: center; margin-top: 8px; }
+    .synopsis-box h3 { margin-bottom: 8px; }
 
-    /* Details container */
-    .details-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
-    .detail-item { background: var(--bg-surface); padding: 10px; border-radius: var(--radius-sm); }
+    /* Details grid */
+    .details-grid { background: var(--bg-surface); border-radius: var(--radius-md); padding: 14px; margin: 16px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
     .detail-item .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
     .detail-item .value { font-size: 0.85rem; margin-top: 4px; }
     .genres-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-    .genres-tags a { background: var(--genre-tag-bg); color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; transition: opacity var(--transition-fast); }
+    .genres-tags a { background: var(--genre-tag-bg); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; transition: opacity var(--transition-fast); }
     .genres-tags a:hover { opacity: 0.8; }
 
-    /* Seasons grid */
+    /* Seasons */
     .seasons-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .season-card { position: relative; aspect-ratio: 16/9; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; background-size: cover; background-position: center; }
     .season-card .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
     .season-card .season-number { position: relative; z-index: 2; font-family: var(--font-title); font-size: 1.5rem; color: #fff; }
     .season-card:hover .overlay { background: rgba(0,0,0,0.3); }
 
-    /* Tab toggle */
-    .tabs-row { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
-    .tab-btn { padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-medium); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); font-size: 0.8rem; }
+    /* Tabs */
+    .tabs-container { margin: 20px 0; }
+    .tabs-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+    .tab-btn { padding: 8px 18px; border-radius: var(--radius-pill); border: 1px solid var(--border-medium); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); font-size: 0.8rem; }
     .tab-btn.active { background: var(--popup-btn); color: #fff; border-color: var(--popup-btn); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Right sidebar cards */
+    /* More Like This & Sunken Treasures grid */
+    .grid-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin: 20px 0; }
+    @media (min-width: 768px) { .grid-section { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+    .grid-card { border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: transform var(--transition-fast); position: relative; }
+    .grid-card:hover { transform: translateY(-4px); }
+    .grid-card .card-poster { width: 100%; aspect-ratio: 2/3; background-size: cover; background-position: center; position: relative; }
+    .grid-card .card-poster .quality-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); color: #fff; font-size: 0.6rem; padding: 2px 5px; border-radius: 3px; }
+    .grid-card .card-poster .score-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); color: var(--accent-gold); font-size: 0.6rem; padding: 2px 5px; border-radius: 3px; }
+    .grid-card .card-title { font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grid-card .card-meta { font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 2px; }
+
+    /* Sidebar */
+    .main-layout { display: flex; gap: 20px; }
+    .main-content { flex: 0 0 78%; max-width: 78%; }
+    .right-sidebar { flex: 0 0 22%; max-width: 22%; }
+    .sidebar-section { margin-bottom: 24px; }
+    .sidebar-title { font-family: var(--font-title); font-size: 1.2rem; color: var(--text-widget-title); margin-bottom: 10px; }
     .sidebar-card { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-surface); margin-bottom: 8px; cursor: pointer; transition: background var(--transition-fast); }
     .sidebar-card:hover { background: rgba(255,255,255,0.06); }
     .sidebar-card img { width: 45px; height: 65px; border-radius: 4px; object-fit: cover; }
@@ -140,7 +152,7 @@
     .sidebar-card .title { font-size: 0.8rem; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .sidebar-card .meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
 
-    /* Mobile/tablet adjustments */
+    /* Mobile adjustments */
     @media (max-width: 900px) {
       .main-layout { flex-direction: column; }
       .main-content, .right-sidebar { flex: 1; max-width: 100%; }
@@ -148,6 +160,7 @@
       .poster-img { width: 140px; }
       .title-metadata { margin-left: 0; text-align: center; }
       .btn-row { justify-content: center; }
+      .breadcrumbs { font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -165,11 +178,11 @@
         <!-- Dynamic content will be injected here -->
       </div>
 
-      <!-- RIGHT SIDEBAR (desktop) -->
+      <!-- RIGHT SIDEBAR -->
       <aside class="right-sidebar" id="rightSidebar">
-        <div id="sidebarHiddenGem"></div>
-        <div id="sidebarTopRanking"></div>
-        <div id="sidebarMostFav"></div>
+        <div class="sidebar-section" id="sidebarHiddenGem"></div>
+        <div class="sidebar-section" id="sidebarTopRanking"></div>
+        <div class="sidebar-section" id="sidebarMostFav"></div>
       </aside>
     </div>
   </div>
@@ -181,7 +194,7 @@
 
   <!-- Alert for non‑logged‑in bookmark -->
   <div id="loginAlert" style="display:none; position:fixed; bottom:16px; right:16px; background:var(--bg-popup); border:1px solid var(--border-medium); padding:12px 16px; border-radius:var(--radius-md); z-index:800; max-width:300px;">
-    <span>⚠️ Please log in to use bookmarks.</span>
+    <i class="fa-solid fa-circle-exclamation" style="color: var(--accent-gold);"></i> Please log in to use bookmarks.
     <button onclick="this.parentElement.style.display='none'" style="margin-left:8px; background:none; border:none; color:#fff; cursor:pointer;">&times;</button>
   </div>
 
@@ -196,24 +209,33 @@
       const tmdbImg = (p,s='w500') => p ? `${TMDB_IMAGE}/${s}${p}` : '';
       const tmdbBack = (p) => p ? `${TMDB_IMAGE}/w1280${p}` : '';
 
-      // Genre mapping TMDB → Jikan (for Sunken Treasures)
+      // Genre mapping TMDB -> Jikan
       const TMDB_TO_JIKAN_GENRES = {
-        28:1,12:2,35:4,80:7,18:8,14:10,36:13,27:14,10402:19,10749:22,878:24,10759:1,10765:10,10768:38
+        28:1,12:2,35:4,80:7,18:8,14:10,36:13,27:14,10402:19,10749:22,878:24,10759:1,10765:10,10768:38,
+        16:3, // Animation
+        99:5, // Documentary
+        10751:11, // Family
+        9648:7, // Mystery (use 7)
+        10770:37, // TV Movie
+        53:14, // Thriller -> Horror
+        10752:13, // War -> Historical
+        37:13 // Western -> Historical
       };
 
       // Bookmark statuses
       const STATUSES = ['Planning to Watch','Watching','Completed','Re-watching','Dropped','My Favourite'];
 
       // ----- STATE -----
-      let showData = null;      // full API payload
-      let currentUser = null;   // from Supabase
-      let selectedStatuses = []; // for bookmark dropdown
+      let showData = null;
+      let showType = ''; // 'anime', 'movie', 'tv'
+      let currentUser = null;
+      let selectedStatuses = [];
 
       // ----- HELPERS -----
-      function getParam() {
-        const parts = location.pathname.split('/'); // e.g. ["","info","anime","jikan-12345"]
+      function getUrlParams() {
+        const parts = location.pathname.split('/');
         const type = parts[2]; // anime, movie, tv
-        const id = parts[3];   // jikan-12345 or tmdb-movie-12345 etc.
+        const id = parts[3];   // e.g., jikan-12345 or tmdb-movie-12345
         return { type, id };
       }
 
@@ -233,22 +255,28 @@
 
       // ----- LOAD SHOW DATA -----
       async function loadShow() {
-        const { type, id } = getParam();
+        const { type, id } = getUrlParams();
         if (!id) return;
-
+        showType = type;
         if (type === 'anime') {
           const malId = id.replace('jikan-', '');
           const data = await fetchJikan(`anime/${malId}/full`);
           showData = { source:'jikan', type:'anime', ...data.data };
         } else {
-          // TMDB movie or tv
           const tmdbType = type === 'movie' ? 'movie' : 'tv';
           const tmdbId = id.replace(/^tmdb-(movie|tv)-/, '');
-          const endpoint = `/${tmdbType}/${tmdbId}?language=en-US`;
+          const endpoint = `/${tmdbType}/${tmdbId}?language=en-US&append_to_response=content_ratings,videos,images,credits`;
           const data = await fetchTMDB(endpoint);
           showData = { source:'tmdb', type: tmdbType, ...data };
         }
         renderPage();
+      }
+
+      function infoUrl(id, type) {
+        if (type === 'anime') return `/info/anime/jikan-${id}`;
+        if (type === 'movie') return `/info/movie/tmdb-movie-${id}`;
+        if (type === 'tv') return `/info/tv/tmdb-tv-${id}`;
+        return '#';
       }
 
       // ----- RENDER FULL PAGE -----
@@ -259,11 +287,23 @@
         loadSidebars();
         initBookmark();
         initShare();
-        initSeasons();
+        updateBreadcrumbs();
+        if ((showType === 'anime' && showData.seasons?.length > 1) || 
+            (showType === 'tv' && showData.seasons?.length > 1)) {
+          loadSeasons();
+        }
         initTabs();
         initMoreLikeThis();
         initSunkenTreasures();
-        updateBreadcrumbs();
+        // Mobile synopsis toggle
+        if (window.innerWidth < 600) {
+          const syn = document.getElementById('synopsisBox');
+          if (syn) {
+            syn.style.maxHeight = '100px';
+            syn.style.overflow = 'hidden';
+            syn.insertAdjacentHTML('afterend', '<div class="toggle-btn" style="text-align:center;margin:8px;" onclick="this.previousElementSibling.style.maxHeight=\'none\';this.style.display=\'none\'">Read more <i class="fa-solid fa-chevron-down"></i></div>');
+          }
+        }
       }
 
       function buildMainHTML() {
@@ -273,16 +313,21 @@
         const originalTitle = isAnime ? s.title_japanese : (s.original_title || s.original_name || '');
         const backdrop = isAnime ? (s.images?.jpg?.large_image_url) : tmdbBack(s.backdrop_path);
         const poster = isAnime ? s.images?.jpg?.large_image_url : tmdbImg(s.poster_path);
-
-        // Metadata for the info box
         const score = isAnime ? s.score : s.vote_average;
         const format = isAnime ? (s.type || 'TV') : (s.media_type || 'movie').toUpperCase();
         const duration = isAnime ? (s.duration || 'N/A') : (s.runtime ? `${s.runtime}min` : 'N/A');
-        const episodes = isAnime ? s.episodes : s.number_of_episodes;
         const status = isAnime ? s.status : (s.status || 'Released');
         const year = isAnime ? (s.aired?.from ? new Date(s.aired.from).getFullYear() : '?') : (new Date(s.release_date || s.first_air_date).getFullYear() || '?');
-        const certification = isAnime ? s.rating : (s.adult ? '18+' : 'PG-13');
-        const genres = isAnime ? s.genres?.map(g=>g.name) : s.genres?.map(g=>g.name); // TMDB already has name
+        const cert = isAnime ? s.rating : (s.adult ? '18+' : 'PG-13');
+        const episodes = isAnime ? s.episodes : s.number_of_episodes;
+
+        // Sub/dub badges for anime
+        let subDubHTML = '';
+        if (isAnime) {
+          // we will populate sub/dub later via allanime API
+          subDubHTML = `<span class="badge-sub"><i class="fa-solid fa-closed-captioning"></i> Sub</span>
+                         <span class="badge-dub"><i class="fa-solid fa-microphone"></i> Dub</span>`;
+        }
 
         let html = `
           <!-- Backdrop -->
@@ -295,16 +340,15 @@
             <div class="title-metadata">
               <h1 class="show-title">${title}</h1>
               <div class="meta-row">
-                <span>${format} • ${status} • ${year} • ${duration} • ${certification}</span>
-                ${isAnime ? `<span class="badge-sub"><i class="fa-solid fa-closed-captioning"></i> Sub</span>
-                             <span class="badge-dub"><i class="fa-solid fa-microphone"></i> Dub</span>` : ''}
+                <span>${format} • ${status} • ${year} • ${duration} • ${cert}</span>
                 ${episodes ? `<span>${episodes} Ep</span>` : ''}
               </div>
+              ${subDubHTML}
             </div>
           </div>
           <!-- Buttons -->
           <div class="btn-row">
-            <a href="/watch/${s.source}/${s.id}" class="btn-watch"><i class="fa-solid fa-play"></i> Watch Now</a>
+            <a href="/watch/${showType}/${showData.id}" class="btn-watch"><i class="fa-solid fa-play"></i> Watch Now</a>
             <div class="btn-addlist" id="addToListWrapper">
               <button id="addToListBtn"><i class="fa-solid fa-bookmark"></i> Add to List</button>
               <div class="status-dropdown" id="statusDropdown">
@@ -317,7 +361,7 @@
           </div>
           <!-- Info box -->
           <div class="info-box">
-            <div class="item"><div class="label">${isAnime?'MAL':'TMDB'} Score</div><div class="value"><i class="fa-regular fa-star"></i> ${score||'N/A'}</div></div>
+            <div class="item"><div class="label">${isAnime?'MAL':'TMDB'} Score</div><div class="value"><i class="fa-regular fa-star" style="color:${isAnime?'#2e51a2':'var(--accent-gold)'};"></i> ${score||'N/A'}</div></div>
             <div class="item"><div class="label">Format</div><div class="value">${format}</div></div>
             <div class="item"><div class="label">Duration</div><div class="value">${duration}</div></div>
             <div class="item"><div class="label">Share</div><div class="value" id="mobileShare" style="cursor:pointer;" onclick="navigator.share({title:'${title}',url:location.href})"><i class="fa-solid fa-share-nodes"></i></div></div>
@@ -326,7 +370,6 @@
           <div class="synopsis-box" id="synopsisBox">
             <h3>${isAnime?'Synopsis':'Overview'}</h3>
             <p>${isAnime ? (s.synopsis||'No synopsis available.') : (s.overview||'No overview available.')}</p>
-            <div class="toggle" onclick="this.parentElement.classList.toggle('expanded')" style="display:none;"><i class="fa-solid fa-chevron-down"></i></div>
           </div>
           <!-- Details container -->
           <div class="details-grid" id="detailsGrid"></div>
@@ -334,7 +377,6 @@
         return html;
       }
 
-      // ----- DETAILS GRID (populated after main HTML) -----
       function populateDetails() {
         const grid = document.getElementById('detailsGrid');
         if (!grid || !showData) return;
@@ -349,8 +391,9 @@
         items.push({label:'Country', value: isAnime ? 'Japan' : (s.origin_country?.[0] || 'N/A')});
         // Genres (clickable)
         let genresHtml = '<div class="genres-tags">';
-        (isAnime ? (s.genres||[]) : (s.genres||[])).forEach(g => {
-          const name = isAnime ? g.name : g.name;
+        const genres = isAnime ? (s.genres||[]) : (s.genres||[]);
+        genres.forEach(g => {
+          const name = g.name || g;
           genresHtml += `<a href="/genre/${name.toLowerCase().replace(/\s+/g,'-')}">${name}</a>`;
         });
         genresHtml += '</div>';
@@ -365,28 +408,28 @@
         }
         // Status
         items.push({label:'Status', value: isAnime ? s.status : (s.status||'N/A')});
-        // Broadcast (anime/TV)
+        // Broadcast
         if ((isAnime || s.type==='tv') && s.broadcast?.string) items.push({label:'Broadcast', value: s.broadcast.string});
         // Episodes
         if (isAnime && s.episodes) items.push({label:'Episodes', value: s.episodes});
         if (!isAnime && s.number_of_episodes) items.push({label:'Episodes', value: s.number_of_episodes});
         // Duration
         items.push({label:'Duration', value: isAnime ? (s.duration||'N/A') : (s.runtime?`${s.runtime} min`:'N/A')});
-        // Premiered (anime)
+        // Premiered
         if (isAnime && s.premiered) items.push({label:'Premiered', value: `<a href="/season/${s.premiered.toLowerCase().replace(/\s+/,'-')}">${s.premiered}</a>`, html:true});
-        // Rating
+        // Score
         items.push({label:'Score', value: `⭐ ${isAnime ? s.score : s.vote_average}`});
-        // Certification
+        // Content Rating
         items.push({label:'Content Rating', value: isAnime ? s.rating : (s.adult?'18+':'PG-13')});
-        // Studio
+        // Studio/Network
         const studios = isAnime ? (s.studios||[]).map(st=>st.name) : (s.networks||[]).map(n=>n.name);
-        if (studios.length) items.push({label:'Studio', value: studios.map(st=>`<a href="/studio/${st.toLowerCase().replace(/\s+/g,'-')}">${st}</a>`).join(', '), html:true});
+        if (studios.length) items.push({label:'Studio/Network', value: studios.map(st=>`<a href="/studio/${st.toLowerCase().replace(/\s+/g,'-')}">${st}</a>`).join(', '), html:true});
         // Producers
         if (isAnime && s.producers?.length) items.push({label:'Producers', value: s.producers.map(p=>p.name).join(', ')});
         // External links
         let ext = '';
         if (isAnime) ext += `<a href="https://myanimelist.net/anime/${s.mal_id}" target="_blank"><svg width="24" height="24" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#2e51a2"/><path d="M432.49 410.61V590.3l-44.86-.06V479l-43.31 51.29-42.43-52.44-.43 112.75H256V410.65h47l39.79 54.29 43-54.31z..." fill="#fff"/></svg></a>`;
-        if (!isAnime) ext += `<a href="https://www.themoviedb.org/movie/${s.id}" target="_blank"><i class="fa-brands fa-mdb"></i></a>`;
+        if (!isAnime) ext += `<a href="https://www.themoviedb.org/${s.type==='movie'?'movie':'tv'}/${s.id}" target="_blank"><i class="fa-brands fa-mdb" style="font-size:1.5rem;"></i></a>`;
         items.push({label:'External', value: ext, html:true});
 
         grid.innerHTML = items.map(i => `
@@ -399,13 +442,12 @@
 
       // ----- BREADCRUMBS -----
       function updateBreadcrumbs() {
-        const { type, id } = getParam();
-        const show = showData;
-        const title = show?.source==='jikan' ? (show.title_english||show.title) : (show.title||show.name);
+        const title = showData.source==='jikan' ? (showData.title_english||showData.title) : (showData.title||showData.name);
+        const typeLabel = showType.charAt(0).toUpperCase()+showType.slice(1);
         document.getElementById('breadcrumbs').innerHTML = `
           <a href="/"><i class="fa-solid fa-house"></i> Home</a>
           <span class="separator"><i class="fa-solid fa-chevron-right"></i></span>
-          <a href="/type/${type}">${type.charAt(0).toUpperCase()+type.slice(1)}</a>
+          <a href="/type/${showType}"><i class="fa-solid fa-layer-group"></i> ${typeLabel}</a>
           <span class="separator"><i class="fa-solid fa-chevron-right"></i></span>
           <span class="current">${title}</span>
         `;
@@ -425,7 +467,6 @@
           dropdown.classList.toggle('open');
         });
         document.addEventListener('click', () => dropdown.classList.remove('open'));
-        // Load existing bookmarks
         loadBookmarks();
       }
 
@@ -451,13 +492,12 @@
         selectedStatuses = statuses;
         const user = window.supabase.auth.user();
         if (!user) return;
-        // Delete all existing bookmarks for this media, then re-insert
         await window.supabase.from('user_bookmarks').delete().eq('user_id', user.id).eq('media_id', showData.id);
         if (statuses.length > 0) {
           const rows = statuses.map(st => ({
             user_id: user.id,
             media_id: showData.id,
-            media_type: showData.source === 'jikan' ? 'anime' : (showData.type || 'movie'),
+            media_type: showType,
             status: st
           }));
           await window.supabase.from('user_bookmarks').insert(rows);
@@ -470,68 +510,182 @@
           if (navigator.share) {
             navigator.share({ title: document.title, url: location.href });
           } else {
-            // fallback copy to clipboard
             navigator.clipboard.writeText(location.href).then(() => alert('Link copied!'));
           }
         });
       }
 
-      // ----- WATCH MORE SEASONS -----
-      function initSeasons() {
-        // only for TV/Anime with seasons > 1
-        // This is a placeholder; real implementation requires fetching season data from TMDB or Jikan.
-        // For Jikan, you can fetch /anime/{id}/full which includes related_adaptations etc.
+      // ----- SEASONS -----
+      async function loadSeasons() {
+        const container = document.getElementById('seasonsContainer');
+        if (!container) return;
+        let seasons = [];
+        if (showType === 'anime') {
+          // Jikan anime has no direct seasons endpoint, but we can fetch related anime or use series
+          // For simplicity, we'll just show if the data has seasons array (often not provided)
+          // Instead, we'll fetch /anime/{id}/full and look for related series? Not reliable.
+          // We'll just skip if no seasons data.
+          if (showData.seasons) seasons = showData.seasons;
+        } else {
+          // TMDB TV: showData.seasons array
+          if (showData.seasons) seasons = showData.seasons.filter(s => s.season_number > 0);
+        }
+        if (!seasons.length) return;
+        container.innerHTML = seasons.map(s => `
+          <div class="season-card" onclick="location.href='/info/${showType}/${showData.id}/season/${s.season_number}'" style="background-image:url('${s.poster_path ? tmdbImg(s.poster_path) : ''}');">
+            <div class="overlay"></div>
+            <div class="season-number">Season ${s.season_number}</div>
+          </div>
+        `).join('');
       }
 
-      // ----- TABS (Cast, Artwork, Trailer, Themes, Statistics) -----
+      // ----- TABS -----
       function initTabs() {
-        const tabs = ['Cast','Artwork','Trailer','Themes','Statistics'];
-        const tabContainer = document.createElement('div');
-        tabContainer.className = 'tabs-row';
-        tabs.forEach(t => {
-          const btn = document.createElement('button');
-          btn.className = 'tab-btn';
-          btn.textContent = t;
-          btn.onclick = () => switchTab(t);
-          tabContainer.appendChild(btn);
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'tabs-container';
+        tabsContainer.innerHTML = `
+          <div class="tabs-nav" id="tabsNav">
+            <button class="tab-btn active" data-tab="cast">Cast/Crew</button>
+            <button class="tab-btn" data-tab="artwork">Artwork</button>
+            <button class="tab-btn" data-tab="trailer">Trailer</button>
+            <button class="tab-btn" data-tab="themes">Themes</button>
+            <button class="tab-btn" data-tab="stats">Statistics</button>
+          </div>
+          <div class="tab-content active" id="tabContent"></div>
+        `;
+        document.getElementById('mainContent').appendChild(tabsContainer);
+        document.getElementById('tabsNav').addEventListener('click', (e) => {
+          if (e.target.classList.contains('tab-btn')) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const tab = e.target.dataset.tab;
+            switchTab(tab);
+          }
         });
-        document.getElementById('mainContent').appendChild(tabContainer);
-        // Content area
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'tab-content active';
-        contentDiv.id = 'tabContent';
-        document.getElementById('mainContent').appendChild(contentDiv);
-        // Default: cast
-        switchTab('Cast');
+        switchTab('cast');
       }
 
       function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => { if(b.textContent===tab) b.classList.add('active'); });
         const content = document.getElementById('tabContent');
-        content.innerHTML = `<p style="padding:20px;">${tab} content loading…</p>`;
-        if (tab === 'Cast') loadCast();
-        else if (tab === 'Artwork') loadArtwork();
-        else if (tab === 'Trailer') loadTrailer();
-        else if (tab === 'Themes') loadThemes();
-        else if (tab === 'Statistics') loadStatistics();
+        content.innerHTML = `<p style="padding:20px;">Loading ${tab}...</p>`;
+        if (tab === 'cast') loadCast();
+        else if (tab === 'artwork') loadArtwork();
+        else if (tab === 'trailer') loadTrailer();
+        else if (tab === 'themes') loadThemes();
+        else if (tab === 'stats') loadStatistics();
       }
 
-      // Placeholder functions (will implement minimal versions)
       async function loadCast() {
-        // TMDB / Jikan cast fetch
+        const content = document.getElementById('tabContent');
+        try {
+          let castData;
+          if (showData.source === 'jikan') {
+            const res = await fetchJikan(`anime/${showData.mal_id}/characters`);
+            castData = res.data || [];
+          } else {
+            const mediaType = showData.type === 'movie' ? 'movie' : 'tv';
+            const res = await fetchTMDB(`/${mediaType}/${showData.id}/credits`);
+            castData = (res.cast || []).slice(0, 10);
+          }
+          renderCast(castData);
+        } catch (e) {
+          content.innerHTML = '<p>Failed to load cast.</p>';
+        }
       }
+
+      function renderCast(cast) {
+        const content = document.getElementById('tabContent');
+        if (!cast.length) { content.innerHTML = '<p>No cast information available.</p>'; return; }
+        content.innerHTML = cast.map(c => {
+          const charImg = c.character?.images?.jpg?.image_url || c.profile_path ? tmdbImg(c.profile_path, 'w185') : '';
+          const actorImg = c.person?.images?.jpg?.image_url || (c.profile_path ? tmdbImg(c.profile_path, 'w185') : '');
+          const charName = c.character?.name || c.character || '';
+          const role = c.role || 'N/A';
+          const actorName = c.person?.name || c.name || '';
+          const actorLang = c.language || '';
+          return `
+            <div class="cast-row" style="display:flex; gap:12px; margin-bottom:12px; align-items:center;">
+              <img src="${charImg}" alt="${charName}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+              <div style="flex:1;">
+                <div style="font-weight:600;">${charName}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">${role}</div>
+              </div>
+              <img src="${actorImg}" alt="${actorName}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+              <div style="flex:1;">
+                <div style="font-weight:600;">${actorName}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">${actorLang}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
       async function loadArtwork() {
-        // images from TMDB or Jikan
+        const content = document.getElementById('tabContent');
+        let images = [];
+        if (showData.source === 'jikan') {
+          const res = await fetchJikan(`anime/${showData.mal_id}/pictures`);
+          images = (res.data || []).map(p => p.jpg?.large_image_url || p.jpg?.image_url).filter(Boolean);
+        } else {
+          const mediaType = showData.type === 'movie' ? 'movie' : 'tv';
+          const res = await fetchTMDB(`/${mediaType}/${showData.id}/images`);
+          const backdrops = (res.backdrops || []).slice(0, 10).map(b => tmdbImg(b.file_path, 'w780'));
+          const posters = (res.posters || []).slice(0, 10).map(p => tmdbImg(p.file_path, 'w500'));
+          images = [...backdrops, ...posters];
+        }
+        if (!images.length) { content.innerHTML = '<p>No artwork available.</p>'; return; }
+        content.innerHTML = `<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">${images.map(img => `
+          <img src="${img}" style="width:100%; border-radius:8px; cursor:pointer;" onclick="document.getElementById('artworkPopup').style.display='flex';document.getElementById('artworkPopupImg').src='${img}'">
+        `).join('')}</div>`;
       }
+
       async function loadTrailer() {
-        // YouTube trailer
+        const content = document.getElementById('tabContent');
+        let trailerUrl = '';
+        if (showData.source === 'jikan' && showData.trailer?.youtube_id) {
+          trailerUrl = `https://www.youtube.com/embed/${showData.trailer.youtube_id}`;
+        } else if (showData.videos?.results?.length) {
+          const trailer = showData.videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+          if (trailer) trailerUrl = `https://www.youtube.com/embed/${trailer.key}`;
+        }
+        if (trailerUrl) {
+          content.innerHTML = `<div style="position:relative;padding-top:56.25%;"><iframe src="${trailerUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allowfullscreen></iframe></div>`;
+        } else {
+          content.innerHTML = '<p>No trailer available.</p>';
+        }
       }
+
       async function loadThemes() {
-        // AnimeThemes integration for OP/ED
+        const content = document.getElementById('tabContent');
+        if (showData.source !== 'jikan') { content.innerHTML = '<p>Theme videos only available for anime.</p>'; return; }
+        try {
+          // Use slug from Jikan? We have mal_id, need to find slug from AnimeThemes.
+          // For simplicity, we'll skip for now or use search? Not reliable.
+          content.innerHTML = '<p>Theme videos loading... (implementation pending)</p>';
+        } catch (e) {
+          content.innerHTML = '<p>Failed to load themes.</p>';
+        }
       }
+
       async function loadStatistics() {
-        // Score distribution from Jikan stats, TMDB has limited; will show generic
+        const content = document.getElementById('tabContent');
+        if (showData.source === 'jikan') {
+          const res = await fetchJikan(`anime/${showData.mal_id}/statistics`);
+          const stats = res.data || {};
+          let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:20px;">';
+          if (stats.scores?.length) {
+            html += '<div><h4>Score Distribution</h4><div class="bar-chart">';
+            stats.scores.forEach(s => {
+              html += `<div style="display:flex;align-items:center;gap:8px;"><span style="width:30px;">${s.score}</span><div style="flex:1;height:10px;background:rgba(255,255,255,0.1);"><div style="width:${s.percentage}%;height:100%;background:var(--accent-gold);"></div></div></div>`;
+            });
+            html += '</div></div>';
+          }
+          if (stats.watching) html += `<div><h4>Member Status</h4><p>Watching: ${stats.watching}</p><p>Completed: ${stats.completed}</p></div>`;
+          html += '</div>';
+          content.innerHTML = html;
+        } else {
+          content.innerHTML = '<p>Statistics only available for anime.</p>';
+        }
       }
 
       // ----- MORE LIKE THIS (TMDB Discover) -----
@@ -543,63 +697,112 @@
         const url = `${TMDB_PROXY}/3/discover/${type}?sort_by=popularity.desc&with_genres=${genreIds}&with_origin_country=${country}&page=1&language=en-US`;
         const res = await fetch(url);
         const data = await res.json();
-        renderGridSection('moreLikeThis', data.results?.slice(0,30) || [], 'tmdb');
-      }
-
-      // ----- SUNKEN TREASURES (Jikan Cross) -----
-      async function initSunkenTreasures() {
-        // Only for non-anime? Actually we can show always but adapted.
-        // Implementation omitted for brevity.
-      }
-
-      // ----- GRID RENDERER -----
-      function renderGridSection(sectionId, items, source) {
+        const filtered = (data.results || []).filter(item => item.id !== showData.id).slice(0, 30);
         const container = document.createElement('div');
-        container.className = 'grid-container';
-        container.id = sectionId;
+        container.className = 'section';
+        container.innerHTML = '<h2 class="section-title" style="font-family:var(--font-title);color:var(--text-widget-title);margin-bottom:14px;">More Like This</h2><div class="grid-section" id="moreLikeGrid"></div>';
         document.getElementById('mainContent').appendChild(container);
-        items.forEach(item => {
-          const card = document.createElement('a');
-          card.className = 'show-card-grid';
-          card.href = `/info/${source === 'tmdb' ? (item.media_type || 'movie') : 'anime'}/${source === 'tmdb' ? `tmdb-${item.media_type||'movie'}-${item.id}` : `jikan-${item.mal_id || item.id}`}`;
-          card.innerHTML = `
-            <div class="card-poster" style="background-image:url('${source==='tmdb'?tmdbImg(item.poster_path):item.images?.jpg?.large_image_url}');">
-              <span class="score-badge">⭐ ${source==='tmdb'?item.vote_average:item.score}</span>
-              <span class="quality-badge">HD</span>
-            </div>
-            <div class="card-title">${item.title || item.name}</div>
-            <div class="card-meta-sm">${item.media_type||'TV'} • ${item.release_date?.slice(0,4)||item.year||'?'} • ${source==='tmdb'?'2h10m':item.duration||'?'}</div>
+        const grid = document.getElementById('moreLikeGrid');
+        grid.innerHTML = filtered.map(item => {
+          const poster = item.poster_path ? tmdbImg(item.poster_path) : '';
+          const title = item.title || item.name;
+          const year = (item.release_date || item.first_air_date || '').slice(0,4);
+          const duration = item.media_type === 'movie' ? '2h 10m' : '45m/ep';
+          const score = item.vote_average;
+          return `
+            <a href="/info/${item.media_type === 'movie' ? 'movie' : 'tv'}/tmdb-${item.media_type || 'movie'}-${item.id}" class="grid-card">
+              <div class="card-poster" style="background-image:url('${poster}');">
+                <span class="quality-badge">HD</span>
+                <span class="score-badge">⭐ ${score}</span>
+              </div>
+              <div class="card-title">${title}</div>
+              <div class="card-meta">${item.media_type?.toUpperCase() || 'TV'} • ${year} • ${duration}</div>
+            </a>
           `;
-          container.appendChild(card);
-        });
+        }).join('');
+      }
+
+      // ----- SUNKEN TREASURES (Jikan cross) -----
+      async function initSunkenTreasures() {
+        if (!showData) return;
+        const currentGenres = showData.genres?.map(g => g.name || g) || [];
+        let jikanType = showType === 'movie' ? 'movie' : 'tv';
+        const originCountry = showData.origin_country?.[0] || (showData.source==='jikan' ? 'JP' : 'US');
+        if (originCountry === 'CN' || originCountry === 'KR') jikanType = 'ona';
+        if (originCountry === 'US' || originCountry === 'GB') jikanType = 'tv';
+        const targetGenres = [];
+        if (showData.genres) {
+          showData.genres.forEach(genre => {
+            const id = genre.id || genre.mal_id;
+            if (TMDB_TO_JIKAN_GENRES[id]) targetGenres.push(TMDB_TO_JIKAN_GENRES[id]);
+          });
+        }
+        const jikanUrl = new URL(`${JIKAN_BASE}/anime`);
+        jikanUrl.searchParams.append('type', jikanType);
+        jikanUrl.searchParams.append('order_by', 'popularity');
+        jikanUrl.searchParams.append('sort', 'asc');
+        jikanUrl.searchParams.append('limit', '30');
+        jikanUrl.searchParams.append('sfw', 'true');
+        if (targetGenres.length > 0) jikanUrl.searchParams.append('genres', targetGenres.slice(0,3).join(','));
+        try {
+          const res = await fetch(jikanUrl.toString());
+          const data = await res.json();
+          const items = data.data || [];
+          const container = document.createElement('div');
+          container.className = 'section';
+          container.innerHTML = '<h2 class="section-title" style="font-family:var(--font-title);color:var(--text-widget-title);margin-bottom:14px;">Sunken Treasures</h2><div class="grid-section" id="sunkenGrid"></div>';
+          document.getElementById('mainContent').appendChild(container);
+          const grid = document.getElementById('sunkenGrid');
+          grid.innerHTML = items.map(anime => {
+            const title = anime.title_english || anime.title;
+            const score = anime.score || 'N/A';
+            const typeLabel = anime.type || 'TV';
+            const episodes = anime.episodes ? `${anime.episodes} Ep` : 'Film';
+            const studio = anime.studios?.[0]?.name || 'Independent';
+            const poster = anime.images?.jpg?.large_image_url || '';
+            return `
+              <a href="/info/anime/jikan-${anime.mal_id}" class="grid-card">
+                <div class="card-poster" style="background-image:url('${poster}');">
+                  <span class="quality-badge">HD</span>
+                  <span class="score-badge">⭐ ${score}</span>
+                </div>
+                <div class="card-title">${title}</div>
+                <div class="card-meta">${typeLabel} • ${episodes} • ${studio}</div>
+              </a>
+            `;
+          }).join('');
+        } catch (e) { console.error('Sunken Treasures error:', e); }
       }
 
       // ----- SIDEBARS -----
       async function loadSidebars() {
         const isAnime = showData.source === 'jikan';
         if (isAnime) {
-          loadSidebar('sidebarHiddenGem', 'https://api.jikan.moe/v4/anime?min_score=8.0&order_by=popularity&sort=desc&limit=17', 'jikan');
-          loadSidebar('sidebarTopRanking', 'https://api.jikan.moe/v4/top/anime?limit=19', 'jikan');
-          loadSidebar('sidebarMostFav', 'https://api.jikan.moe/v4/top/anime?filter=favorite&limit=21', 'jikan');
+          loadSidebar('sidebarHiddenGem', 'Hidden Gem', 'https://api.jikan.moe/v4/anime?min_score=8.0&order_by=popularity&sort=desc&limit=17', 'jikan');
+          loadSidebar('sidebarTopRanking', 'Top Ranking', 'https://api.jikan.moe/v4/top/anime?limit=19', 'jikan');
+          loadSidebar('sidebarMostFav', 'Most Favourite', 'https://api.jikan.moe/v4/top/anime?filter=favorite&limit=21', 'jikan');
         } else {
           const type = showData.type === 'movie' ? 'movie' : 'tv';
-          loadSidebar('sidebarHiddenGem', `${TMDB_PROXY}/3/discover/${type}?vote_average.gte=7.8&vote_count.gte=150&vote_count.lte=1200&sort_by=popularity.asc&page=1`, 'tmdb');
-          loadSidebar('sidebarTopRanking', `${TMDB_PROXY}/3/${type}/top_rated?page=1`, 'tmdb');
-          loadSidebar('sidebarMostFav', `${TMDB_PROXY}/3/${type}/popular?page=1`, 'tmdb');
+          loadSidebar('sidebarHiddenGem', 'Hidden Gem', `${TMDB_PROXY}/3/discover/${type}?vote_average.gte=7.8&vote_count.gte=150&vote_count.lte=1200&sort_by=popularity.asc&page=1`, 'tmdb');
+          loadSidebar('sidebarTopRanking', 'Top Ranking', `${TMDB_PROXY}/3/${type}/top_rated?page=1`, 'tmdb');
+          loadSidebar('sidebarMostFav', 'Most Favourite', `${TMDB_PROXY}/3/${type}/popular?page=1`, 'tmdb');
         }
       }
 
-      async function loadSidebar(containerId, url, source) {
+      async function loadSidebar(containerId, sectionTitle, url, source) {
         const container = document.getElementById(containerId);
+        container.innerHTML = `<div class="sidebar-title"><i class="${source==='jikan'?'fa-solid fa-gem':'fa-solid fa-star'}" style="color: var(--accent-blue);"></i> ${sectionTitle}</div>`;
         const res = await fetch(url);
         const data = await res.json();
-        const items = source==='jikan' ? data.data : data.results;
-        container.innerHTML = items.slice(0, source==='jikan'?17:17).map(item => {
+        const items = source === 'jikan' ? data.data : data.results;
+        const max = source==='jikan'? (containerId==='sidebarHiddenGem'?17:19) : 21;
+        container.innerHTML += items.slice(0, max).map(item => {
           const poster = source==='jikan' ? item.images?.jpg?.image_url : tmdbImg(item.poster_path, 'w185');
-          const title = source==='jikan' ? item.title : (item.title||item.name);
+          const title = source==='jikan' ? (item.title_english || item.title) : (item.title || item.name);
           const meta = source==='jikan' ? `⭐ ${item.score} • ${item.type}` : `⭐ ${item.vote_average} • ${item.media_type}`;
+          const infoUrl = source==='jikan' ? `/info/anime/jikan-${item.mal_id}` : `/info/${item.media_type === 'movie' ? 'movie' : 'tv'}/tmdb-${item.media_type || 'movie'}-${item.id}`;
           return `
-            <a href="/info/${source==='jikan'?'anime':(item.media_type||'movie')}/${source==='jikan'?`jikan-${item.mal_id}`:`tmdb-${item.media_type||'movie'}-${item.id}`}" class="sidebar-card">
+            <a href="${infoUrl}" class="sidebar-card">
               <img src="${poster}" onerror="this.style.display='none'">
               <div class="info">
                 <div class="title">${title}</div>
@@ -614,14 +817,10 @@
       async function init() {
         await loadShow();
         populateDetails();
-        // adjust mobile synopsis toggle
-        if (window.innerWidth < 768) {
-          const syn = document.getElementById('synopsisBox');
-          if (syn) {
-            syn.style.maxHeight = '100px';
-            syn.querySelector('.toggle').style.display = 'block';
-            syn.classList.add('collapsed');
-          }
+        // Ensure user UI is updated
+        if (window.supabase) {
+          const { data: { user } } = await window.supabase.auth.getUser();
+          currentUser = user;
         }
       }
 
