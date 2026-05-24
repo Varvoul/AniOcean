@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/info/:type/:id", "destination": "/info.html" },
+    { "source": "/watch/:id",       "destination": "/watch.html" }
+  ]
+}
