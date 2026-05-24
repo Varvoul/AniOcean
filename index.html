@@ -545,17 +545,45 @@
       const tmdbImg = (p,s='w500') => p ? `${TMDB_IMAGE}/${s}${p}` : '';
       const tmdbBack = (p) => p ? `${TMDB_IMAGE}/w1280${p}` : '';
 
-      /* ── INFO URL BUILDER ── */
-      function infoUrl(show) {
-        const id = show.id;
-        if (!id) return '#';
-        if (id.startsWith('jikan-'))          return `/info/anime/${id}`;
-        if (id.startsWith('tmdb-mv') || id.startsWith('tmdb-movie')) return `/info/movie/${id}`;
-        if (id.startsWith('tmdb-tv'))          return `/info/tv/${id}`;
-        if (id.startsWith('tmdb-up'))          return `/info/movie/${id}`; // upcoming movies
-        if (id.startsWith('anilist-'))          return `/info/anime/${id}`;
-        return `/info/other/${id}`;
-      }
+      /* ── INFO URL BUILDER (SEO‑friendly) ── */
+function infoUrl(show) {
+  const id = show.id;                       // e.g. "jikan-21" or "tmdb-movie-550"
+  const title = (show.title || '').trim();
+  if (!id) return '#';
+
+  // Create a URL‑safe slug from the title
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')           // replace non‑alphanumeric with dash
+    .replace(/^-+|-+$/g, '');              // trim leading/trailing dashes
+
+  let type = 'anime';
+  let sourceId = id;
+
+  if (id.startsWith('jikan-') || id.startsWith('jikan-air-') || id.startsWith('jikan-up-') || id.startsWith('jikan-comp-')) {
+    type = 'anime';
+    // extract the numeric mal_id after "jikan-"
+    sourceId = id.replace(/^jikan-(?:air|up|comp-)?/, '');
+  } else if (id.startsWith('tmdb-mv-') || id.startsWith('tmdb-movie-') || id.startsWith('tmdb-up-')) {
+    type = 'movie';
+    sourceId = id.replace(/^tmdb-(?:mv|movie|up)-/, '');
+    sourceId = `tmdb-movie-${sourceId}`;   // normalize to tmdb-movie-XXXX
+  } else if (id.startsWith('tmdb-tv-') || id.startsWith('tmdb-comp-') && !id.startsWith('tmdb-mv')) {
+    // careful: tmdb-comp could be movie or TV – we treat TV as default for non‑movie
+    type = 'tv';
+    sourceId = id.replace(/^tmdb-(?:tv|comp)-/, '');
+    sourceId = `tmdb-tv-${sourceId}`;
+  } else if (id.startsWith('tmdb-')) {
+    // generic fallback: treat as movie
+    type = 'movie';
+    sourceId = id.replace('tmdb-', 'tmdb-movie-');
+  }
+
+  // Build the final URL: /info/type/{prefix}-{numericId}/{slug}
+  // If no slug (empty title), omit it
+  const base = `/info/type/${sourceId}`;
+  return slug ? `${base}/${slug}` : base;
+}
 
       const GENRE_MAP = {
         28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',99:'Documentary',
