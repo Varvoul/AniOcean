@@ -1,6 +1,17 @@
 {
   "rewrites": [
-    { "source": "/info/:type/:id", "destination": "/info.html" },
-    { "source": "/watch/:id",       "destination": "/watch.html" }
+    { "source": "/info/anime/:id",         "destination": "/info.html" },
+    { "source": "/info/anime/:id/:slug",   "destination": "/info.html" },
+    { "source": "/info/movie/:id",         "destination": "/info.html" },
+    { "source": "/info/movie/:id/:slug",   "destination": "/info.html" },
+    { "source": "/info/tv/:id",            "destination": "/info.html" },
+    { "source": "/info/tv/:id/:slug",      "destination": "/info.html" },
+
+    { "source": "/watch/anime/:id",        "destination": "/watch.html" },
+    { "source": "/watch/anime/:id/:slug",  "destination": "/watch.html" },
+    { "source": "/watch/movie/:id",        "destination": "/watch.html" },
+    { "source": "/watch/movie/:id/:slug",  "destination": "/watch.html" },
+    { "source": "/watch/tv/:id",           "destination": "/watch.html" },
+    { "source": "/watch/tv/:id/:slug",     "destination": "/watch.html" }
   ]
 }
