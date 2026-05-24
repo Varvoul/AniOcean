@@ -1133,86 +1133,99 @@
         original: item.title_japanese || item.title || '',
         meta:     `${monthYear} · ${item.type||'—'} · ${dur}`,
         score:    item.score ? `★ MAL ${item.score}` : null,
-        id:       item.mal_id,        // ← add
-        source:   'jikan'             // ← add
+        id:       item.mal_id,
+        source:   'jikan'
       };
     });
   }
 
   /* ── TMDB via Cloudflare Worker ── */
-async function fetchTMDB(q) {
-  // Worker expects the full TMDB path, e.g. /3/search/movie?query=...
-  const [movieRes, tvRes] = await Promise.all([
-    fetch(`${CF_WORKER_URL}/3/search/movie?query=${encodeURIComponent(q)}&language=en-US&page=1`),
-    fetch(`${CF_WORKER_URL}/3/search/tv?query=${encodeURIComponent(q)}&language=en-US&page=1`)
-  ]);
+  async function fetchTMDB(q) {
+    const [movieRes, tvRes] = await Promise.all([
+      fetch(`${CF_WORKER_URL}/3/search/movie?query=${encodeURIComponent(q)}&language=en-US&page=1`),
+      fetch(`${CF_WORKER_URL}/3/search/tv?query=${encodeURIComponent(q)}&language=en-US&page=1`)
+    ]);
 
-  const movieData = await movieRes.json();
-  const tvData    = await tvRes.json();
+    const movieData = await movieRes.json();
+    const tvData    = await tvRes.json();
 
-  const movieResults = (movieData.results || []).map(r => ({ ...r, media_type: 'movie' }));
-  const tvResults    = (tvData.results    || []).map(r => ({ ...r, media_type: 'tv' }));
+    const movieResults = (movieData.results || []).map(r => ({ ...r, media_type: 'movie' }));
+    const tvResults    = (tvData.results    || []).map(r => ({ ...r, media_type: 'tv' }));
 
-  // Combine, sort by popularity (higher first), take top 6
-  const combined = [...movieResults, ...tvResults]
-    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
-    .slice(0, 6);
+    const combined = [...movieResults, ...tvResults]
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+      .slice(0, 6);
 
-  return combined.map(item => {
-    const date      = item.release_date || item.first_air_date || '';
-    const monthYear = date ? new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
-    const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV';
-    const poster    = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
-    const score     = item.vote_average ? `★ TMDB ${Number(item.vote_average).toFixed(1)}` : null;
-    return {
-      poster,
-      title:    item.title || item.name || '—',
-      original: item.original_title || item.original_name || '',
-      meta:     `${monthYear} · ${typeLabel}`,
-      score,
-      id:       item.id,                    // ← add
-      source:   'tmdb',                    // ← add
-      mediaType: item.media_type           // ← add (to build the right URL)
-    };
-  });
-}
+    return combined.map(item => {
+      const date      = item.release_date || item.first_air_date || '';
+      const monthYear = date ? new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
+      const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV';
+      const poster    = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
+      const score     = item.vote_average ? `★ TMDB ${Number(item.vote_average).toFixed(1)}` : null;
+      return {
+        poster,
+        title:    item.title || item.name || '—',
+        original: item.original_title || item.original_name || '',
+        meta:     `${monthYear} · ${typeLabel}`,
+        score,
+        id:       item.id,
+        source:   'tmdb',
+        mediaType: item.media_type
+      };
+    });
+  }
 
   function renderSuggestions(results, q, container) {
-  if (!results.length) {
-    container.innerHTML = `<div style="padding:14px 12px;font-size:0.76rem;color:var(--text-muted,#888);">No results for "${esc(q)}"</div>`;
-    return;
-  }
-  const html = results.map(r => {
-    // Build the details URL based on source
-    let detailsUrl = '#';
-    if (r.source === 'jikan') {
-      detailsUrl = `/details/jikan-${r.id}`;
-    } else if (r.source === 'tmdb') {
-      const prefix = r.mediaType === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
-      detailsUrl = `/details/${prefix}-${r.id}`;
+    if (!results.length) {
+      container.innerHTML = `<div style="padding:14px 12px;font-size:0.76rem;color:var(--text-muted,#888);">No results for "${esc(q)}"</div>`;
+      return;
     }
 
-    const img = r.poster
-      ? `<img class="suggestion-poster" src="${esc(r.poster)}" alt="" loading="lazy" onerror="this.style.background='#1e2633';">`
-      : `<div class="suggestion-poster"></div>`;
-    const orig = r.original && r.original !== r.title
-      ? `<div class="sug-orig">${esc(r.original)}</div>` : '';
-    const score = r.score
-      ? `<span class="sug-score">${esc(r.score)}</span>` : '';
-    const meta = [r.meta, score].filter(Boolean).join(' · ');
-    return `<a href="${detailsUrl}" class="suggestion-item">
-      ${img}
-      <div class="suggestion-info">
-        <div class="sug-title">${esc(r.title)}</div>
-        ${orig}
-        <div class="sug-meta">${meta}</div>
-      </div>
-    </a>`;
-  }).join('');
-  container.innerHTML = html
-    + `<button class="view-all-btn" onclick="location.href='/search?q=${encodeURIComponent(q)}&type=${currentSearchMode}'">${SVG.arrow} View all results</button>`;
-  container.style.display = 'block';
-}
+    const slugify = (title) => {
+      if (!title) return '';
+      return title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    };
+
+    const html = results.map(r => {
+      let detailsUrl = '#';
+      const slug = slugify(r.title);
+
+      if (r.source === 'jikan') {
+        detailsUrl = `/info/anime/jikan-${r.id}`;
+        if (slug) detailsUrl += `/${slug}`;
+      } else if (r.source === 'tmdb') {
+        const type = r.mediaType === 'movie' ? 'movie' : 'tv';
+        const prefix = r.mediaType === 'movie' ? `tmdb-movie-${r.id}` : `tmdb-tv-${r.id}`;
+        detailsUrl = `/info/${type}/${prefix}`;
+        if (slug) detailsUrl += `/${slug}`;
+      }
+
+      const img = r.poster
+        ? `<img class="suggestion-poster" src="${esc(r.poster)}" alt="" loading="lazy" onerror="this.style.background='#1e2633';">`
+        : `<div class="suggestion-poster"></div>`;
+      const orig = r.original && r.original !== r.title
+        ? `<div class="sug-orig">${esc(r.original)}</div>` : '';
+      const score = r.score
+        ? `<span class="sug-score">${esc(r.score)}</span>` : '';
+      const meta = [r.meta, score].filter(Boolean).join(' · ');
+
+      return `<a href="${detailsUrl}" class="suggestion-item">
+        ${img}
+        <div class="suggestion-info">
+          <div class="sug-title">${esc(r.title)}</div>
+          ${orig}
+          <div class="sug-meta">${meta}</div>
+        </div>
+      </a>`;
+    }).join('');
+
+    container.innerHTML = html
+      + `<button class="view-all-btn" onclick="location.href='/search?q=${encodeURIComponent(q)}&type=${currentSearchMode}'">${SVG.arrow} View all results</button>`;
+    container.style.display = 'block';
+  }
 
   /* ═══════════════════════════════════════════════════════════
      AUTH MODAL
@@ -1222,7 +1235,6 @@ async function fetchTMDB(q) {
   function openModal(n = 0) {
     document.getElementById('authOverlay').classList.add('open');
     slideTo(n);
-    // clear errors
     ['loginErr','signUpErr','resetErr','errUsername','errConfirm'].forEach(id => {
       const el = document.getElementById(id); if (el) el.textContent = '';
     });
@@ -1234,7 +1246,6 @@ async function fetchTMDB(q) {
 
   function slideTo(n) {
     currentSlide = n;
-    // 3 slides each 33.333% wide
     document.getElementById('formSlides').style.transform = `translateX(-${n * 33.333}%)`;
   }
 
@@ -1244,13 +1255,11 @@ async function fetchTMDB(q) {
       if (e.target.id === 'authOverlay') closeModal();
     });
 
-    // Slide navigation
     document.getElementById('goSignUp')?.addEventListener('click', () => slideTo(1));
     document.getElementById('goLogin')?.addEventListener('click',  () => slideTo(0));
     document.getElementById('forgotLink')?.addEventListener('click', () => slideTo(2));
     document.getElementById('backLogin')?.addEventListener('click',  () => slideTo(0));
 
-    // Eye toggles
     document.querySelectorAll('.eye-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         const inp = document.getElementById(this.dataset.target);
@@ -1261,26 +1270,22 @@ async function fetchTMDB(q) {
       });
     });
 
-    // Username: alphanumeric only
     document.getElementById('regUsername')?.addEventListener('input', function () {
       this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
       document.getElementById('errUsername').textContent =
         this.value.length > 0 && this.value.length < 3 ? 'Minimum 3 characters.' : '';
     });
 
-    // Password strength
     document.getElementById('regPassword')?.addEventListener('input', function () {
       updatePwdStrength(this.value);
     });
 
-    // Confirm password
     document.getElementById('regConfirm')?.addEventListener('input', function () {
       const pwd = document.getElementById('regPassword')?.value || '';
       document.getElementById('errConfirm').textContent =
         this.value && this.value !== pwd ? 'Passwords do not match.' : '';
     });
 
-    // ── SIGN IN ──
     document.getElementById('btnSignIn')?.addEventListener('click', async () => {
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -1291,8 +1296,7 @@ async function fetchTMDB(q) {
       const btn = document.getElementById('btnSignIn');
       btn.disabled = true; btn.textContent = 'Signing in…';
       try {
-        // Try to look up email by username
-        let email = username; // allow direct email login as fallback
+        let email = username;
         if (!username.includes('@')) {
           const { data: p } = await supabase.from('profiles').select('email').eq('username', username).maybeSingle();
           if (p?.email) email = p.email;
@@ -1305,7 +1309,6 @@ async function fetchTMDB(q) {
       finally { btn.disabled = false; btn.textContent = 'Sign In'; }
     });
 
-    // ── GOOGLE ──
     ['btnGoogleLogin','btnGoogleSignUp'].forEach(id => {
       document.getElementById(id)?.addEventListener('click', async () => {
         await supabase.auth.signInWithOAuth({
@@ -1315,7 +1318,6 @@ async function fetchTMDB(q) {
       });
     });
 
-    // ── SIGN UP ──
     document.getElementById('btnSignUp')?.addEventListener('click', async () => {
       const username = document.getElementById('regUsername').value.trim();
       const email    = document.getElementById('regEmail').value.trim();
@@ -1335,7 +1337,6 @@ async function fetchTMDB(q) {
       const btn = document.getElementById('btnSignUp');
       btn.disabled = true; btn.textContent = 'Creating…';
       try {
-        // Check username taken
         const { data: ex } = await supabase.from('profiles').select('user_id').eq('username', username).maybeSingle();
         if (ex) { errEl.textContent = 'Username already taken.'; return; }
 
@@ -1347,12 +1348,11 @@ async function fetchTMDB(q) {
         });
         if (error) { errEl.textContent = error.message; return; }
 
-        // Upsert profile with email
         if (data.user) {
           await supabase.from('profiles').upsert({
             user_id:    data.user.id,
             username,
-            email,          // ← stored in profiles.email column
+            email,
             avatar_url: avatarUrl
           });
         }
@@ -1362,7 +1362,6 @@ async function fetchTMDB(q) {
       finally { btn.disabled = false; btn.textContent = 'Create Account'; }
     });
 
-    // ── RESET PASSWORD ──
     document.getElementById('btnReset')?.addEventListener('click', async () => {
       const email = document.getElementById('resetEmail').value.trim();
       const errEl = document.getElementById('resetErr');
@@ -1433,7 +1432,7 @@ async function fetchTMDB(q) {
       if (!error && data) {
         setAvatar(`${PROFILE_BUCKET_URL}${path}`);
       } else {
-        setAvatar(dataUrl); // local fallback
+        setAvatar(dataUrl);
       }
       document.getElementById('avatarPopupOverlay').classList.remove('open');
     });
@@ -1500,13 +1499,11 @@ async function fetchTMDB(q) {
 
     const btnLogin      = document.getElementById('btnLogin');
     const deskAvatar    = document.getElementById('desktopAvatar');
-    const deskWrap      = document.getElementById('desktopAvatarWrap');
     const mobProfileBtn = document.getElementById('mobProfileBtn');
     const mobAvatarWrap = document.getElementById('mobAvatarWrap');
     const mobAvatar     = document.getElementById('mobAvatar');
 
     if (user) {
-      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('username,avatar_url')
@@ -1516,17 +1513,14 @@ async function fetchTMDB(q) {
       const username  = profile?.username  || user.user_metadata?.username  || user.email?.split('@')[0] || 'User';
       const avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url || DEFAULT_AVATAR;
 
-      // Hide login button, show desktop avatar
       if (btnLogin)   btnLogin.style.display = 'none';
       if (deskAvatar) { deskAvatar.style.display = 'block'; deskAvatar.src = avatarUrl; }
 
-      // Update dropdown info
       const ddAv  = document.getElementById('ddAvatarImg');
       const ddUn  = document.getElementById('ddUsername');
       if (ddAv) ddAv.src = avatarUrl;
       if (ddUn) ddUn.textContent = username;
 
-      // Mobile: hide profile SVG button, show avatar wrap
       if (mobProfileBtn) mobProfileBtn.style.display = 'none';
       if (mobAvatarWrap) mobAvatarWrap.style.display = 'flex';
       if (mobAvatar)     mobAvatar.src = avatarUrl;
