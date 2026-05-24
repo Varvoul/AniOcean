@@ -545,43 +545,32 @@
       const tmdbImg = (p,s='w500') => p ? `${TMDB_IMAGE}/${s}${p}` : '';
       const tmdbBack = (p) => p ? `${TMDB_IMAGE}/w1280${p}` : '';
 
-      /* ── INFO URL BUILDER (SEO‑friendly) ── */
-function infoUrl(show) {
-  const id = show.id;                       // e.g. "jikan-21" or "tmdb-movie-550"
+      function infoUrl(show) {
+  const id = show.id;
   const title = (show.title || '').trim();
-  if (!id) return '#';
-
-  // Create a URL‑safe slug from the title
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')           // replace non‑alphanumeric with dash
-    .replace(/^-+|-+$/g, '');              // trim leading/trailing dashes
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
   let type = 'anime';
-  let sourceId = id;
+  let prefixId = id;
 
   if (id.startsWith('jikan-') || id.startsWith('jikan-air-') || id.startsWith('jikan-up-') || id.startsWith('jikan-comp-')) {
     type = 'anime';
-    // extract the numeric mal_id after "jikan-"
-    sourceId = id.replace(/^jikan-(?:air|up|comp-)?/, '');
+    prefixId = id.replace(/^jikan-(?:air|up|comp-)?/, 'jikan-');  // ensure jikan-xxx
   } else if (id.startsWith('tmdb-mv-') || id.startsWith('tmdb-movie-') || id.startsWith('tmdb-up-')) {
     type = 'movie';
-    sourceId = id.replace(/^tmdb-(?:mv|movie|up)-/, '');
-    sourceId = `tmdb-movie-${sourceId}`;   // normalize to tmdb-movie-XXXX
-  } else if (id.startsWith('tmdb-tv-') || id.startsWith('tmdb-comp-') && !id.startsWith('tmdb-mv')) {
-    // careful: tmdb-comp could be movie or TV – we treat TV as default for non‑movie
+    const numeric = id.replace(/^tmdb-(?:mv|movie|up)-/, '');
+    prefixId = `tmdb-movie-${numeric}`;
+  } else if (id.startsWith('tmdb-tv-') || (id.startsWith('tmdb-comp-') && !id.includes('movie'))) {
     type = 'tv';
-    sourceId = id.replace(/^tmdb-(?:tv|comp)-/, '');
-    sourceId = `tmdb-tv-${sourceId}`;
-  } else if (id.startsWith('tmdb-')) {
-    // generic fallback: treat as movie
-    type = 'movie';
-    sourceId = id.replace('tmdb-', 'tmdb-movie-');
+    const numeric = id.replace(/^tmdb-(?:tv|comp)-/, '');
+    prefixId = `tmdb-tv-${numeric}`;
+  } else if (/^\d+$/.test(id)) {
+    // raw number → treat as anime
+    type = 'anime';
+    prefixId = `jikan-${id}`;
   }
 
-  // Build the final URL: /info/type/{prefix}-{numericId}/{slug}
-  // If no slug (empty title), omit it
-  const base = `/info/type/${sourceId}`;
+  const base = `/info/${type}/${prefixId}`;
   return slug ? `${base}/${slug}` : base;
 }
 
