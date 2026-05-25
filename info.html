@@ -1311,15 +1311,22 @@
     .show-title { font-size: 1.3rem; }
     
     .action-buttons {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .btn { width: 100%; justify-content: center; }
-    .btn-icon-only {
-      width: 100%;
-      height: 44px;
-      border-radius: 12px;
-    }
+  flex-wrap: wrap;           /* allow wrapping */
+  justify-content: center;
+}
+
+/* Only the watch‑now and add‑to‑list buttons stay on the same row */
+.action-buttons .btn {
+  width: auto;               /* let them shrink to content */
+  flex: 1;                   /* fill available space equally */
+  min-width: 0;
+}
+
+/* Force the share button to start a new row */
+.action-buttons .btn-icon-only {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
     
     .stats-container { grid-template-columns: repeat(2, 1fr); }
     .stat-column:nth-child(3) { display: none; }
