@@ -1665,6 +1665,9 @@
       document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
         parseUrl();
+
+         // ADD THIS LINE – initialise tabs immediately
+  initTabSwitching();
         
         if (currentState.id && currentState.source) {
           await fetchShowData();
@@ -2098,7 +2101,7 @@
       }
 
       function renderTabs() {
-        initTabSwitching();
+  
         loadCastData(); 
         loadArtworkData(); 
         loadTrailerData(); 
@@ -2202,35 +2205,50 @@
 
       // FIXED: Tab indicator sync
       function initTabSwitching() {
-        const tabs = document.querySelectorAll('.tab-btn');
-        const indicator = document.getElementById('tabIndicator');
-        const contents = document.querySelectorAll('.tab-content');
-        
-        function activateTab(tab) {
-          tabs.forEach(t => t.classList.remove('active')); 
-          tab.classList.add('active');
-          
-          // FIXED: Only animate indicator on desktop
-          if (window.innerWidth > 768) {
-            const rect = tab.getBoundingClientRect(); 
-            const container = tab.parentElement.getBoundingClientRect();
-            indicator.style.width = `${rect.width}px`; 
-            indicator.style.transform = `translateX(${rect.left - container.left}px)`;
-          }
-          
-          const tabName = tab.dataset.tab; 
-          contents.forEach(c => c.classList.remove('active')); 
-          document.getElementById(`${tabName}Tab`).classList.add('active');
-        }
-        
-        tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
-        
-        // Initialize indicator position
-        setTimeout(() => { 
-          const active = document.querySelector('.tab-btn.active'); 
-          if (active) activateTab(active); 
-        }, 100);
-      }
+  const tabs = document.querySelectorAll('.tab-btn');
+  const indicator = document.getElementById('tabIndicator');
+  const contents = document.querySelectorAll('.tab-content');
+
+  function positionIndicator(activeTab) {
+    if (window.innerWidth > 768 && indicator && activeTab) {
+      const container = activeTab.parentElement;
+      const rect = activeTab.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const left = rect.left - containerRect.left;
+      const width = rect.width;
+      indicator.style.width = `${width}px`;
+      indicator.style.transform = `translateX(${left}px)`;
+    }
+  }
+
+  function activateTab(tab) {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    positionIndicator(tab);
+    const tabName = tab.dataset.tab;
+    contents.forEach(c => c.classList.remove('active'));
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+  }
+
+  tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
+
+  // Initial positioning immediately (no setTimeout)
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab) {
+    if (indicator) indicator.style.transition = 'none';
+    activateTab(activeTab);
+    if (indicator) {
+      void indicator.offsetHeight; // force reflow
+      indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
+    }
+  }
+
+  // Reposition on window resize
+  window.addEventListener('resize', () => {
+    const currentActive = document.querySelector('.tab-btn.active');
+    if (currentActive) positionIndicator(currentActive);
+  });
+}
 
       async function fetchUserBookmarks() {
         if (!currentState.currentUser) return;
