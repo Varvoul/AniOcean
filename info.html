@@ -29,41 +29,32 @@
       --max-width: 1400px;
       --sidebar-width: 420px;
       --gutter: 24px;
-    
-  --bg-body: #0a1929;
-  --bg-header: #0f2440;
-  --bg-card: #132f4c;
-  --bg-surface: #1a3a5c;
-  --bg-popup: #102a44;
-  --text-primary: #ffffff;
-  --text-secondary: #b0c7e3;
-  --text-muted: #94a3b8;
-  --text-widget-title: #a2c4de;
-  --btn-primary: #2b6cb0;
-  --btn-primary-hover: #1d4e89;
-  --btn-primary-text: #ffffff;
-  --btn-secondary: #334e68;
-  --btn-secondary-hover: #243b53;
-  --popup-btn: #5c6ac4;
-  --popup-btn-text: #ffffff;
-  --popup-btn-hover: #4955b5;
-  --genre-tag-bg: #4c51bf;
-  --link-accent: #ed64a6;
-  --accent-gold: #ecc94b;
-  --accent-blue: #4299e1;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.16);
-  --font-title: 'Archivo Black', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-meta: 'Poppins', sans-serif;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 50px;
-  --radius-circle: 50%;
-  --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
-  --transition-fast: 0.18s ease;
-
+      
+      /* Colors - fallback if not in shared.js */
+      --bg-body: #0a1929;
+      --bg-card: #131f2e;
+      --bg-surface: rgba(255,255,255,0.05);
+      --text-primary: #ffffff;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(255,255,255,0.08);
+      --border-medium: rgba(255,255,255,0.12);
+      
+      /* Brand */
+      --btn-primary: #2b6cb0;
+      --btn-primary-hover: #3182ce;
+      --accent-cyan: #3184c4;
+      --accent-gold: #ecc94b;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      
+      /* Badges */
+      --badge-sub-bg: rgba(49, 132, 192, 0.2);
+      --badge-sub-border: #3184c4;
+      --badge-dub-bg: rgba(239, 68, 68, 0.2);
+      --badge-dub-border: #ef4444;
+      --badge-quality-bg: rgba(16, 185, 129, 0.2);
+      --badge-quality-border: #10b981;
     }
 
     /* Reset & Base - FIXED: Added missing * selector */
@@ -1556,7 +1547,7 @@
      * Integrates with Supabase for user bookmarks
      * 
      * URL Format: /info/{type}/{source}-{id}/{slug}
-     * - type: anime, tv, movie
+     * - type: anime, tv, movie  ← FIXED: anime for ALL jikan content
      * - source: jikan, tmdb-tv, tmdb-movie
      * - id: numeric ID
      * - slug: optional URL slug
@@ -1635,7 +1626,7 @@
         
         // NEW URL Format: /info/{type}/{source}-{id}/{slug}
         // Examples:
-        // /info/anime/jikan-21/one-piece
+        // /info/anime/jikan-21/one-piece      ← ALWAYS "anime" for jikan
         // /info/tv/tmdb-tv-94605/arcane  
         // /info/movie/tmdb-movie-550/fight-club
         
@@ -1656,11 +1647,9 @@
         
         if (sourcePrefix === 'jikan') {
           currentState.source = 'jikan';
-          // Ensure type is anime for jikan
-          if (pageType !== 'anime') {
-            console.warn('Jikan source should use anime type, correcting...');
-            currentState.type = 'anime';
-          }
+          // ✅ CRITICAL FIX: Force type to 'anime' for ALL jikan content
+          // Regardless of format (TV/OVA/Movie/Music/Special/ONA)
+          currentState.type = 'anime';
         } else if (sourcePrefix === 'tmdb-tv') {
           currentState.source = 'tmdb';
           currentState.type = 'tv';
@@ -1801,8 +1790,9 @@
         // Title
         document.getElementById('showTitle').textContent = currentState.title;
         
-        // Metadata row
+        // Metadata row - FIXED: use data.type for display (TV/OVA/etc) but URL type stays 'anime'
         const metaParts = [];
+        // Display the actual format from API (TV/OVA/Music/etc) in metadata
         metaParts.push(data.type || typeNameMap[currentState.type] || currentState.type);
         const status = isAnime ? data.status : (data.status === 'Released' ? 'Released' : data.status);
         metaParts.push(status);
@@ -1817,9 +1807,10 @@
         
         document.getElementById('metadataRow').innerHTML = metaParts.map(m => `<span>${m}</span>`).join('');
         
-        // Watch Now button - FIXED: new URL format
+        // Watch Now button - FIXED: new URL format with type='anime' for jikan
         const slug = slugify(currentState.title);
-        const watchPath = `/watch/${currentState.type}/${currentState.source}-${currentState.id}/${slug}`;
+        const urlType = currentState.source === 'jikan' ? 'anime' : currentState.type;
+        const watchPath = `/watch/${urlType}/${currentState.source}-${currentState.id}/${slug}`;
         document.getElementById('watchNowBtn').href = watchPath;
       }
 
@@ -1855,6 +1846,7 @@
         document.getElementById('platformLabel').textContent = platform;
         document.getElementById('platformStar').style.color = starColor;
         document.getElementById('ratingValue').textContent = rating ? rating.toFixed(1) : 'N/A';
+        // Show actual format from API (TV/OVA/etc) in stats display
         document.getElementById('formatValue').textContent = data.type || currentState.type;
         document.getElementById('durationValue').textContent = formatDuration(data.duration, isAnime, currentState.type) || '—';
       }
@@ -2287,11 +2279,17 @@
         }
       }
 
+      // ✅ CRITICAL FIX: renderSidebarItem - ALWAYS use 'anime' type for jikan links
       function renderSidebarItem(item, rank, isAnime, showRank = false) {
         const title = isAnime ? (item.title_english || item.title) : (item.title || item.name);
         const poster = isAnime ? item.images?.jpg?.image_url : item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
         const score = isAnime ? item.score : item.vote_average;
-        const type = isAnime ? item.type : currentState.type;
+        
+        // ✅ FIX: For jikan/anime, URL type is ALWAYS 'anime', NOT item.type (TV/OVA/etc)
+        const urlType = isAnime ? 'anime' : currentState.type;
+        const source = isAnime ? 'jikan' : (currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv');
+        const id = isAnime ? item.mal_id : item.id;
+        
         const year = isAnime ? item.aired?.from?.slice(0,4) : (item.release_date || item.first_air_date)?.slice(0,4);
         const genres = (item.genres || []).slice(0, 2).map(g => g.name || g).join(', ');
         const studio = isAnime ? item.studios?.[0]?.name : item.production_companies?.[0]?.name || item.networks?.[0]?.name;
@@ -2299,12 +2297,11 @@
         const popularity = item.popularity || item.vote_count || '';
         const itemRank = item.rank || item.popularity ? `#${Math.round(item.rank || item.popularity)}` : '';
         
-        // FIXED: Use new permalink format for sidebar item links
-        const source = isAnime ? 'jikan' : (type === 'movie' ? 'tmdb-movie' : 'tmdb-tv');
+        // ✅ Generate slug and URL with correct type
         const slug = slugify(title);
-        const detailsUrl = `/info/${type}/${source}-${item.mal_id || item.id}/${slug}`;
+        const detailsUrl = `/info/${urlType}/${source}-${id}/${slug}`;
         
-        return `<a href="${detailsUrl}" class="sidebar-item">${showRank ? `<span class="rank">${rank}</span>` : ''}<img src="${poster}" alt="${title}" class="sidebar-poster" loading="lazy"><div class="sidebar-info"><div class="sidebar-title">${escapeHtml(title)}</div><div class="sidebar-meta"><span class="score"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span><span>${type}</span>${year ? `<span>${year}</span>` : ''}${genres ? `<span>${genres}</span>` : ''}${studio ? `<span>${studio}</span>` : ''}${langBadges}${popularity ? `<span>Pop: ${formatNumber(popularity)}</span>` : ''}${itemRank ? `<span>${itemRank}</span>` : ''}</div></div></a>`;
+        return `<a href="${detailsUrl}" class="sidebar-item">${showRank ? `<span class="rank">${rank}</span>` : ''}<img src="${poster}" alt="${title}" class="sidebar-poster" loading="lazy"><div class="sidebar-info"><div class="sidebar-title">${escapeHtml(title)}</div><div class="sidebar-meta"><span class="score"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span><span>${item.type || urlType}</span>${year ? `<span>${year}</span>` : ''}${genres ? `<span>${genres}</span>` : ''}${studio ? `<span>${studio}</span>` : ''}${langBadges}${popularity ? `<span>Pop: ${formatNumber(popularity)}</span>` : ''}${itemRank ? `<span>${itemRank}</span>` : ''}</div></div></a>`;
       }
 
       // ═══════════════════════════════════════════════════════════
@@ -2361,7 +2358,7 @@
           gridContainer.innerHTML = payload.data.slice(0, 30).map(anime => {
             const badge = generateSunkenBadge(anime, currentGenres);
             const studio = anime.studios?.[0]?.name || "N/A";
-            // FIXED: Use new permalink format for recommendation cards
+            // ✅ FIX: Use 'anime' type for all jikan recommendation links
             const slug = slugify(anime.title);
             const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
             return `<a href="${detailsUrl}" class="rec-card"><div class="rec-poster"><img src="${anime.images.jpg.large_image_url}" alt="${anime.title}" loading="lazy"><div class="rec-badges"><span class="rec-badge score">★ ${anime.score?.toFixed(1) || 'N/A'}</span><span class="rec-badge quality">HD</span></div><span class="rec-badge status ${anime.status === 'Currently Airing' ? 'airing' : 'finished'}">${anime.status === 'Currently Airing' ? 'Airing' : 'Finished'}</span></div><div class="rec-info"><div class="rec-title">${escapeHtml(anime.title)}</div><div class="rec-meta"><span>${anime.type}</span><span>${anime.episodes || 'Movie'}ep</span><span>${studio}</span></div></div></a>`;
@@ -2385,20 +2382,24 @@
         return { label: "Recommended", class: "badge-default" };
       }
 
+      // ✅ CRITICAL FIX: renderRecCard - ALWAYS use correct type for URL
       function renderRecCard(item) {
         const title = item.title || item.name;
         const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
         const score = item.vote_average;
-        const type = currentState.type;
+        
+        // ✅ FIX: Determine URL type based on source, not item format
+        const urlType = currentState.type; // tmdb items use current page type (tv/movie)
+        const source = currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+        
         const year = (item.release_date || item.first_air_date)?.slice(0,4);
         const duration = item.runtime ? `${item.runtime} min` : (item.episode_run_time?.[0] ? `${item.episode_run_time[0]} min` : '');
         
-        // FIXED: Use new permalink format for recommendation cards
-        const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+        // ✅ Generate slug and URL with correct type
         const slug = slugify(title);
-        const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
+        const detailsUrl = `/info/${urlType}/${source}-${item.id}/${slug}`;
         
-        return `<a href="${detailsUrl}" class="rec-card"><div class="rec-poster"><img src="${poster}" alt="${title}" loading="lazy"><div class="rec-badges"><span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span><span class="rec-badge quality">HD</span></div></div><div class="rec-info"><div class="rec-title">${escapeHtml(title)}</div><div class="rec-meta"><span>${type}</span>${year ? `<span>${year}</span>` : ''}${duration ? `<span>${duration}</span>` : ''}</div></div></a>`;
+        return `<a href="${detailsUrl}" class="rec-card"><div class="rec-poster"><img src="${poster}" alt="${title}" loading="lazy"><div class="rec-badges"><span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span><span class="rec-badge quality">HD</span></div></div><div class="rec-info"><div class="rec-title">${escapeHtml(title)}</div><div class="rec-meta"><span>${item.media_type || currentState.type}</span>${year ? `<span>${year}</span>` : ''}${duration ? `<span>${duration}</span>` : ''}</div></div></a>`;
       }
 
       // ═══════════════════════════════════════════════════════════
