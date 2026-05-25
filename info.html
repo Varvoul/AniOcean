@@ -1310,22 +1310,36 @@
     .poster-wrapper { width: 160px; }
     .show-title { font-size: 1.3rem; }
     
-    .action-buttons {
-  flex-wrap: wrap;           /* allow wrapping */
-  justify-content: center;
+ /* BUTTONS – mobile row layout */
+.action-buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-
-/* Only the watch‑now and add‑to‑list buttons stay on the same row */
-.action-buttons .btn {
-  width: auto;               /* let them shrink to content */
-  flex: 1;                   /* fill available space equally */
+.action-buttons .btn-watch,
+.action-buttons .btn-dropdown {
+  flex: 1 1 calc(50% - 5px);
   min-width: 0;
+  justify-content: center;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 0;
+  font-size: 0.8rem;
 }
-
-/* Force the share button to start a new row */
 .action-buttons .btn-icon-only {
-  flex-basis: 100%;
-  margin-top: 8px;
+  flex: 1 1 100%;
+  height: 44px;
+  border-radius: 50px;
+  justify-content: center;
+  border: none;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+/* Override the generic .btn rule only inside .action-buttons */
+.action-buttons .btn {
+  width: auto;
+  padding: 10px 0;
 }
     
     .stats-container { grid-template-columns: repeat(2, 1fr); }
