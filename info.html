@@ -1300,55 +1300,52 @@
   }
 
   @media (max-width: 480px) {
-    :root {
-      --gutter: 12px;
-      --content-padding: 12px;
-    }
-    
+    :root { --gutter: 12px; --content-padding: 12px; }
     .breadcrumbs ol { gap: 2px; }
-    .backdrop-container { aspect-ratio: 16/9; }
-    .poster-wrapper { width: 160px; }
+    .breadcrumbs-separator { display: none; }
+    .backdrop-container { aspect-ratio: 16/8; }
+    .poster-wrapper { width: 140px; }
     .show-title { font-size: 1.3rem; }
-    
- /* BUTTONS – mobile row layout */
-.action-buttons {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.action-buttons .btn-watch,
-.action-buttons .btn-dropdown {
-  flex: 1 1 calc(50% - 5px);
-  min-width: 0;
-  justify-content: center;
-  border: none;
-  border-radius: 50px;
-  padding: 10px 0;
-  font-size: 0.8rem;
-}
-.action-buttons .btn-icon-only {
-  flex: 1 1 100%;
-  height: 44px;
-  border-radius: 50px;
-  justify-content: center;
-  border: none;
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-}
-/* Override the generic .btn rule only inside .action-buttons */
-.action-buttons .btn {
-  width: auto;
-  padding: 10px 0;
-}
-    
+
+    /* ✅ FIXED: Watch Now & Add to List side-by-side, Share below */
+    .action-buttons {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    /* Watch Now Button */
+    .action-buttons > .btn-primary {
+      flex: 1 1 calc(50% - 5px);
+      width: 100%;
+      justify-content: center;
+      border-radius: 50px; /* Match desktop round corners */
+    }
+    /* Add to List Dropdown Container */
+    .action-buttons > .dropdown-container {
+      flex: 1 1 calc(50% - 5px);
+      min-width: 0;
+    }
+    .action-buttons > .dropdown-container .btn {
+      width: 100%;
+      justify-content: center;
+      border-radius: 50px; /* Match desktop round corners */
+    }
+    /* Share Button (drops to new line, full width) */
+    .action-buttons > .btn-icon-only {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 44px;
+      border-radius: 50px; /* Match desktop round corners */
+      justify-content: center;
+    }
+
     .stats-container { grid-template-columns: repeat(2, 1fr); }
     .stat-column:nth-child(3) { display: none; }
-    
     .details-grid { grid-template-columns: 1fr; }
     .recs-grid { grid-template-columns: repeat(2, 1fr); }
     .metric-cards { grid-template-columns: 1fr; }
-    
     .alert-content {
       max-width: calc(100vw - 40px);
       flex-wrap: wrap;
@@ -1357,10 +1354,7 @@
     }
     .alert-content p { margin: 0; }
     .alert-close { margin: 0; }
-    
-    .sidebar-section {
-      padding: 12px;
-    }
+    .sidebar-section { padding: 12px; }
   }
 
   /* Landscape mobile */
