@@ -6,6 +6,7 @@
     { "source": "/info/movie/:id/:slug",   "destination": "/info.html" },
     { "source": "/info/tv/:id",            "destination": "/info.html" },
     { "source": "/info/tv/:id/:slug",      "destination": "/info.html" },
+    { "source": "info/TV/:id/:slug",        "destination": "/info.html" },
 
     { "source": "/watch/anime/:id",        "destination": "/watch.html" },
     { "source": "/watch/anime/:id/:slug",  "destination": "/watch.html" },
