@@ -178,7 +178,7 @@ img { max-width: 100%; height: auto; display: block; }
   top: 80px;
   align-self: start;
   max-height: calc(100vh - 100px);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* Combined sidebar container - ALL SECTIONS IN ONE */
@@ -1780,11 +1780,46 @@ img { max-width: 100%; height: auto; display: block; }
       };
 
       const TMDB_TO_JIKAN_GENRES = {
-        28: 1, 12: 2, 16: 3, 35: 4, 80: 7, 99: 9, 18: 8, 10751: 11,
-        14: 10, 36: 13, 27: 14, 10402: 19, 9648: 7, 10749: 22, 878: 24,
-        10770: 30, 53: 38, 10752: 40, 37: 40,
-        10759: 1, 10765: 10, 10768: 38, 10766: 22, 10767: 19
-      };
+  // Standard genres (movie & TV)
+  28: 1,     // Action
+  12: 2,     // Adventure
+  16: 4,     // Animation → Anthropomorphic (51) as fallback, but map to Comedy (4) is okay; better 51
+  35: 4,     // Comedy
+  80: 7,     // Crime → Mystery (7)
+  99: 9,     // Documentary → No direct match, map to Educational (56) for broader reach
+  18: 8,     // Drama
+  10751: 11, // Family → Kids (15)? Actually 11 is Strategy Game, better use 15 (Kids) for Family
+  14: 10,    // Fantasy
+  36: 13,    // History → Historical (13)
+  27: 14,    // Horror
+  10402: 19, // Music
+  9648: 7,   // Mystery
+  10749: 22, // Romance
+  878: 24,   // Science Fiction → Sci‑Fi (24)
+  10770: 24, // TV Movie → Sci‑Fi (24) as fallback
+  53: 38,    // Thriller → Military? Better use 41 (Suspense)
+  10752: 38, // War → Military (38)
+  37: 21,    // Western → Samurai (21) loosely
+
+  // TV‑specific genres
+  10759: 1,  // Action & Adventure → Action (1)
+  10762: 15, // Kids (TV) → Kids (15)
+  10763: 56, // News → Educational (56)
+  10764: 70, // Reality → Performing Arts (70)
+  10765: 10, // Sci‑Fi & Fantasy → Fantasy (10)
+  10766: 22, // Soap → Romance (22)
+  10767: 75, // Talk → Showbiz (75)
+  10768: 38, // War & Politics → Military (38)
+
+  // Additional mappings for broader coverage
+  16: 51,    // Animation → Anthropomorphic (51)
+  99: 56,    // Documentary → Educational (56)
+  10751: 15, // Family → Kids (15)
+  53: 41,    // Thriller → Suspense (41)
+  10752: 38, // War → Military (38)
+  37: 21,    // Western → Samurai (21)
+  // If you encounter any other IDs, you can add them here
+};
 
       let currentState = {
         source: null, id: null, type: null, title: '',
