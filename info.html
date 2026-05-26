@@ -1473,6 +1473,70 @@ a:focus-visible,
   outline: none;
   box-shadow: none;
 }
+
+    /* ═══════════════════════════════════════════════════════════
+   DESKTOP ACTION BUTTONS - Side by side with proper shapes
+   (Only applies on screens wider than 768px)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  .action-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+    justify-content: flex-start !important;
+  }
+  
+  /* Watch Now Button - pill/round corners */
+  .action-buttons > .btn-primary {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 120px !important;
+    padding: 10px 20px !important;
+    border-radius: 50px !important; /* Pill shape */
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+  
+  /* Add to List Dropdown Container - pill/round corners */
+  .action-buttons > .dropdown-container {
+    flex: 0 0 auto !important;
+  }
+  .action-buttons > .dropdown-container .btn {
+    width: auto !important;
+    min-width: 140px !important;
+    padding: 10px 20px !important;
+    border-radius: 50px !important; /* Pill shape */
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+  
+  /* Share Button - perfect circle */
+  .action-buttons > .btn-icon-only {
+    flex: 0 0 auto !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important; /* Circle shape */
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Ensure dropdown menu positions correctly on desktop */
+  .dropdown-menu {
+    left: 0 !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: none !important;
+  }
+}
   </style>
 </head>
 <body>
