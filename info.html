@@ -877,15 +877,18 @@
   .metric-trend.down { color: var(--accent-red); }
 
     /* Recommendations - FIXED GRID LAYOUT */
+/* ========================================
+   RECOMMENDATIONS GRID & CARDS
+   ======================================== */
+
 .recommendations-section { margin-bottom: 32px; }
 .recommendations-section h3 { margin-bottom: 16px; }
 
 .recs-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  /* Ensure all rows have equal height */
-  grid-auto-rows: 1fr;
+  /* Default: 2 per row (Mobile) */
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .rec-card {
@@ -895,7 +898,7 @@
   background: transparent;
   border: none;
   outline: none;
-  /* Make all cards same height */
+  /* FIXED: Flex layout to ensure full height consistency */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -909,21 +912,30 @@
   border: none !important;
 }
 
+/* FIXED: "Nuclear Option" for Equal Poster Heights */
+/* padding-bottom: 150% forces a perfect 2:3 ratio regardless of image source */
 .rec-poster {
   position: relative;
-  aspect-ratio: 2/3;
-  border-radius: 10px;
+  width: 100%;
+  height: 0; 
+  padding-bottom: 150%; 
   overflow: hidden;
+  border-radius: 10px;
   background: var(--bg-surface);
-  margin-bottom: 0;
-  /* Ensure consistent poster sizing */
-  flex-shrink: 0;
+  /* FIXED: No extra margin below poster */
+  margin-bottom: 0; 
+  flex-shrink: 0; /* Prevents poster from shrinking */
 }
+
 .rec-poster img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  /* FIXED: Center top ensures we see faces/important details */
   object-fit: cover;
-  object-position: center top;
+  object-position: center top; 
 }
 
 .rec-badges {
@@ -964,18 +976,18 @@
 .rec-badge.status.airing { color: var(--accent-green); }
 .rec-badge.status.finished { color: var(--text-muted); }
 
+/* Info section fills remaining space */
 .rec-info {
   padding: 8px 4px 0;
   text-align: center;
   background: transparent;
   margin: 0;
-  /* Ensure consistent info section */
-  flex: 1;
+  flex: 1; /* Pushes content to fill vertical space */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: 60px;
 }
+
 .rec-title {
   font-size: 0.9rem;
   font-weight: 600;
@@ -985,8 +997,10 @@
   margin: 0 0 4px 0;
   color: var(--text-primary);
   line-height: 1.3;
-  min-height: 1.3em;
+  min-height: 1.3em; /* Ensures consistent spacing even if title is short */
 }
+
+/* UPDATED: Simplified Metadata */
 .rec-meta {
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -994,6 +1008,7 @@
   margin: 0;
   line-height: 1.4;
 }
+/* Bullet dot separator */
 .rec-meta span:not(:last-child)::after {
   content: '•';
   margin: 0 4px;
@@ -1022,9 +1037,8 @@
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   font-size: 2rem;
-  color: var(--accent-cyan);f
-}
-    
+  color: var(--accent-cyan);
+}    
   /* Remove focus/active outlines on click */
   .rec-card:focus,
   .rec-card:active,
@@ -1319,37 +1333,26 @@
   /* Responsive Breakpoints for Recommendations Grid */
   /* Computer: 7 shows per row */
 @media (min-width: 1201px) {
-  .recs-grid {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 14px;
-  }
+  .recs-grid { grid-template-columns: repeat(7, 1fr); gap: 14px; }
 }
 
-/* Tablet & Mobile Desktop Mode: 4 shows per row */
-@media (max-width: 1200px) and (min-width: 769px) {
-  .recs-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-  }
+media (max-width: 1200px) and (min-width: 769px) {
+  .recs-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
 }
 
 /* Mobile Landscape: 3 shows per row */
-@media (max-width: 768px) and (orientation: landscape) {
-  .recs-grid { 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 12px; 
-  }
+media (max-width: 768px) and (orientation: landscape) {
+  .recs-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+}
   .rec-poster { border-radius: 8px; }
   .rec-title { font-size: 0.85rem; }
   .rec-meta { font-size: 0.7rem; }
 }
 
 /* Mobile Portrait: 2 shows per row */
-@media (max-width: 480px) {
-  .recs-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
+media (max-width: 480px) {
+  .recs-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
   .rec-title { font-size: 0.82rem; }
   .rec-meta { font-size: 0.68rem; }
 }
