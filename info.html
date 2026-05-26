@@ -112,13 +112,13 @@
     font-size: 0.7rem;
     opacity: 0.7;
   }
-  .breadcrumb-current {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 280px;
-    display: block;
-  }
+ .breadcrumb-current {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+  display: block;
+}
 
   /* Backdrop */
   .backdrop-container {
@@ -876,146 +876,145 @@
   .metric-trend.up { color: var(--accent-green); }
   .metric-trend.down { color: var(--accent-red); }
 
-  /* ============================================
-     RECOMMENDATIONS GRID - "More Like This" &
-     "Sunken Treasures" sections
-     ============================================ */
+  /* Recommendations - FIXED GRID LAYOUT */
   .recommendations-section { margin-bottom: 32px; }
   .recommendations-section h3 { margin-bottom: 16px; }
-
-  /* Grid: default desktop = 7 per row */
+  
   .recs-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 12px;
+    /* Default: 2 per row (Mobile Portrait) */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
-  /* Each card: no background, no border, no outline on any state */
   .rec-card {
     position: relative;
     cursor: pointer;
     transition: transform 0.2s;
+    /* No background/border for card itself - overlays on page background */
     background: transparent;
     border: none;
     outline: none;
-    -webkit-tap-highlight-color: transparent;
-    text-decoration: none;
-    display: block;
   }
   .rec-card:hover { transform: translateY(-4px); }
+  /* Remove focus/active outlines on click */
   .rec-card:focus,
-  .rec-card:focus-visible,
-  .rec-card:active {
-    outline: none;
-    border: none;
-    box-shadow: none;
+  .rec-card:active,
+  .rec-card:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
   }
-
-  /* Poster: portrait 2/3 ratio, rounded, no extra space below */
+  
   .rec-poster {
     position: relative;
-    aspect-ratio: 2 / 3;
-    border-radius: 8px;
+    /* Portrait shape: 2/3 aspect ratio */
+    aspect-ratio: 2/3;
+    border-radius: 10px;
     overflow: hidden;
     background: var(--bg-surface);
-    /* No margin-bottom — title/meta float below naturally */
+    /* FIXED: No extra margin/padding below poster */
+    margin-bottom: 0;
   }
   .rec-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
   }
-
-  /* Badges inside poster */
+  
   .rec-badges {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     display: flex;
     justify-content: space-between;
     z-index: 2;
-    pointer-events: none;
   }
   .rec-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.62rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
     font-weight: 700;
-    line-height: 1.4;
   }
   .rec-badge.score {
-    background: rgba(0,0,0,0.72);
+    background: rgba(0,0,0,0.7);
     color: var(--accent-gold);
   }
   .rec-badge.quality {
-    background: rgba(16, 185, 129, 0.18);
+    background: rgba(16, 185, 129, 0.2);
     border: 1px solid #10b981;
     color: #fff;
   }
   .rec-badge.status {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
-    padding: 2px 8px;
+    bottom: 8px;
+    left: 8px;
+    padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.62rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    background: rgba(0,0,0,0.62);
+    background: rgba(0,0,0,0.6);
     border: 1px solid var(--border-medium);
-    pointer-events: none;
   }
-  .rec-badge.status.airing { color: #10b981; }
+  .rec-badge.status.airing { color: var(--accent-green); }
   .rec-badge.status.finished { color: var(--text-muted); }
-
-  /*
-    Info section: title + meta sit directly below poster,
-    on the page background. No extra padding-box, no bg colour.
-    Text is centered.
-  */
+  
+  /* FIXED: Info overlaying background, centered, no extra bg space */
   .rec-info {
     padding: 6px 2px 0;
     text-align: center;
+    /* Ensure it sits directly on the page background - no background color */
     background: transparent;
+    margin: 0;
   }
   .rec-title {
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 3px;
+    margin: 0 0 3px 0;
     color: var(--text-primary);
     line-height: 1.3;
   }
-  /* Meta line: items separated by bullet dot */
   .rec-meta {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-family: var(--font-meta);
+    margin: 0;
     line-height: 1.4;
   }
-  /* Bullet-dot separator between meta spans */
-  .rec-meta span + span::before {
-    content: ' · ';
+  .rec-meta span:not(:last-child)::after {
+    content: '•';
+    margin: 0 4px;
     color: var(--text-muted);
-    opacity: 0.6;
+    opacity: 0.8;
   }
-
-  /* Hover play overlay on poster only */
-  .rec-poster::after {
+  
+  /* Hover Play Icon Overlay */
+  .rec-card::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
     opacity: 0;
     transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
+    z-index: 5;
   }
-  .rec-card:hover .rec-poster::after { opacity: 1; }
+  .rec-card:hover::after {
+    opacity: 1;
+    content: '\f144';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 2rem;
+    color: var(--accent-cyan);
+  }
 
   /* Sidebar */
   .sidebar {
@@ -1189,23 +1188,53 @@
     box-shadow: 0 25px 80px rgba(0,0,0,0.6);
   }
 
-  /* ============================================
-     RESPONSIVE BREAKPOINTS FOR RECS GRID
-     ============================================ */
+  /* Responsive Breakpoints for Recommendations Grid */
+  /* Computer: 7 shows per row */
+  @media (min-width: 1201px) {
+    .recs-grid {
+      grid-template-columns: repeat(7, 1fr);
+      gap: 14px;
+    }
+  }
+  
+  /* Tablet & Mobile Desktop Mode: 4 shows per row */
+  @media (max-width: 1200px) and (min-width: 769px) {
+    .recs-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+  }
 
-  /* Tablet (≤1200px): 4 per row */
+  /* Mobile Landscape: 3 shows per row */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .recs-grid { 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 12px; 
+    }
+    .rec-poster { border-radius: 8px; }
+    .rec-title { font-size: 0.85rem; }
+    .rec-meta { font-size: 0.7rem; }
+  }
+
+  /* Mobile Portrait: 2 shows per row */
+  @media (max-width: 480px) {
+    .recs-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .rec-title { font-size: 0.82rem; }
+    .rec-meta { font-size: 0.68rem; }
+  }
+
+  /* Main Layout Breakpoints */
   @media (max-width: 1200px) {
     :root {
       --max-width: 1200px;
       --sidebar-width: 280px;
       --gutter: 16px;
     }
-    .recs-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
   }
 
-  /* Tablet portrait / collapsed sidebar (≤992px): 4 per row */
   @media (max-width: 992px) {
     .info-grid {
       grid-template-columns: 1fr;
@@ -1229,23 +1258,19 @@
       flex: 1 1 calc(50% - 10px);
       min-width: 260px;
     }
-    .recs-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
   }
 
-  /* Mobile landscape / tablet small (≤768px): 3 per row */
   @media (max-width: 768px) {
     :root {
       --gutter: 16px;
       --content-padding: 16px;
     }
-
+    
     .breadcrumbs { padding: 12px var(--gutter); }
     .breadcrumbs ol { font-size: 0.8rem; }
     .breadcrumb-current { max-width: 180px; }
     .backdrop-container { aspect-ratio: 16/7; min-height: 200px; }
-
+    
     .hero-section {
       grid-template-columns: 1fr;
       grid-template-rows: auto auto;
@@ -1257,9 +1282,9 @@
     .show-title { font-size: 1.5rem; }
     .action-buttons { justify-content: center; }
     .btn { padding: 9px 16px; font-size: 0.85rem; }
-
+    
     .metadata-row { justify-content: center; }
-
+    
     .stats-container {
       grid-template-columns: repeat(4, 1fr);
       padding: 12px;
@@ -1267,7 +1292,7 @@
     .stat-column { padding: 4px; }
     .stat-value { font-size: 1rem; }
     .stat-column:last-child { grid-column: span 1; }
-
+    
     .details-grid {
       grid-template-columns: 1fr;
       gap: 10px 16px;
@@ -1286,9 +1311,9 @@
       flex: 1;
       min-width: 0;
     }
-
+    
     .seasons-grid { grid-template-columns: 1fr; }
-
+    
     .tabs-container {
       flex-wrap: wrap;
       gap: 2px;
@@ -1299,38 +1324,32 @@
     .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
     .tab-indicator { display: none; }
     .tab-btn.active { background: var(--btn-primary); color: #fff; }
-
+    
     .dropdown-menu {
       left: 50%;
       transform: translateX(-50%);
       width: calc(100vw - 32px);
       max-width: 300px;
     }
-
+    
     .cast-scroll-container { padding: 5px 0 15px 0; }
     .cast-card { width: 120px; padding: 12px 8px; }
     .cast-card-img { width: 70px; height: 70px; }
     .cast-card-name { font-size: 0.85rem; }
     .cast-card-role { font-size: 0.7rem; }
-
+    
     .cast-item {
       grid-template-columns: 48px 1fr 48px;
       gap: 10px;
       padding: 10px;
     }
     .cast-avatar, .actor-avatar { width: 48px; height: 48px; }
-
+    
     .artwork-grid { grid-template-columns: 1fr; }
-
-    /* Mobile landscape: 3 per row */
-    .recs-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+    
+    .sidebar {
+      flex-direction: column;
     }
-    .rec-title { font-size: 0.75rem; }
-    .rec-meta { font-size: 0.65rem; }
-
-    .sidebar { flex-direction: column; }
     .sidebar-section {
       flex: 1 1 100%;
       min-width: auto;
@@ -1346,21 +1365,13 @@
     .sidebar-meta { font-size: 0.7rem; gap: 4px; }
   }
 
-  /* Mobile portrait (≤480px): 2 per row */
   @media (max-width: 480px) {
     :root { --gutter: 12px; --content-padding: 12px; }
     .breadcrumbs ol { gap: 2px; }
-
+    
     .backdrop-container { aspect-ratio: 16/4; }
     .poster-wrapper { width: 140px; }
     .show-title { font-size: 1.3rem; }
-
-    .recs-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .rec-title { font-size: 0.78rem; }
-    .rec-meta { font-size: 0.65rem; }
 
     /* Action Buttons Layout */
     .action-buttons {
@@ -1408,11 +1419,7 @@
     .sidebar-section { padding: 12px; }
   }
 
-  /* Mobile desktop mode (≤992px wide but high-res): 4 per row
-     This targets the specific "mobile desktop mode" case — handled
-     by the 992px breakpoint above which gives 4 columns. */
-
-  /* Landscape mobile (short height) */
+  /* Landscape mobile */
   @media (max-height: 500px) and (orientation: landscape) {
     .backdrop-container { display: none; }
     .hero-section { margin-top: 0; }
@@ -1421,11 +1428,6 @@
     .metadata-row { font-size: 0.8rem; }
     .action-buttons { gap: 8px; }
     .btn { padding: 8px 14px; font-size: 0.8rem; }
-    /* Landscape mobile: 3 per row (already set by 768px breakpoint,
-       but reinforce here) */
-    .recs-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
   }
 
   .btn-watch svg {
@@ -1488,16 +1490,7 @@
     }
   }
 
-  /* Remove focus outlines globally for rec cards */
-  .rec-card:focus,
-  .rec-card:focus-visible,
-  .rec-card:active {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Remove focus outlines on action buttons */
+  /* Remove focus outlines */
   .action-buttons .btn:focus,
   .action-buttons .btn:focus-visible,
   .action-buttons .btn-icon-only:focus,
@@ -1979,31 +1972,6 @@
         }
       }
 
-      /**
-       * Extracts a clean duration string in "Xmin" or "Xh Ymin" format
-       * from Jikan or TMDB data objects.
-       */
-      function extractDurationMins(item, isAnime) {
-        if (isAnime) {
-          const raw = item.duration || '';
-          const match = raw.match(/(\d+)\s*min/);
-          if (match) {
-            const mins = parseInt(match[1], 10);
-            return mins >= 60
-              ? `${Math.floor(mins / 60)}h ${mins % 60}min`
-              : `${mins}min`;
-          }
-          return null;
-        } else {
-          // TMDB movie: runtime in minutes, TMDB TV: episode_run_time array
-          const mins = item.runtime || item.episode_run_time?.[0] || null;
-          if (!mins) return null;
-          return mins >= 60
-            ? `${Math.floor(mins / 60)}h ${mins % 60}min`
-            : `${mins}min`;
-        }
-      }
-
       function getFirstStudio(data, isAnime) {
         if (isAnime) {
           return data.studios?.[0]?.name || null;
@@ -2322,12 +2290,14 @@
         lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('show'); });
       }
 
+      // FIXED: Tab indicator sync logic
       function initTabSwitching() {
         const tabs = document.querySelectorAll('.tab-btn');
         const indicator = document.getElementById('tabIndicator');
         const contents = document.querySelectorAll('.tab-content');
 
         function positionIndicator(activeTab) {
+          // Only move indicator on desktop where it's visible
           if (window.innerWidth > 768 && indicator && activeTab) {
             const container = activeTab.parentElement;
             const rect = activeTab.getBoundingClientRect();
@@ -2350,16 +2320,18 @@
 
         tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
 
+        // Initial positioning
         const activeTab = document.querySelector('.tab-btn.active');
         if (activeTab) {
           if (indicator) indicator.style.transition = 'none';
           activateTab(activeTab);
           if (indicator) {
-            void indicator.offsetHeight;
+            void indicator.offsetHeight; // force reflow
             indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
           }
         }
 
+        // Reposition on resize
         window.addEventListener('resize', () => {
           const currentActive = document.querySelector('.tab-btn.active');
           if (currentActive) positionIndicator(currentActive);
@@ -2604,8 +2576,34 @@
             gridContainer.innerHTML = `<div class="loading-text">No anime recommendations found</div>`; 
             return; 
           }
+          const currentGenres = currentShow?.genres?.map(g => g.name) || [];
           gridContainer.innerHTML = payload.data.slice(0, 30).map(anime => {
-            return renderRecCardJikan(anime);
+            const badge = generateSunkenBadge(anime, currentGenres);
+            const studio = anime.studios?.[0]?.name || "N/A";
+            const slug = slugify(anime.title);
+            const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+            // Use Type, Year, Duration (in minutes), Studio
+            const year = anime.aired?.from?.slice(0,4) || 'N/A';
+            const duration = formatDurationForRec(anime.duration);
+            return `<a href="${detailsUrl}" class="rec-card">
+              <div class="rec-poster">
+                <img src="${anime.images.jpg.large_image_url}" alt="${anime.title}" loading="lazy">
+                <div class="rec-badges">
+                  <span class="rec-badge score">★ ${anime.score?.toFixed(1) || 'N/A'}</span>
+                  <span class="rec-badge quality">HD</span>
+                </div>
+                <span class="rec-badge status ${anime.status === 'Currently Airing' ? 'airing' : 'finished'}">${anime.status === 'Currently Airing' ? 'Airing' : 'Finished'}</span>
+              </div>
+              <div class="rec-info">
+                <div class="rec-title">${escapeHtml(anime.title)}</div>
+                <div class="rec-meta">
+                  <span>${anime.type}</span>
+                  <span>${year}</span>
+                  <span>${duration}</span>
+                  <span>${studio}</span>
+                </div>
+              </div>
+            </a>`;
           }).join('');
         } catch (error) { 
           console.error("Sunken Treasures error:", error); 
@@ -2626,79 +2624,58 @@
         return { label: "Recommended", class: "badge-default" };
       }
 
-      /**
-       * Renders a rec card for Jikan (anime) items.
-       * Metadata: Type · Year · Duration · First Studio
-       */
-      function renderRecCardJikan(anime) {
-        const title = anime.title_english || anime.title || 'Unknown';
-        const poster = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
-        const score = anime.score;
-
-        // Metadata fields
-        const type = anime.type || 'Anime';
-        const year = anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null;
-        const duration = extractDurationMins(anime, true);
-        const studio = anime.studios?.[0]?.name || null;
-
-        // Build meta parts (only non-null)
-        const metaParts = [type, year, duration, studio].filter(Boolean);
-
+      function renderRecCard(item) {
+        const title = item.title || item.name;
+        const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+        const score = item.vote_average;
+        const type = currentState.type;
+        const year = (item.release_date || item.first_air_date)?.slice(0,4);
+        
+        // Get first studio/production company
+        const studio = item.production_companies?.[0]?.name || item.networks?.[0]?.name || '';
+        
+        // Format duration for TMDB
+        let duration = '—';
+        if (currentState.type === 'movie' && item.runtime) {
+          duration = `${item.runtime}min`;
+        } else if (currentState.type === 'tv' && item.episode_run_time?.[0]) {
+          duration = `${item.episode_run_time[0]}min`;
+        }
+        
+        const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
         const slug = slugify(title);
-        const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-        const isAiring = anime.status === 'Currently Airing';
-
+        const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
+        
         return `<a href="${detailsUrl}" class="rec-card">
           <div class="rec-poster">
-            <img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy">
+            <img src="${poster}" alt="${title}" loading="lazy">
             <div class="rec-badges">
-              <span class="rec-badge score">★ ${score ? score.toFixed(1) : 'N/A'}</span>
+              <span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span>
               <span class="rec-badge quality">HD</span>
             </div>
-            <span class="rec-badge status ${isAiring ? 'airing' : 'finished'}">${isAiring ? 'Airing' : 'Finished'}</span>
           </div>
           <div class="rec-info">
             <div class="rec-title">${escapeHtml(title)}</div>
-            <div class="rec-meta">${metaParts.map(p => `<span>${escapeHtml(String(p))}</span>`).join('')}</div>
+            <div class="rec-meta">
+              <span>${type}</span>
+              <span>${year}</span>
+              <span>${duration}</span>
+              <span>${studio}</span>
+            </div>
           </div>
         </a>`;
       }
 
-      /**
-       * Renders a rec card for TMDB items.
-       * Metadata: Type · Year · Duration · First Studio/Network
-       */
-      function renderRecCard(item) {
-        const title = item.title || item.name || 'Unknown';
-        const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-        const score = item.vote_average;
-
-        // Metadata fields
-        const type = currentState.type === 'movie' ? 'Movie' : 'TV';
-        const year = (item.release_date || item.first_air_date)?.slice(0, 4) || null;
-        const duration = extractDurationMins(item, false);
-        const studio = item.production_companies?.[0]?.name || item.networks?.[0]?.name || null;
-
-        // Build meta parts (only non-null)
-        const metaParts = [type, year, duration, studio].filter(Boolean);
-
-        const source = currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
-        const slug = slugify(title);
-        const detailsUrl = `/info/${currentState.type}/${source}-${item.id}/${slug}`;
-
-        return `<a href="${detailsUrl}" class="rec-card">
-          <div class="rec-poster">
-            <img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy">
-            <div class="rec-badges">
-              <span class="rec-badge score">★ ${score ? score.toFixed(1) : 'N/A'}</span>
-              <span class="rec-badge quality">HD</span>
-            </div>
-          </div>
-          <div class="rec-info">
-            <div class="rec-title">${escapeHtml(title)}</div>
-            <div class="rec-meta">${metaParts.map(p => `<span>${escapeHtml(String(p))}</span>`).join('')}</div>
-          </div>
-        </a>`;
+      // Helper: Format duration for recommendation cards (shows minutes only)
+      function formatDurationForRec(durationStr) {
+        if (!durationStr || durationStr === 'Unknown') return '—';
+        // Parse "24 min per ep" -> "24min", "1 hr per ep" -> "60min"
+        const match = durationStr.match(/(\d+)\s*(min|hr|hour)/i);
+        if (!match) return '—';
+        let mins = parseInt(match[1]);
+        const unit = match[2].toLowerCase();
+        if (unit === 'hr' || unit === 'hour') mins *= 60;
+        return `${mins}min`;
       }
 
       async function loadCastData() {
@@ -3044,7 +3021,7 @@
       function formatNumber(num) { 
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'; 
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K'; 
-        return num?.toString() || '—'; 
+        return num.toString(); 
       }
       
       function showError(message) { 
