@@ -952,7 +952,7 @@
   
   /* FIXED: Info overlaying background, centered, no extra bg space */
   .rec-info {
-    padding: 0;
+    padding: 8px 4px 0;
     text-align: center;
     /* Ensure it sits on the page background */
     background: transparent; 
@@ -1180,9 +1180,9 @@
     }
     /* Computer/Tablet: 7 shows per row */
     .recs-grid {
-        grid-template-columns: repeat(5, 1fr); } 
-       }/* Small desktop */
-
+      grid-template-columns: repeat(7, 1fr);
+    }
+  }
 
   @media (max-width: 992px) {
     .info-grid {
@@ -1209,15 +1209,16 @@
     }
     /* Tablet/Mobile Desktop Mode: 4 shows per row */
     .recs-grid {
-      grid-template-columns: repeat(4, 1fr); } 
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
 
   @media (max-width: 768px) {
     :root {
       --gutter: 16px;
       --content-padding: 16px;
     }
-
-    .recs-grid { grid-template-columns: repeat(3, 1fr); } 
+    
     .breadcrumbs { padding: 12px var(--gutter); }
     .breadcrumbs ol { font-size: 0.8rem; }
     .breadcrumb-current { max-width: 180px; }
@@ -1300,10 +1301,10 @@
     .artwork-grid { grid-template-columns: 1fr; }
     
     /* Mobile Landscape: 3 shows per row */
-    .recs-grid {
-    grid-template-columns: repeat(3, 1fr); 
+    .recs-grid { 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 12px; 
     }
-  
     .rec-poster { border-radius: 8px; }
     .rec-title { font-size: 0.85rem; }
     .rec-meta { font-size: 0.7rem; }
@@ -1336,9 +1337,8 @@
 
     /* Mobile Portrait: 2 shows per row */
     .recs-grid {
-           grid-template-columns: repeat(2, 1fr); }
-    
-          
+      grid-template-columns: repeat(2, 1fr);
+    }
 
     /* Action Buttons Layout */
     .action-buttons {
@@ -1465,78 +1465,6 @@
     outline: none;
     box-shadow: none;
   }
-
-    a:focus,
-a:focus-visible,
-.rec-card:focus,
-.rec-card:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
-    /* ═══════════════════════════════════════════════════════════
-   DESKTOP ACTION BUTTONS - Side by side with proper shapes
-   (Only applies on screens wider than 768px)
-   ═══════════════════════════════════════════════════════════ */
-@media (min-width: 769px) {
-  .action-buttons {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 12px !important;
-    justify-content: flex-start !important;
-  }
-  
-  /* Watch Now Button - pill/round corners */
-  .action-buttons > .btn-primary {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 120px !important;
-    padding: 10px 20px !important;
-    border-radius: 50px !important; /* Pill shape */
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    justify-content: center !important;
-  }
-  
-  /* Add to List Dropdown Container - pill/round corners */
-  .action-buttons > .dropdown-container {
-    flex: 0 0 auto !important;
-  }
-  .action-buttons > .dropdown-container .btn {
-    width: auto !important;
-    min-width: 140px !important;
-    padding: 10px 20px !important;
-    border-radius: 50px !important; /* Pill shape */
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    justify-content: center !important;
-  }
-  
-  /* Share Button - perfect circle */
-  .action-buttons > .btn-icon-only {
-    flex: 0 0 auto !important;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important; /* Circle shape */
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  
-  /* Ensure dropdown menu positions correctly on desktop */
-  .dropdown-menu {
-    left: 0 !important;
-    transform: none !important;
-    width: auto !important;
-    min-width: 220px !important;
-    max-width: none !important;
-  }
-}
   </style>
 </head>
 <body>
