@@ -6,7 +6,6 @@
   <title>Aniocean - Show Details</title>
   <meta name="description" content="Stream anime, movies, and TV shows on Aniocean">
   
-  
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -32,45 +31,41 @@
     --sidebar-width: 300px;
     --gutter: 20px;
     --content-padding: 24px;
-
-  --max-width: 1400px;
-  --sidebar-width: 320px;
-  --gutter: 24px;
     
-  --bg-body: #0a1929;
-  --bg-header: #0f2440;
-  --bg-card: #132f4c;
-  --bg-surface: #1a3a5c;
-  --bg-popup: #102a44;
-  --text-primary: #ffffff;
-  --text-secondary: #b0c7e3;
-  --text-muted: #94a3b8;
-  --text-widget-title: #a2c4de;
-  --btn-primary: #2b6cb0;
-  --btn-primary-hover: #1d4e89;
-  --btn-primary-text: #ffffff;
-  --btn-secondary: #334e68;
-  --btn-secondary-hover: #243b53;
-  --popup-btn: #5c6ac4;
-  --popup-btn-text: #ffffff;
-  --popup-btn-hover: #4955b5;
-  --genre-tag-bg: #4c51bf;
-  --link-accent: #ed64a6;
-  --accent-gold: #ecc94b;
-  --accent-blue: #4299e1;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.16);
-  --font-title: 'Archivo Black', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-meta: 'Poppins', sans-serif;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 50px;
-  --radius-circle: 50%;
-  --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
-  --transition-fast: 0.18s ease;
-}
+    --bg-body: #0a1929;
+    --bg-header: #0f2440;
+    --bg-card: #132f4c;
+    --bg-surface: #1a3a5c;
+    --bg-popup: #102a44;
+    --text-primary: #ffffff;
+    --text-secondary: #b0c7e3;
+    --text-muted: #94a3b8;
+    --text-widget-title: #a2c4de;
+    --btn-primary: #2b6cb0;
+    --btn-primary-hover: #1d4e89;
+    --btn-primary-text: #ffffff;
+    --btn-secondary: #334e68;
+    --btn-secondary-hover: #243b53;
+    --popup-btn: #5c6ac4;
+    --popup-btn-text: #ffffff;
+    --popup-btn-hover: #4955b5;
+    --genre-tag-bg: #4c51bf;
+    --link-accent: #ed64a6;
+    --accent-gold: #ecc94b;
+    --accent-blue: #4299e1;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-medium: rgba(255, 255, 255, 0.16);
+    --font-title: 'Archivo Black', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-meta: 'Poppins', sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-pill: 50px;
+    --radius-circle: 50%;
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
+    --transition-fast: 0.18s ease;
+  }
 
   /* Reset & Base */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -122,19 +117,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 280px;
-  display: block; /* or inline-block; block works fine inside the flex li */
+  display: block;
 }
 
   /* Backdrop */
   .backdrop-container {
-  position: relative;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 5.5;   /* was 16/6 – now a little taller */
-  min-height: 300px;        /* was 280px */
-  max-height: 450px;        /* was 400px */
-  overflow: hidden;
-}
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 5.5;
+    min-height: 300px;
+    max-height: 450px;
+    overflow: hidden;
+  }
   .backdrop-img {
     width: 100%;
     height: 100%;
@@ -155,7 +150,7 @@
     pointer-events: none;
   }
 
-  /* FIXED: Main grid layout matching index.html */
+  /* Main grid layout matching index.html */
   .info-grid {
     display: grid;
     grid-template-columns: 1fr var(--sidebar-width);
@@ -166,7 +161,7 @@
     width: 100%;
   }
 
-  /* Main content wrapper - constrained width */
+  /* Main content wrapper */
   .main-content {
     min-width: 0;
     padding-right: var(--content-padding);
@@ -192,7 +187,6 @@
   .poster-img {
     width: 100%;
     border-radius: 12px;
-    
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
     aspect-ratio: 2/3;
     object-fit: cover;
@@ -220,12 +214,12 @@
     backdrop-filter: blur(4px);
   }
   .lang-badge.sub {
-    background: var(--badge-sub-bg);
-    border: 1px solid var(--badge-sub-border);
+    background: rgba(49, 132, 192, 0.2);
+    border: 1px solid #3184c4;
   }
   .lang-badge.dub {
-    background: var(--badge-dub-bg);
-    border: 1px solid var(--badge-dub-border);
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
   }
 
   .episode-badge {
@@ -272,16 +266,16 @@
   }
 
   /* Action Buttons */
- .action-buttons {
-  flex-direction: row;          /* keep buttons side‑by‑side */
-  justify-content: center;
-  flex-wrap: wrap;              /* allow wrapping if really needed */
-}
-.btn { width: auto; }           /* let buttons size naturally */
-.btn-icon-only {
-  width: 40px;                  /* keep share icon compact */
-  height: 40px;
-}
+  .action-buttons {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn { width: auto; }
+  .btn-icon-only {
+    width: 40px;
+    height: 40px;
+  }
   .btn-primary {
     background: var(--btn-primary);
     color: #fff;
@@ -441,7 +435,7 @@
     line-height: 1.7;
   }
 
-  /* Details Section - Two-column layout desktop */
+  /* Details Section */
   .details-section {
     margin-bottom: 32px;
   }
@@ -629,7 +623,7 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  /* Cast Tab - Horizontal scroll cards */
+  /* Cast Tab */
   .cast-list { display: flex; flex-direction: column; gap: 12px; }
   .cast-scroll-container {
     overflow-x: auto;
@@ -882,32 +876,42 @@
   .metric-trend.up { color: var(--accent-green); }
   .metric-trend.down { color: var(--accent-red); }
 
-  /* Recommendations */
+  /* Recommendations - FIXED GRID LAYOUT */
   .recommendations-section { margin-bottom: 32px; }
   .recommendations-section h3 { margin-bottom: 16px; }
+  
   .recs-grid {
     display: grid;
+    /* Default: 2 per row (Mobile) */
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
+
   .rec-card {
     position: relative;
     cursor: pointer;
     transition: transform 0.2s;
+    /* No background/border for card itself to allow overlay effect */
+    background: transparent;
   }
   .rec-card:hover { transform: translateY(-4px); }
+  
   .rec-poster {
     position: relative;
+    /* FIXED: Aspect Ratio 2/3 */
     aspect-ratio: 2/3;
     border-radius: 10px;
     overflow: hidden;
     background: var(--bg-surface);
+    /* No extra margin/padding below */
+    margin-bottom: 0;
   }
   .rec-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+  
   .rec-badges {
     position: absolute;
     top: 8px;
@@ -915,6 +919,7 @@
     right: 8px;
     display: flex;
     justify-content: space-between;
+    z-index: 2;
   }
   .rec-badge {
     padding: 3px 8px;
@@ -927,8 +932,8 @@
     color: var(--accent-gold);
   }
   .rec-badge.quality {
-    background: var(--badge-quality-bg);
-    border: 1px solid var(--badge-quality-border);
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10b981;
     color: #fff;
   }
   .rec-badge.status {
@@ -944,9 +949,13 @@
   }
   .rec-badge.status.airing { color: var(--accent-green); }
   .rec-badge.status.finished { color: var(--text-muted); }
+  
+  /* FIXED: Info overlaying background, centered, no extra bg space */
   .rec-info {
-    padding: 10px 4px 0;
+    padding: 8px 4px 0;
     text-align: center;
+    /* Ensure it sits on the page background */
+    background: transparent; 
   }
   .rec-title {
     font-size: 0.9rem;
@@ -955,6 +964,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 4px;
+    color: var(--text-primary);
   }
   .rec-meta {
     font-size: 0.75rem;
@@ -964,6 +974,8 @@
     content: '•';
     margin: 0 4px;
   }
+  
+  /* Hover Play Icon Overlay */
   .rec-card::after {
     content: '';
     position: absolute;
@@ -975,6 +987,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none; /* Let clicks pass through to link */
+    z-index: 5;
   }
   .rec-card:hover::after {
     opacity: 1;
@@ -985,7 +999,7 @@
     color: var(--accent-cyan);
   }
 
-  /* Sidebar - FIXED: Match index.html */
+  /* Sidebar */
   .sidebar {
     display: flex;
     flex-direction: column;
@@ -1157,12 +1171,16 @@
     box-shadow: 0 25px 80px rgba(0,0,0,0.6);
   }
 
-  /* Responsive - Matched to index.html breakpoints */
+  /* Responsive Breakpoints */
   @media (max-width: 1200px) {
     :root {
       --max-width: 1200px;
       --sidebar-width: 280px;
       --gutter: 16px;
+    }
+    /* Computer/Tablet: 7 shows per row */
+    .recs-grid {
+      grid-template-columns: repeat(7, 1fr);
     }
   }
 
@@ -1188,6 +1206,10 @@
     .sidebar-section {
       flex: 1 1 calc(50% - 10px);
       min-width: 260px;
+    }
+    /* Tablet/Mobile Desktop Mode: 4 shows per row */
+    .recs-grid {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 
@@ -1277,7 +1299,12 @@
     .cast-avatar, .actor-avatar { width: 48px; height: 48px; }
     
     .artwork-grid { grid-template-columns: 1fr; }
-    .recs-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    
+    /* Mobile Landscape: 3 shows per row */
+    .recs-grid { 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 12px; 
+    }
     .rec-poster { border-radius: 8px; }
     .rec-title { font-size: 0.85rem; }
     .rec-meta { font-size: 0.7rem; }
@@ -1308,7 +1335,12 @@
     .poster-wrapper { width: 140px; }
     .show-title { font-size: 1.3rem; }
 
-    /* ✅ FIXED: Watch Now & Add to List side-by-side, Share below */
+    /* Mobile Portrait: 2 shows per row */
+    .recs-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Action Buttons Layout */
     .action-buttons {
       display: flex;
       flex-direction: row;
@@ -1316,14 +1348,12 @@
       justify-content: center;
       gap: 10px;
     }
-    /* Watch Now Button */
     .action-buttons > .btn-primary {
       flex: 1 1 calc(50% - 5px);
       width: 100%;
       justify-content: center;
-      border-radius: 50px; /* Match desktop round corners */
+      border-radius: 50px;
     }
-    /* Add to List Dropdown Container */
     .action-buttons > .dropdown-container {
       flex: 1 1 calc(50% - 5px);
       min-width: 0;
@@ -1331,21 +1361,19 @@
     .action-buttons > .dropdown-container .btn {
       width: 100%;
       justify-content: center;
-      border-radius: 50px; /* Match desktop round corners */
+      border-radius: 50px;
     }
-    /* Share Button (drops to new line, full width) */
     .action-buttons > .btn-icon-only {
       flex: 0 0 100%;
       width: 100%;
       height: 44px;
-      border-radius: 50px; /* Match desktop round corners */
+      border-radius: 50px;
       justify-content: center;
     }
 
     .stats-container { grid-template-columns: repeat(2, 1fr); }
     .stat-column:nth-child(3) { display: none; }
     .details-grid { grid-template-columns: 1fr; }
-    .recs-grid { grid-template-columns: repeat(2, 1fr); }
     .metric-cards { grid-template-columns: 1fr; }
     .alert-content {
       max-width: calc(100vw - 40px);
@@ -1369,89 +1397,75 @@
     .btn { padding: 8px 14px; font-size: 0.8rem; }
   }
 
-    .btn-watch svg {
-  width: 21px;
-  height: 21px;
-}
+  .btn-watch svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
 
-    .btn-watch svg {
-  flex-shrink: 0;        /* prevent the icon from shrinking */
-  vertical-align: middle; /* ensure it sits on the same baseline as text */
-}
+  /* Desktop Action Buttons */
+  @media (min-width: 769px) {
+    .action-buttons {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      gap: 12px !important;
+      justify-content: flex-start !important;
+    }
+    .action-buttons > .btn-primary {
+      flex: 0 0 auto !important;
+      width: auto !important;
+      min-width: 120px !important;
+      padding: 10px 20px !important;
+      border-radius: 50px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      justify-content: center !important;
+    }
+    .action-buttons > .dropdown-container {
+      flex: 0 0 auto !important;
+    }
+    .action-buttons > .dropdown-container .btn {
+      width: auto !important;
+      min-width: 140px !important;
+      padding: 10px 20px !important;
+      border-radius: 50px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      justify-content: center !important;
+    }
+    .action-buttons > .btn-icon-only {
+      flex: 0 0 auto !important;
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .dropdown-menu {
+      left: 0 !important;
+      transform: none !important;
+      width: auto !important;
+      min-width: 220px !important;
+      max-width: none !important;
+    }
+  }
 
-    /* ═══════════════════════════════════════════════════════════
-   DESKTOP ACTION BUTTONS - Side by side with proper shapes
-   (Only applies on screens wider than 768px)
-   ═══════════════════════════════════════════════════════════ */
-@media (min-width: 769px) {
-  .action-buttons {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 12px !important;
-    justify-content: flex-start !important;
+  /* Remove focus outlines */
+  .action-buttons .btn:focus,
+  .action-buttons .btn:focus-visible,
+  .action-buttons .btn-icon-only:focus,
+  .action-buttons .btn-icon-only:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
-  
-  /* Watch Now Button - pill/round corners */
-  .action-buttons > .btn-primary {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 120px !important;
-    padding: 10px 20px !important;
-    border-radius: 50px !important; /* Pill shape */
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    justify-content: center !important;
-  }
-  
-  /* Add to List Dropdown Container - pill/round corners */
-  .action-buttons > .dropdown-container {
-    flex: 0 0 auto !important;
-  }
-  .action-buttons > .dropdown-container .btn {
-    width: auto !important;
-    min-width: 140px !important;
-    padding: 10px 20px !important;
-    border-radius: 50px !important; /* Pill shape */
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    justify-content: center !important;
-  }
-  
-  /* Share Button - perfect circle */
-  .action-buttons > .btn-icon-only {
-    flex: 0 0 auto !important;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important; /* Circle shape */
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  
-  /* Ensure dropdown menu positions correctly on desktop */
-  .dropdown-menu {
-    left: 0 !important;
-    transform: none !important;
-    width: auto !important;
-    min-width: 220px !important;
-    max-width: none !important;
-  }
-}
-
-    /* Remove focus outlines on all action buttons */
-.action-buttons .btn:focus,
-.action-buttons .btn:focus-visible,
-.action-buttons .btn-icon-only:focus,
-.action-buttons .btn-icon-only:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-</style>
+  </style>
 </head>
 <body>
   <!-- Header/Footer injected by shared.js -->
@@ -1590,7 +1604,7 @@
           </div>
         </div>
 
-        <!-- Show Details Section - FIXED: Two-column layout -->
+        <!-- Show Details Section -->
         <section class="details-section">
           <h3>Show Details</h3>
           <div class="details-grid" id="detailsGrid">
@@ -1598,7 +1612,7 @@
           </div>
         </section>
 
-        <!-- Watch More Seasons - FIXED: Dynamic seasons with proper URLs -->
+        <!-- Watch More Seasons -->
         <section class="seasons-section" id="seasonsSection" style="display:none;">
           <h3>Watch More Seasons</h3>
           <div class="seasons-grid" id="seasonsGrid">
@@ -1606,7 +1620,7 @@
           </div>
         </section>
 
-        <!-- Tab Navigation - FIXED: Indicator sync -->
+        <!-- Tab Navigation -->
         <section class="tabs-section">
           <div class="tabs-container">
             <button class="tab-btn active" data-tab="cast">Cast/Crew</button>
@@ -1738,9 +1752,7 @@
       document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
         parseUrl();
-
-         // ADD THIS LINE – initialise tabs immediately
-  initTabSwitching();
+        initTabSwitching();
         
         if (currentState.id && currentState.source) {
           await fetchShowData();
@@ -1773,7 +1785,7 @@
         
         if (sourcePrefix === 'jikan') {
           currentState.source = 'jikan';
-          currentState.type = 'anime'; // Force anime for jikan
+          currentState.type = 'anime';
         } else if (sourcePrefix === 'tmdb-tv') {
           currentState.source = 'tmdb';
           currentState.type = 'tv';
@@ -1814,7 +1826,6 @@
       }
 
       async function fetchJikanData() {
-        // Use /full endpoint for complete data including relations
         const res = await fetch(`https://api.jikan.moe/v4/anime/${currentState.id}/full`);
         if (!res.ok) throw new Error(`Jikan API error: ${res.status}`);
         const { data } = await res.json();
@@ -1850,7 +1861,6 @@
           const res = await fetch(`${CONFIG.ALLANIME_API}/search?query=${encoded}`);
           const results = await res.json();
           
-          // Filter by exact ID match first, then title
           const match = results.find(r => 
             r.id === currentState.id && 
             (r.title.toLowerCase() === query.toLowerCase() || query.toLowerCase().includes(r.title.toLowerCase()))
@@ -1875,7 +1885,6 @@
         document.getElementById('typeLink').href = `/type/${currentState.type}`;
         document.getElementById('breadcrumbTitle').textContent = currentState.title;
         
-        // FIXED: Higher quality backdrop
         const backdrop = isAnime 
           ? data.images?.jpg?.large_image_url 
           : data.backdrop_path 
@@ -1892,17 +1901,12 @@
         
         document.getElementById('showTitle').textContent = currentState.title;
         
-        // FIXED: Metadata with Studio, correct duration format
         const metaParts = [];
-        // Score
         const score = isAnime ? data.score : data.vote_average;
         if (score) metaParts.push(`★ ${score.toFixed(1)}`);
-        // Format
         metaParts.push(data.type || typeNameMap[currentState.type] || currentState.type);
-        // Studio (NEW)
         const studio = getFirstStudio(data, isAnime);
         if (studio) metaParts.push(studio);
-        // Duration (FIXED)
         const duration = formatDuration(data.duration, isAnime, currentState.type);
         if (duration) metaParts.push(duration);
         
@@ -1918,12 +1922,10 @@
         return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       }
 
-      // FIXED: Duration formatting for movie/TV/anime
       function formatDuration(duration, isAnime, type) {
         if (!duration || duration === 'Unknown') return null;
         
         if (type === 'movie') {
-          // Movie: "2h 49min" format
           const match = duration.match(/(\d+)\s*min/);
           if (match) {
             const mins = parseInt(match[1]);
@@ -1933,12 +1935,10 @@
           }
           return duration;
         } else {
-          // TV/Anime: "24 min" format
           return duration.replace(/ per ep.*/, '').replace(' min', ' min').trim();
         }
       }
 
-      // FIXED: Get first studio name
       function getFirstStudio(data, isAnime) {
         if (isAnime) {
           return data.studios?.[0]?.name || null;
@@ -1976,14 +1976,12 @@
         document.getElementById('synopsisText').textContent = text || 'No description available.';
       }
 
-      // FIXED: Details section with two-column layout, label:value format
       function renderDetails() {
         const data = currentState.data;
         const isAnime = currentState.source === 'jikan';
         const grid = document.getElementById('detailsGrid');
         const details = [];
         
-        // Column 1 fields
         if (isAnime) {
           if (data.title_english) details.push({ label: 'Title', value: data.title_english });
           if (data.title_japanese) details.push({ label: 'Japanese', value: data.title_japanese });
@@ -1996,7 +1994,6 @@
         const country = isAnime ? 'Japan' : data.origin_country?.[0] || data.production_countries?.[0]?.iso_3166_1 || 'Unknown';
         details.push({ label: 'Country', value: country });
         
-        // FIXED: Merge genres/themes/demographics for anime
         if (isAnime && data.genres?.length) {
           const allGenres = [
             ...(data.genres?.map(g => g.name) || []),
@@ -2020,7 +2017,6 @@
           details.push({ label: 'Genres', value: `<div class="genre-tags">${genreHtml}</div>`, isHtml: true });
         }
         
-        // Column 2 fields
         const status = isAnime ? data.status : (data.status === 'Released' ? 'Released' : data.status);
         details.push({ label: 'Status', value: status });
         
@@ -2048,7 +2044,6 @@
         if (currentState.type !== 'movie') {
           const episodes = isAnime ? data.episodes : data.number_of_episodes || data.number_of_seasons;
           if (episodes) {
-            // FIXED: Add Sub/Dub icons for anime episodes
             let episodeText = episodes.toString();
             if (isAnime && currentState.allAnimeData) {
               const { episodes_sub, episodes_dub } = currentState.allAnimeData;
@@ -2066,7 +2061,6 @@
           details.push({ label: 'Source', value: data.source });
         }
         
-        // Popularity & Rank
         if (data.popularity !== undefined) {
           details.push({ label: 'Popularity', value: formatNumber(data.popularity) });
         }
@@ -2074,14 +2068,12 @@
           details.push({ label: 'Rank', value: `#${data.rank}` });
         }
         
-        // Studio (all)
         const studios = isAnime ? data.studios : data.production_companies || data.networks;
         if (studios?.length) {
           const studioList = studios.slice(0, 5).map(s => s.name).join(', ');
           details.push({ label: 'Studio' + (studios.length > 1 ? 's' : ''), value: studioList });
         }
         
-        // Producers (all)
         if (isAnime && data.producers?.length) {
           const producers = data.producers.slice(0, 5).map(p => p.name).join(', ');
           details.push({ label: 'Producer' + (data.producers.length > 1 ? 's' : ''), value: producers });
@@ -2090,7 +2082,6 @@
           if (producers) details.push({ label: 'Producers', value: producers });
         }
         
-        // External links
         const extLinks = [];
         if (isAnime && data.mal_id) {
           extLinks.push(`<a href="https://myanimelist.net/anime/${data.mal_id}" target="_blank" class="ext-link-btn mal"><svg width="16" height="16" viewBox="-890.88 -890.88 2805.76 2805.76"><circle cx="512" cy="512" r="512" style="fill:#2e51a2"/><path d="M432.49 410.61V590.3l-44.86-.06V479l-43.31 51.29-42.43-52.44-.43 112.75H256V410.65h47l39.79 54.29 43-54.31zm184.06 44.14.53 135.15h-50.45l-.17-61.25h-59.73c1.49 10.65 4.48 27 8.9 38 3.31 8.13 6.36 16 12.44 24.06l-36.37 24c-7.45-13.57-13.27-28.52-18.73-44.42a198.31 198.31 0 0 1-10.82-46.49c-1.81-16-2.07-31.38 2.28-47.19a83.37 83.37 0 0 1 24.77-39.81c6.68-6.25 16-10.67 23.47-14.66s15.85-5.63 23.62-7.66a158 158 0 0 1 25.41-3.9c8.49-.73 23.62-1.41 51-.6l11.63 37.31h-58.78c-12.65.17-18.73 0-28.61 4.46a47.7 47.7 0 0 0-27.26 41l56.81.7.81-38.61h49.26zM701.72 410v141.35L768 552l-9.17 37.87H656.28V409.33z" style="fill:#fff"/></svg> MyAnimeList</a>`);
@@ -2101,7 +2092,6 @@
         }
         if (extLinks.length) details.push({ label: 'External', value: `<div class="external-links">${extLinks.join('')}</div>`, isHtml: true });
         
-        // Render grid with label:value format
         grid.innerHTML = details.map(d => `
           <div class="detail-item">
             <span class="detail-label">${d.label}:</span>
@@ -2110,16 +2100,13 @@
         `).join('');
       }
 
-      // FIXED: Render seasons with proper URLs
       function renderSeasons() {
         const section = document.getElementById('seasonsSection');
         const data = currentState.data;
         const isAnime = currentState.source === 'jikan';
         
-        // Check if we have seasons to show
         let seasons = [];
         if (isAnime) {
-          // For anime: get sequel/prequel/side story from relations
           const relations = data.relations || {};
           seasons = [
             ...(relations.sequel || []),
@@ -2127,7 +2114,6 @@
             ...(relations.side_story || []).filter(r => r.type === 'anime')
           ].filter(r => r.title.toLowerCase().includes('season') || r.title.toLowerCase().includes('part') || /\d+/.test(r.title));
           
-          // Add current season as first item if not already included
           if (!seasons.some(s => s.mal_id === currentState.id)) {
             seasons.unshift({
               mal_id: currentState.id,
@@ -2136,7 +2122,6 @@
             });
           }
         } else if (currentState.type === 'tv') {
-          // For TV: use TMDB seasons data
           seasons = data.seasons?.filter(s => s.season_number > 0) || [];
         }
         
@@ -2154,14 +2139,11 @@
           const seasonNumber = season.season_number || 1;
           const slug = slugify(seasonTitle);
           
-          // FIXED: Proper URL format for seasons
           let seasonUrl, backdrop;
           if (isAnime) {
-            // Anime: use the season's own ID and title in slug
             seasonUrl = `/info/anime/jikan-${seasonId}/${slug}`;
             backdrop = season.images?.jpg?.large_image_url || '';
           } else {
-            // TV: use series ID, append season number to slug
             seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
             backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
           }
@@ -2174,7 +2156,6 @@
       }
 
       function renderTabs() {
-  
         loadCastData(); 
         loadArtworkData(); 
         loadTrailerData(); 
@@ -2276,52 +2257,53 @@
         lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('show'); });
       }
 
-      // FIXED: Tab indicator sync
+      // FIXED: Tab indicator sync logic
       function initTabSwitching() {
-  const tabs = document.querySelectorAll('.tab-btn');
-  const indicator = document.getElementById('tabIndicator');
-  const contents = document.querySelectorAll('.tab-content');
+        const tabs = document.querySelectorAll('.tab-btn');
+        const indicator = document.getElementById('tabIndicator');
+        const contents = document.querySelectorAll('.tab-content');
 
-  function positionIndicator(activeTab) {
-    if (window.innerWidth > 768 && indicator && activeTab) {
-      const container = activeTab.parentElement;
-      const rect = activeTab.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      const left = rect.left - containerRect.left;
-      const width = rect.width;
-      indicator.style.width = `${width}px`;
-      indicator.style.transform = `translateX(${left}px)`;
-    }
-  }
+        function positionIndicator(activeTab) {
+          // Only move indicator on desktop where it's visible
+          if (window.innerWidth > 768 && indicator && activeTab) {
+            const container = activeTab.parentElement;
+            const rect = activeTab.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const left = rect.left - containerRect.left;
+            const width = rect.width;
+            indicator.style.width = `${width}px`;
+            indicator.style.transform = `translateX(${left}px)`;
+          }
+        }
 
-  function activateTab(tab) {
-    tabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    positionIndicator(tab);
-    const tabName = tab.dataset.tab;
-    contents.forEach(c => c.classList.remove('active'));
-    document.getElementById(`${tabName}Tab`).classList.add('active');
-  }
+        function activateTab(tab) {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          positionIndicator(tab);
+          const tabName = tab.dataset.tab;
+          contents.forEach(c => c.classList.remove('active'));
+          document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
 
-  tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
+        tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
 
-  // Initial positioning immediately (no setTimeout)
-  const activeTab = document.querySelector('.tab-btn.active');
-  if (activeTab) {
-    if (indicator) indicator.style.transition = 'none';
-    activateTab(activeTab);
-    if (indicator) {
-      void indicator.offsetHeight; // force reflow
-      indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
-    }
-  }
+        // Initial positioning
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab) {
+          if (indicator) indicator.style.transition = 'none';
+          activateTab(activeTab);
+          if (indicator) {
+            void indicator.offsetHeight; // force reflow
+            indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
+          }
+        }
 
-  // Reposition on window resize
-  window.addEventListener('resize', () => {
-    const currentActive = document.querySelector('.tab-btn.active');
-    if (currentActive) positionIndicator(currentActive);
-  });
-}
+        // Reposition on resize
+        window.addEventListener('resize', () => {
+          const currentActive = document.querySelector('.tab-btn.active');
+          if (currentActive) positionIndicator(currentActive);
+        });
+      }
 
       async function fetchUserBookmarks() {
         if (!currentState.currentUser) return;
@@ -2567,7 +2549,26 @@
             const studio = anime.studios?.[0]?.name || "N/A";
             const slug = slugify(anime.title);
             const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-            return `<a href="${detailsUrl}" class="rec-card"><div class="rec-poster"><img src="${anime.images.jpg.large_image_url}" alt="${anime.title}" loading="lazy"><div class="rec-badges"><span class="rec-badge score">★ ${anime.score?.toFixed(1) || 'N/A'}</span><span class="rec-badge quality">HD</span></div><span class="rec-badge status ${anime.status === 'Currently Airing' ? 'airing' : 'finished'}">${anime.status === 'Currently Airing' ? 'Airing' : 'Finished'}</span></div><div class="rec-info"><div class="rec-title">${escapeHtml(anime.title)}</div><div class="rec-meta"><span>${anime.type}</span><span>${anime.episodes || 'Movie'}ep</span><span>${studio}</span></div></div></a>`;
+            // Use Type (not format), Year, Studio
+            const year = anime.aired?.from?.slice(0,4) || 'N/A';
+            return `<a href="${detailsUrl}" class="rec-card">
+              <div class="rec-poster">
+                <img src="${anime.images.jpg.large_image_url}" alt="${anime.title}" loading="lazy">
+                <div class="rec-badges">
+                  <span class="rec-badge score">★ ${anime.score?.toFixed(1) || 'N/A'}</span>
+                  <span class="rec-badge quality">HD</span>
+                </div>
+                <span class="rec-badge status ${anime.status === 'Currently Airing' ? 'airing' : 'finished'}">${anime.status === 'Currently Airing' ? 'Airing' : 'Finished'}</span>
+              </div>
+              <div class="rec-info">
+                <div class="rec-title">${escapeHtml(anime.title)}</div>
+                <div class="rec-meta">
+                  <span>${anime.type}</span>
+                  <span>${year}</span>
+                  <span>${studio}</span>
+                </div>
+              </div>
+            </a>`;
           }).join('');
         } catch (error) { 
           console.error("Sunken Treasures error:", error); 
@@ -2594,16 +2595,33 @@
         const score = item.vote_average;
         const type = currentState.type;
         const year = (item.release_date || item.first_air_date)?.slice(0,4);
-        const duration = item.runtime ? `${item.runtime} min` : (item.episode_run_time?.[0] ? `${item.episode_run_time[0]} min` : '');
+        
+        // Get first studio/production company
+        const studio = item.production_companies?.[0]?.name || item.networks?.[0]?.name || '';
         
         const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
         const slug = slugify(title);
         const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
         
-        return `<a href="${detailsUrl}" class="rec-card"><div class="rec-poster"><img src="${poster}" alt="${title}" loading="lazy"><div class="rec-badges"><span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span><span class="rec-badge quality">HD</span></div></div><div class="rec-info"><div class="rec-title">${escapeHtml(title)}</div><div class="rec-meta"><span>${type}</span>${year ? `<span>${year}</span>` : ''}${duration ? `<span>${duration}</span>` : ''}</div></div></a>`;
+        return `<a href="${detailsUrl}" class="rec-card">
+          <div class="rec-poster">
+            <img src="${poster}" alt="${title}" loading="lazy">
+            <div class="rec-badges">
+              <span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span>
+              <span class="rec-badge quality">HD</span>
+            </div>
+          </div>
+          <div class="rec-info">
+            <div class="rec-title">${escapeHtml(title)}</div>
+            <div class="rec-meta">
+              <span>${type}</span>
+              <span>${year}</span>
+              <span>${studio}</span>
+            </div>
+          </div>
+        </a>`;
       }
 
-      // FIXED: Cast tab with horizontal scroll card layout
       async function loadCastData() {
         const container = document.getElementById('castList');
         const data = currentState.data;
@@ -2611,7 +2629,6 @@
         
         if (isAnime) {
           try {
-            // Fetch from Jikan characters endpoint
             const res = await fetch(`https://api.jikan.moe/v4/anime/${currentState.id}/characters`);
             if (!res.ok) throw new Error('Jikan characters error');
             const { data: charsData } = await res.json();
@@ -2622,7 +2639,6 @@
               return;
             }
             
-            // FIXED: Horizontal scroll card layout
             container.innerHTML = `
               <div class="cast-scroll-container" onscroll="updateArrowVisibility(this)">
                 <div class="cast-scroll-inner">
@@ -2648,7 +2664,6 @@
               </div>
             `;
             
-            // Show navigation arrows on desktop
             if (window.innerWidth > 768) {
               updateArrowVisibility(container.querySelector('.cast-scroll-container'));
             }
@@ -2657,7 +2672,6 @@
             container.innerHTML = '<p class="loading-text">Failed to load cast</p>';
           }
         } else {
-          // TMDB cast
           const cast = data.credits?.cast || [];
           if (!cast.length) {
             container.innerHTML = '<p class="loading-text">No cast data available</p>';
@@ -2691,7 +2705,6 @@
         }
       }
 
-      // Show/hide navigation arrows based on scroll position
       window.updateArrowVisibility = function(container) {
         if (!container) return;
         const leftArrow = container.parentElement.querySelector('.left-arrow');
@@ -2705,7 +2718,6 @@
         rightArrow.style.display = canScrollRight ? 'flex' : 'none';
       };
 
-      // Add arrow click handlers
       document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.cast-nav-arrow.left-arrow').forEach(arrow => {
           arrow.addEventListener('click', (e) => {
@@ -2760,7 +2772,6 @@
         let trailerUrl = null;
         
         if (isAnime) {
-          // FIXED: Use trailer from /full endpoint
           trailerUrl = data.trailer?.embed_url || data.trailers?.youtube?.[0]?.url;
         } else {
           const videos = data.videos?.results || [];
@@ -2780,7 +2791,6 @@
         }
       }
 
-      // FIXED: Themes tab using AnimeThemes GraphQL API
       async function loadThemesData() {
         const container = document.getElementById('themesContainer');
         if (currentState.source !== 'jikan') { 
@@ -2795,7 +2805,6 @@
         }
         
         try {
-          // GraphQL query to find anime by MAL ID and fetch themes
           const query = `
             query GetAnimeByMalId($site: ExternalSiteEnum!, $id: Int!) {
               findAnimesByExternalSite(site: $site, id: $id) {
@@ -2850,7 +2859,6 @@
           
           let html = '';
           
-          // Opening themes
           if (ops.length) {
             html += '<h4 style="margin: 16px 0 12px">Opening Themes</h4>';
             ops.forEach((op, i) => {
@@ -2873,7 +2881,6 @@
             });
           }
           
-          // Ending themes
           if (eds.length) {
             html += '<h4 style="margin: 24px 0 12px">Ending Themes</h4>';
             eds.forEach((ed, i) => {
