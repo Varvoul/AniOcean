@@ -26,11 +26,12 @@
      ======================================== */
 
   :root {
-    /* Layout - MATCHED TO index.html */
-    --max-width: 1600px;
-    --sidebar-width: 300px;
-    --gutter: 20px;
-    --content-padding: 24px;
+    /* Layout - MATCHED TO index.html (68% main, 32% sidebar) */
+    --max-width: 100%;
+    --main-width: 68%;
+    --sidebar-width: 32%;
+    --gutter: 16px;
+    --content-padding: 16px;
     
     --bg-body: #0a1929;
     --bg-header: #0f2440;
@@ -150,21 +151,42 @@
     pointer-events: none;
   }
 
-  /* Main grid layout matching index.html */
+  /* Main grid layout - MATCHED TO INDEX.HTML */
   .info-grid {
-    display: grid;
-    grid-template-columns: 1fr var(--sidebar-width);
-    gap: var(--gutter);
-    max-width: var(--max-width);
+    display: flex;
+    gap: 0;
+    max-width: 100%;
     margin: 0 auto;
     padding: 0 var(--gutter) var(--gutter);
     width: 100%;
   }
 
-  /* Main content wrapper */
+  /* Main content wrapper - 68% like index.html */
   .main-content {
+    flex: 0 0 var(--main-width);
+    max-width: var(--main-width);
+    padding: 0 var(--content-padding);
     min-width: 0;
-    padding-right: var(--content-padding);
+  }
+
+  /* Sidebar - 32% like index.html */
+  .sidebar {
+    flex: 0 0 var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    padding: 0 var(--content-padding) 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 80px;
+    align-self: start;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 2px;
   }
 
   /* Hero Section */
@@ -876,380 +898,237 @@
   .metric-trend.up { color: var(--accent-green); }
   .metric-trend.down { color: var(--accent-red); }
 
-    /* Recommendations - FIXED GRID LAYOUT */
-/* ========================================
-   RECOMMENDATIONS GRID & CARDS
-   ======================================== */
-
-.recommendations-section { margin-bottom: 32px; }
-.recommendations-section h3 { margin-bottom: 16px; }
-
-.recs-grid {
-  display: grid;
-  gap: 16px;
-  /* Default: 2 per row (Mobile) */
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.rec-card {
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s;
-  background: transparent;
-  border: none;
-  outline: none;
-  /* FIXED: Flex layout to ensure full height consistency */
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.rec-card:hover { transform: translateY(-4px); }
-.rec-card:focus,
-.rec-card:active,
-.rec-card:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* FIXED: "Nuclear Option" for Equal Poster Heights */
-/* padding-bottom: 150% forces a perfect 2:3 ratio regardless of image source */
-.rec-poster {
-  position: relative;
-  width: 100%;
-  height: 0; 
-  padding-bottom: 150%; 
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--bg-surface);
-  /* FIXED: No extra margin below poster */
-  margin-bottom: 0; 
-  flex-shrink: 0; /* Prevents poster from shrinking */
-}
-
-.rec-poster img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* FIXED: Center top ensures we see faces/important details */
-  object-fit: cover;
-  object-position: center top; 
-}
-
-.rec-badges {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  display: flex;
-  justify-content: space-between;
-  z-index: 2;
-}
-.rec-badge {
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-.rec-badge.score {
-  background: rgba(0,0,0,0.7);
-  color: var(--accent-gold);
-}
-.rec-badge.quality {
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid #10b981;
-  color: #fff;
-}
-.rec-badge.status {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid var(--border-medium);
-}
-.rec-badge.status.airing { color: var(--accent-green); }
-.rec-badge.status.finished { color: var(--text-muted); }
-
-/* Info section fills remaining space */
-.rec-info {
-  padding: 8px 4px 0;
-  text-align: center;
-  background: transparent;
-  margin: 0;
-  flex: 1; /* Pushes content to fill vertical space */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.rec-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  line-height: 1.3;
-  min-height: 1.3em; /* Ensures consistent spacing even if title is short */
-}
-
-/* UPDATED: Simplified Metadata */
-.rec-meta {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-family: var(--font-meta);
-  margin: 0;
-  line-height: 1.4;
-}
-/* Bullet dot separator */
-.rec-meta span:not(:last-child)::after {
-  content: '•';
-  margin: 0 4px;
-  color: var(--text-muted);
-  opacity: 0.8;
-}
-
-/* Hover Play Icon Overlay */
-.rec-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  border-radius: 10px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 5;
-}
-.rec-card:hover::after {
-  opacity: 1;
-  content: '\f144';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
-  font-size: 2rem;
-  color: var(--accent-cyan);
-}    
-  /* Remove focus/active outlines on click */
-  .rec-card:focus,
-  .rec-card:active,
-  .rec-card:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
+  /* Recommendations - MATCHING INDEX.HTML GRID LAYOUT */
+  .recommendations-section { margin-bottom: 32px; }
+  .recommendations-section h3 { margin-bottom: 16px; }
+  
+  .recs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+    gap: 16px;
+  }
+  
+  @media (min-width: 768px) {
+    .recs-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+  }
+  
+  @media (min-width: 1201px) {
+    .recs-grid {
+      grid-template-columns: repeat(7, 1fr);
+    }
+  }
+  
+  @media (max-width: 1200px) and (min-width: 769px) {
+    .recs-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    .recs-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .recs-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .rec-card {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+    position: relative;
+    text-decoration: none;
+    display: block;
+  }
+  
+  .rec-card:hover {
+    transform: translateY(-3px);
   }
   
   .rec-poster {
+    width: 100%;
+    aspect-ratio: 3/4.5;
+    background-size: cover;
+    background-position: center;
+    border-radius: 0;
     position: relative;
-    /* Portrait shape: 2/3 aspect ratio */
-    aspect-ratio: 2/3;
-    border-radius: 10px;
     overflow: hidden;
-    background: var(--bg-surface);
-    /* FIXED: No extra margin/padding below poster */
     margin-bottom: 0;
+    background-color: var(--bg-card);
   }
+  
   .rec-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
   
-  .rec-badges {
+  .quality-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    display: flex;
-    justify-content: space-between;
-    z-index: 2;
-  }
-  .rec-badge {
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 700;
-  }
-  .rec-badge.score {
-    background: rgba(0,0,0,0.7);
-    color: var(--accent-gold);
-  }
-  .rec-badge.quality {
-    background: rgba(16, 185, 129, 0.2);
-    border: 1px solid #10b981;
+    top: 6px;
+    left: 6px;
+    background: rgba(0, 0, 0, 0.7);
     color: #fff;
+    font-size: 0.62rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 2;
+    font-weight: 600;
   }
-  .rec-badge.status {
+  
+  .score-badge {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--accent-gold);
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 2;
     font-weight: 600;
-    background: rgba(0,0,0,0.6);
-    border: 1px solid var(--border-medium);
-  }
-  .rec-badge.status.airing { color: var(--accent-green); }
-  .rec-badge.status.finished { color: var(--text-muted); }
-  
-  /* FIXED: Info overlaying background, centered, no extra bg space */
-  .rec-info {
-    padding: 6px 2px 0;
-    text-align: center;
-    /* Ensure it sits directly on the page background - no background color */
-    background: transparent;
-    margin: 0;
-  }
-  .rec-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 0 0 3px 0;
-    color: var(--text-primary);
-    line-height: 1.3;
-  }
-  .rec-meta {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    font-family: var(--font-meta);
-    margin: 0;
-    line-height: 1.4;
-  }
-  .rec-meta span:not(:last-child)::after {
-    content: '•';
-    margin: 0 4px;
-    color: var(--text-muted);
-    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
   
-  /* Hover Play Icon Overlay */
-  .rec-card::after {
-    content: '';
+  .play-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.4);
-    border-radius: 10px;
-    opacity: 0;
-    transition: opacity 0.2s;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
-    z-index: 5;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    border-radius: var(--radius-md);
   }
-  .rec-card:hover::after {
+  
+  .play-overlay svg {
+    width: 36px;
+    height: 36px;
+    fill: #fff;
+  }
+  
+  .rec-card:hover .play-overlay {
     opacity: 1;
-    content: '\f144';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    font-size: 2rem;
-    color: var(--accent-cyan);
+  }
+  
+  .rec-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px 8px 8px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    color: #fff;
+    pointer-events: none;
+  }
+  
+  .rec-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    margin: 0;
+  }
+  
+  .rec-meta {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
   }
 
-  /* Sidebar */
-  .sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    position: sticky;
-    top: 80px;
-    align-self: start;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-    padding-left: var(--content-padding);
-    border-left: 1px solid var(--border-subtle);
-  }
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-thumb {
-    background: var(--border-medium);
-    border-radius: 2px;
-  }
+  /* Sidebar Sections */
   .sidebar-section {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  .sidebar-section:first-child {
+    margin-top: 0;
   }
   .sidebar-section h4 {
+    padding: 10px 12px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
+    justify-content: space-between;
     border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
   }
   .sidebar-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    padding: 0;
+    margin: 0;
   }
-  .sidebar-item {
-    display: grid;
-    grid-template-columns: 56px 1fr;
-    gap: 12px;
+  .sidebar-list-item {
+    display: flex;
+    gap: 10px;
     align-items: center;
     padding: 8px;
-    border-radius: 10px;
-    transition: background 0.15s;
+    border-radius: var(--radius-sm);
     cursor: pointer;
+    transition: background var(--transition-fast);
+    margin-bottom: 4px;
+    text-decoration: none;
+    color: inherit;
   }
-  .sidebar-item:hover { background: rgba(255,255,255,0.05); }
-  .sidebar-item .rank {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--accent-cyan);
-    width: 24px;
-    text-align: center;
-  }
-  .sidebar-poster {
-    width: 56px;
-    aspect-ratio: 2/3;
-    border-radius: 8px;
-    object-fit: cover;
+  .sidebar-list-item:hover {
     background: var(--bg-surface);
   }
-  .sidebar-info { min-width: 0; }
-  .sidebar-title {
-    font-size: 0.9rem;
+  .sidebar-rank {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.12);
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+    font-family: var(--font-title);
+  }
+  .sidebar-poster {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    background: var(--bg-card);
+  }
+  .sidebar-info h4 {
+    font-size: 0.8rem;
     font-weight: 600;
+    color: #fff;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 4px;
+    white-space: normal;
+    line-height: 1.3;
+    margin: 0;
   }
-  .sidebar-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    font-size: 0.75rem;
+  .side-meta {
+    font-size: 0.6875rem;
     color: var(--text-muted);
-  }
-  .sidebar-meta .score {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    color: var(--accent-gold);
-    font-weight: 600;
-  }
-  .sidebar-meta .lang-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.65rem;
+    margin-top: 2px;
   }
 
   /* Alert Popup */
@@ -1330,49 +1209,16 @@
     box-shadow: 0 25px 80px rgba(0,0,0,0.6);
   }
 
-  /* Responsive Breakpoints for Recommendations Grid */
-  /* Computer: 7 shows per row */
-@media (min-width: 1201px) {
-  .recs-grid { grid-template-columns: repeat(7, 1fr); gap: 14px; }
-}
-
-media (max-width: 1200px) and (min-width: 769px) {
-  .recs-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
-}
-
-/* Mobile Landscape: 3 shows per row */
-media (max-width: 768px) and (orientation: landscape) {
-  .recs-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
-}
-  .rec-poster { border-radius: 8px; }
-  .rec-title { font-size: 0.85rem; }
-  .rec-meta { font-size: 0.7rem; }
-}
-
-/* Mobile Portrait: 2 shows per row */
-media (max-width: 480px) {
-  .recs-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-}
-  .rec-title { font-size: 0.82rem; }
-  .rec-meta { font-size: 0.68rem; }
-}
-
-  /* Main Layout Breakpoints */
-  @media (max-width: 1200px) {
-    :root {
-      --max-width: 1200px;
-      --sidebar-width: 280px;
-      --gutter: 16px;
-    }
-  }
-
-  @media (max-width: 992px) {
+  /* Responsive Breakpoints */
+  @media (max-width: 1024px) {
     .info-grid {
-      grid-template-columns: 1fr;
+      flex-direction: column;
       padding: 0 var(--gutter) var(--gutter);
     }
-    .main-content {
-      padding-right: 0;
+    .main-content, .sidebar {
+      flex: 1;
+      max-width: 100%;
+      padding: 0;
     }
     .sidebar {
       position: static;
@@ -1380,10 +1226,10 @@ media (max-width: 480px) {
       flex-direction: row;
       flex-wrap: wrap;
       overflow: visible;
-      padding-left: 0;
       border-left: none;
       border-top: 1px solid var(--border-subtle);
       padding-top: var(--gutter);
+      margin-top: var(--gutter);
     }
     .sidebar-section {
       flex: 1 1 calc(50% - 10px);
@@ -1548,6 +1394,8 @@ media (max-width: 480px) {
     .alert-content p { margin: 0; }
     .alert-close { margin: 0; }
     .sidebar-section { padding: 12px; }
+    
+    .recs-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   /* Landscape mobile */
@@ -1666,7 +1514,7 @@ media (max-width: 480px) {
 
     <!-- Main Content Grid -->
     <div class="info-grid">
-      <!-- Left: Main Content -->
+      <!-- Left: Main Content (68%) -->
       <div class="main-content">
         
         <!-- Poster & Title Section -->
@@ -1846,18 +1694,18 @@ media (max-width: 480px) {
 
       </div>
 
-      <!-- Right Sidebar -->
+      <!-- Right Sidebar (32%) - MATCHED TO INDEX.HTML -->
       <aside class="sidebar" id="sidebar">
         <section class="sidebar-section">
-          <h4><i class="fa-regular fa-gem" style="color: var(--accent-cyan);"></i> Hidden Gem</h4>
+          <h4>💎 Hidden Gem</h4>
           <div class="sidebar-list" id="hiddenGemList"></div>
         </section>
         <section class="sidebar-section">
-          <h4><i class="fa-solid fa-star" style="color: var(--accent-cyan);"></i> Top Ranking</h4>
+          <h4>⭐ Top Ranking</h4>
           <div class="sidebar-list" id="topRankingList"></div>
         </section>
         <section class="sidebar-section">
-          <h4><i class="fa-solid fa-heart" style="color: var(--accent-cyan);"></i> Most Favourite</h4>
+          <h4>❤️ Most Favourite</h4>
           <div class="sidebar-list" id="mostFavouriteList"></div>
         </section>
       </aside>
@@ -2659,7 +2507,14 @@ media (max-width: 480px) {
         const slug = slugify(title);
         const detailsUrl = `/info/${urlType}/${source}-${id}/${slug}`;
         
-        return `<a href="${detailsUrl}" class="sidebar-item">${showRank ? `<span class="rank">${rank}</span>` : ''}<img src="${poster}" alt="${title}" class="sidebar-poster" loading="lazy"><div class="sidebar-info"><div class="sidebar-title">${escapeHtml(title)}</div><div class="sidebar-meta"><span class="score"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span><span>${type}</span>${year ? `<span>${year}</span>` : ''}${genres ? `<span>${genres}</span>` : ''}${studio ? `<span>${studio}</span>` : ''}${langBadges}${popularity ? `<span>Pop: ${formatNumber(popularity)}</span>` : ''}${itemRank ? `<span>${itemRank}</span>` : ''}</div></div></a>`;
+        return `<a href="${detailsUrl}" class="sidebar-list-item">
+          ${showRank ? `<span class="sidebar-rank">${rank}</span>` : ''}
+          <img class="sidebar-poster" src="${poster}" alt="${title}" loading="lazy" onerror="this.style.display='none'">
+          <div class="sidebar-info">
+            <h4>${escapeHtml(title)}</h4>
+            <div class="side-meta">⭐ ${score?.toFixed(1) || 'N/A'} · ${type}${year ? ` · ${year}` : ''}</div>
+          </div>
+        </a>`;
       }
 
       async function loadRecommendations() {
@@ -2685,132 +2540,99 @@ media (max-width: 480px) {
         }
       }
 
+      function renderRecCard(item) {
+        const title = item.title || item.name;
+        const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+        const score = item.vote_average;
+        const type = currentState.type;
+        const year = (item.release_date || item.first_air_date)?.slice(0, 4) || 'N/A';
+        
+        const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+        const slug = slugify(title);
+        const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
+        
+        return `<a href="${detailsUrl}" class="rec-card">
+          <div class="rec-poster" style="background-image: url('${poster}')">
+            <span class="quality-badge">HD</span>
+            <span class="score-badge">⭐ ${score?.toFixed(1) || 'N/A'}</span>
+            <div class="play-overlay">
+              <svg viewBox="0 0 24 24">
+                <polygon points="5,3 19,12 5,21" fill="white"/>
+              </svg>
+            </div>
+          </div>
+          <div class="rec-info">
+            <div class="rec-meta">${type.toUpperCase()} · ${year}</div>
+            <div class="rec-title">${escapeHtml(title)}</div>
+          </div>
+        </a>`;
+      }
+
       async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
         const gridContainer = document.getElementById('sunkenTreasuresGrid');
         const loaderMessage = document.getElementById('jikanRecLoading');
         if (currentState.source === 'jikan') return;
+        
         let jikanType = activeType === 'movie' ? 'movie' : 'tv';
         let targetGenres = [];
         const originCountry = currentShow?.origin_country?.[0] || 'US';
+        
         if (originCountry === 'CN' || originCountry === 'KR') jikanType = 'ona';
-        if (currentShow?.genres?.length > 0) currentShow.genres.forEach(genre => { if (TMDB_TO_JIKAN_GENRES[genre.id]) targetGenres.push(TMDB_TO_JIKAN_GENRES[genre.id]); });
+        if (currentShow?.genres?.length > 0) {
+          currentShow.genres.forEach(genre => {
+            if (TMDB_TO_JIKAN_GENRES[genre.id]) {
+              targetGenres.push(TMDB_TO_JIKAN_GENRES[genre.id]);
+            }
+          });
+        }
+        
         const jikanUrl = new URL("https://api.jikan.moe/v4/anime");
-        jikanUrl.searchParams.append("type", jikanType); jikanUrl.searchParams.append("order_by", "popularity");
-        jikanUrl.searchParams.append("sort", "asc"); jikanUrl.searchParams.append("limit", "30"); jikanUrl.searchParams.append("sfw", "true");
-        if (targetGenres.length > 0) jikanUrl.searchParams.append("genres", targetGenres.slice(0, 3).join(','));
+        jikanUrl.searchParams.append("type", jikanType);
+        jikanUrl.searchParams.append("order_by", "popularity");
+        jikanUrl.searchParams.append("sort", "asc");
+        jikanUrl.searchParams.append("limit", "30");
+        jikanUrl.searchParams.append("sfw", "true");
+        if (targetGenres.length > 0) {
+          jikanUrl.searchParams.append("genres", targetGenres.slice(0, 3).join(','));
+        }
+        
         try {
           const response = await fetch(jikanUrl.toString());
           if (!response.ok) throw new Error("Jikan error");
-          const payload = await response.json(); 
+          const payload = await response.json();
           loaderMessage.style.display = "none";
-          if (!payload.data?.length) { 
-            gridContainer.innerHTML = `<div class="loading-text">No anime recommendations found</div>`; 
-            return; 
+          
+          if (!payload.data?.length) {
+            gridContainer.innerHTML = `<div class="loading-text">No anime recommendations found</div>`;
+            return;
           }
-          const currentGenres = currentShow?.genres?.map(g => g.name) || [];
+          
           gridContainer.innerHTML = payload.data.slice(0, 30).map(anime => {
-            const badge = generateSunkenBadge(anime, currentGenres);
-            const studio = anime.studios?.[0]?.name || "N/A";
+            const year = anime.aired?.from?.slice(0, 4) || 'N/A';
             const slug = slugify(anime.title);
             const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-            // Use Type, Year, Duration (in minutes), Studio
-            const year = anime.aired?.from?.slice(0,4) || 'N/A';
-            const duration = formatDurationForRec(anime.duration);
+            
             return `<a href="${detailsUrl}" class="rec-card">
-              <div class="rec-poster">
-                <img src="${anime.images.jpg.large_image_url}" alt="${anime.title}" loading="lazy">
-                <div class="rec-badges">
-                  <span class="rec-badge score">★ ${anime.score?.toFixed(1) || 'N/A'}</span>
-                  <span class="rec-badge quality">HD</span>
+              <div class="rec-poster" style="background-image: url('${anime.images.jpg.large_image_url}')">
+                <span class="quality-badge">HD</span>
+                <span class="score-badge">⭐ ${anime.score?.toFixed(1) || 'N/A'}</span>
+                <div class="play-overlay">
+                  <svg viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21" fill="white"/>
+                  </svg>
                 </div>
-                <span class="rec-badge status ${anime.status === 'Currently Airing' ? 'airing' : 'finished'}">${anime.status === 'Currently Airing' ? 'Airing' : 'Finished'}</span>
               </div>
               <div class="rec-info">
+                <div class="rec-meta">${anime.type || 'TV'} · ${year}</div>
                 <div class="rec-title">${escapeHtml(anime.title)}</div>
-                <div class="rec-meta">
-                  <span>${anime.type}</span>
-                  <span>${year}</span>
-                  <span>${duration}</span>
-                  <span>${studio}</span>
-                </div>
               </div>
             </a>`;
           }).join('');
-        } catch (error) { 
-          console.error("Sunken Treasures error:", error); 
-          loaderMessage.innerText = "Failed to load recommendations"; 
+          
+        } catch (error) {
+          console.error("Sunken Treasures error:", error);
+          loaderMessage.innerText = "Failed to load recommendations";
         }
-      }
-
-      function generateSunkenBadge(anime, currentShowGenres = []) {
-        const score = anime.score || 0, popularity = anime.popularity || 0;
-        if (score >= 7.2 && popularity > 1500) return { label: "Deep Dive", class: "badge-deep-dive" };
-        if (score >= 7.6 && popularity > 500) return { label: "Hidden Gem", class: "badge-hidden-gem" };
-        if (popularity > 0 && popularity <= 200) return { label: "High Tide", class: "badge-high-tide" };
-        if (anime.genres?.length) { 
-          const match = anime.genres.find(g => currentShowGenres.includes(g.name)); 
-          if (match) return { label: `${match.name} Match`, class: "badge-genre-match" }; 
-          return { label: `${anime.genres[0].name} Choice`, class: "badge-genre-match" }; 
-        }
-        return { label: "Recommended", class: "badge-default" };
-      }
-
-      function renderRecCard(item) {
-  const title = item.title || item.name;
-  const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-  const score = item.vote_average;
-  const type = currentState.type;
-  const year = (item.release_date || item.first_air_date)?.slice(0,4) || 'N/A';
-  
-  // Get first studio/production company
-  const studio = item.production_companies?.[0]?.name || 
-                 item.networks?.[0]?.name || 
-                 'N/A';
-  
-  // Format duration - TMDB discover API doesn't return runtime
-  // We'll show a placeholder or try to estimate
-  let duration = 'N/A';
-  if (currentState.type === 'movie') {
-    // Movies typically 90-180 min, but we don't have exact data
-    duration = 'Movie';
-  } else if (currentState.type === 'tv') {
-    // TV episodes typically 20-60 min
-    duration = 'TV';
-  }
-  
-  const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
-  const slug = slugify(title);
-  const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
-  
-  return `<a href="${detailsUrl}" class="rec-card">
-    <div class="rec-poster">
-      <img src="${poster}" alt="${title}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 300%22><rect fill=%22%231e2633%22 width=%22200%22 height=%22300%22/></svg>'">
-      <div class="rec-badges">
-        <span class="rec-badge score">★ ${score?.toFixed(1) || 'N/A'}</span>
-        <span class="rec-badge quality">HD</span>
-      </div>
-    </div>
-    <div class="rec-info">
-      <div class="rec-title">${escapeHtml(title)}</div>
-      <div class="rec-meta">
-        <span>${type.toUpperCase()}</span>
-        <span>${year}</span>
-        <span>${studio !== 'N/A' ? studio : type.toUpperCase()}</span>
-      </div>
-    </div>
-  </a>`;
-}
-      
-      // Helper: Format duration for recommendation cards (shows minutes only)
-      function formatDurationForRec(durationStr) {
-        if (!durationStr || durationStr === 'Unknown') return '—';
-        // Parse "24 min per ep" -> "24min", "1 hr per ep" -> "60min"
-        const match = durationStr.match(/(\d+)\s*(min|hr|hour)/i);
-        if (!match) return '—';
-        let mins = parseInt(match[1]);
-        const unit = match[2].toLowerCase();
-        if (unit === 'hr' || unit === 'hour') mins *= 60;
-        return `${mins}min`;
       }
 
       async function loadCastData() {
