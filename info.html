@@ -2633,30 +2633,6 @@ img { max-width: 100%; height: auto; display: block; }
           </div>
         </a>`;
       }
-
-      // Helper: renders one anime recommendation card
-function renderAnimeRecCard(anime) {
-  const title = anime.title_english || anime.title;
-  const poster = anime.images?.jpg?.large_image_url || '';
-  const year = anime.aired?.from?.slice(0, 4) || 'N/A';
-  const type = anime.type || 'TV';
-  const slug = slugify(title);
-  const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-
-  return `<a href="${detailsUrl}" class="rec-card">
-    <div class="rec-poster" style="background-image: url('${poster}')">
-      <span class="quality-badge">HD</span>
-      <span class="score-badge">⭐ ${(anime.score || 0).toFixed(1)}</span>
-      <div class="play-overlay">
-        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
-      </div>
-    </div>
-    <div class="rec-info">
-      <div class="rec-meta">${type} · ${year}</div>
-      <div class="rec-title">${escapeHtml(title)}</div>
-    </div>
-  </a>`;
-}
       
  async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
@@ -2726,6 +2702,39 @@ function renderAnimeRecCard(anime) {
       <i class="fa-solid fa-triangle-exclamation"></i> Could not load anime
     </div>`;
   }
+}
+
+      function renderAnimeRecCard(anime) {
+  const title = anime.title_english || anime.title || 'Unknown';
+  const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
+  const score = anime.score;
+  const year = anime.aired?.from?.slice(0, 4) || 'N/A';
+  const episodes = anime.episodes || '?';
+  const type = anime.type || 'TV';
+  const slug = slugify(title);
+  const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+  
+  // Fallback poster if image fails to load
+  const posterStyle = poster 
+    ? `background-image: url('${poster}')` 
+    : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
+  
+  return `<a href="${detailsUrl}" class="rec-card">
+    <div class="rec-poster" style="${posterStyle}">
+      ${poster ? `<img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
+      <span class="quality-badge">${type}</span>
+      <span class="score-badge"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span>
+      <div class="play-overlay">
+        <svg viewBox="0 0 24 24">
+          <polygon points="5,3 19,12 5,21" fill="white"/>
+        </svg>
+      </div>
+    </div>
+    <div class="rec-info">
+      <div class="rec-meta">${episodes} eps · ${year}</div>
+      <div class="rec-title">${escapeHtml(title)}</div>
+    </div>
+  </a>`;
 }
 
       async function loadCastData() {
