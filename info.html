@@ -2635,6 +2635,13 @@ img { max-width: 100%; height: auto; display: block; }
       }
       
  async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
+   console.log('🔍 DEBUG - Sunken Treasures called with:', {
+    source: currentState.source,
+    type: currentState.type,
+    id: currentState.id,
+    hasData: !!currentShow,
+    genres: currentShow?.genres?.length || 0
+  });
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
   const loaderMessage = document.getElementById('jikanRecLoading');
   
