@@ -3326,12 +3326,10 @@ img { max-width: 100%; height: auto; display: block; }
 
   </script>
 
-  
-   <script>
+  <script>
   (function() {
     'use strict';
 
-    // ── Theme & Demographic IDs (embedded) ──
     const ANIME_THEMES = [
       { id: 3, name: "Racing" },{ id: 6, name: "Mythology" },{ id: 11, name: "Strategy Game" },
       { id: 13, name: "Historical" },{ id: 17, name: "Martial Arts" },{ id: 18, name: "Mecha" },
@@ -3358,27 +3356,27 @@ img { max-width: 100%; height: auto; display: block; }
       { id: 42, name: "Seinen" },{ id: 43, name: "Josei" }
     ];
 
-    // ── Build unique combos (theme + demographic) ──
     const combos = [];
     ANIME_THEMES.forEach(theme => {
       ANIME_DEMOGRAPHICS.forEach(demo => {
         combos.push({ themeId: theme.id, demoId: demo.id, label: `${theme.name} + ${demo.name}` });
       });
     });
-    const TOTAL_PAGES = combos.length;   // 48 * 5 = 240
+    const TOTAL_PAGES = combos.length;   // 240
 
-    // ── State & cache ──
     let currentPage = 1;
     const cache = {};
 
     const gridEl = document.getElementById('recfGrid');
     const paginationEl = document.getElementById('recfPagination');
 
-    // ── Fetch anime for a given combo index ──
     async function fetchAnimeForCombo(comboIndex) {
       if (cache[comboIndex]) return cache[comboIndex];
       const combo = combos[comboIndex];
-      const url = `https://api.jikan.moe/v4/anime?genres=${combo.themeId},${combo.demoId}&limit=25&sfw=true`;
+
+      // 🔥 New filtering: TV, score 7.0‑9.6, ordered by popularity
+      const url = `https://api.jikan.moe/v4/anime?genres=${combo.themeId},${combo.demoId}&type=tv&min_score=7&max_score=9.6&order_by=popularity&sort=desc&limit=25&sfw=true`;
+
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -3392,7 +3390,7 @@ img { max-width: 100%; height: auto; display: block; }
       }
     }
 
-    // ── Render one card (homepage style + custom badges) ──
+    // renderCard remains identical (it already uses score, poster, etc.)
     function renderCard(anime) {
       const title = anime.title_english || anime.title || 'Untitled';
       const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
@@ -3405,7 +3403,6 @@ img { max-width: 100%; height: auto; display: block; }
       if (season) metaParts.push(season);
       const metaStr = metaParts.join(' · ');
 
-      // ⚠️ Jikan doesn't provide sub/dub counts; using '?' as placeholder
       const subCount = '?';
       const dubCount = '?';
 
@@ -3431,7 +3428,7 @@ img { max-width: 100%; height: auto; display: block; }
       `;
     }
 
-    // ── Render pagination (Previous / page numbers / Next) ──
+    // pagination and page loading unchanged
     function renderPagination() {
       const maxVisible = window.innerWidth < 1025 ? 5 : 7;
       let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -3459,7 +3456,6 @@ img { max-width: 100%; height: auto; display: block; }
         </button>
       `;
 
-      // Attach events
       paginationEl.querySelectorAll('.pagination-page').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const page = parseInt(e.currentTarget.dataset.page, 10);
@@ -3472,16 +3468,12 @@ img { max-width: 100%; height: auto; display: block; }
       if (nextBtn) nextBtn.addEventListener('click', () => { if (currentPage < TOTAL_PAGES) loadPage(currentPage + 1); });
     }
 
-    // ── Load a specific page ──
     async function loadPage(page) {
       currentPage = page;
       renderPagination();
-
       gridEl.innerHTML = '<div class="loading-text">Loading recommendations…</div>';
-
       const comboIndex = page - 1;
       const animeList = await fetchAnimeForCombo(comboIndex);
-
       if (animeList.length === 0) {
         gridEl.innerHTML = '<p class="loading-text">No anime found for this combination.</p>';
       } else {
@@ -3489,23 +3481,17 @@ img { max-width: 100%; height: auto; display: block; }
       }
     }
 
-    // ── Init ──
-    function initRecommendedForYou() {
+    function init() {
       loadPage(1);
-      window.addEventListener('resize', () => {
-        // re-render pagination if needed (visible pages may change)
-        renderPagination();
-      });
+      window.addEventListener('resize', () => renderPagination());
     }
-
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initRecommendedForYou);
+      document.addEventListener('DOMContentLoaded', init);
     } else {
-      initRecommendedForYou();
+      init();
     }
   })();
-  
-  </script>
+</script>
 
   <script>
   (function() {
