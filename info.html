@@ -1504,6 +1504,125 @@ img { max-width: 100%; height: auto; display: block; }
   outline: none;
   box-shadow: none;
 }
+
+    /* === RECOMMENDED FOR YOU – GRID & CARDS === */
+.recf-grid {
+  display: grid;
+  gap: 16px;
+}
+/* Mobile portrait: 2 per row */
+@media (max-width: 480px) and (orientation: portrait) {
+  .recf-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* Mobile landscape: 3 per row */
+@media (max-width: 768px) and (orientation: landscape) {
+  .recf-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* Tablet portrait: 4 per row */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .recf-grid { grid-template-columns: repeat(4, 1fr); }
+}
+/* Desktop: 7 per row */
+@media (min-width: 1025px) {
+  .recf-grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+.recf-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-md);
+  overflow: visible;        /* title floats outside */
+  position: relative;
+  transition: transform var(--transition-fast);
+}
+.recf-card:hover {
+  transform: scale(1.02);
+}
+.recf-card:focus-visible,
+.recf-card:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.recf-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4.5;          /* portrait shape */
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.recf-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;            /* adapt image */
+  display: block;
+}
+
+/* Badges inside poster */
+.recf-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.recf-badge.score {
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.65);
+  color: var(--accent-gold);
+}
+.recf-badge.sub {
+  bottom: 8px;
+  left: 8px;
+  background: rgba(49,132,192,0.25);
+  border: 1px solid #3184c4;
+  color: #fff;
+}
+.recf-badge.dub {
+  bottom: 8px;
+  left: calc(8px + 80px);       /* next to sub badge */
+  background: rgba(239,68,68,0.25);
+  border: 1px solid #ef4444;
+  color: #fff;
+}
+
+/* Title & meta float below poster */
+.recf-info {
+  text-align: center;
+  padding: 6px 0 0 0;           /* no extra space */
+  color: var(--text-primary);
+  pointer-events: none;
+}
+.recf-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.recf-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pagination container */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
   </style>
 </head>
 <body>
@@ -1710,6 +1829,17 @@ img { max-width: 100%; height: auto; display: block; }
             <!-- Dynamically populated -->
           </div>
         </section>
+
+        <!-- Recommended for You -->
+<section class="recommendations-section" id="recommendedForYouSection">
+  <h3>Recommended for You</h3>
+  <div class="recf-grid" id="recfGrid">
+    <!-- Cards will be rendered here -->
+  </div>
+  <div class="pagination-container" id="recfPagination">
+    <!-- Pagination injected by JS -->
+  </div>
+</section>
 
         <!-- Sunken Treasures -->
         <section class="recommendations-section">
@@ -3108,16 +3238,264 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
     })();
-  </script>
-  <!-- Add before </body> for testing only -->
-<button id="debugRecs" style="position:fixed;bottom:10px;left:10px;z-index:9999;padding:8px 16px;background:#2b6cb0;color:white;border:none;border-radius:6px;cursor:pointer">
-  🔧 Debug Recs
-</button>
-<script>
-document.getElementById('debugRecs')?.addEventListener('click', async () => {
-  console.log('🔄 Force reloading recommendations...');
-  await loadPersonalizedAnimeRecs(currentState.data, currentState.type);
-});
+
+    <script>
+  (function() {
+    'use strict';
+
+    // ------------------------------------------------------------
+    // Theme & Demographic IDs (embedded directly)
+    // ------------------------------------------------------------
+    const ANIME_THEMES = [
+      { id: 3, name: "Racing" },
+      { id: 6, name: "Mythology" },
+      { id: 11, name: "Strategy Game" },
+      { id: 13, name: "Historical" },
+      { id: 17, name: "Martial Arts" },
+      { id: 18, name: "Mecha" },
+      { id: 19, name: "Music" },
+      { id: 20, name: "Parody" },
+      { id: 21, name: "Samurai" },
+      { id: 23, name: "School" },
+      { id: 29, name: "Space" },
+      { id: 31, name: "Super Power" },
+      { id: 32, name: "Vampire" },
+      { id: 35, name: "Harem" },
+      { id: 38, name: "Military" },
+      { id: 39, name: "Detective" },
+      { id: 40, name: "Psychological" },
+      { id: 48, name: "Workplace" },
+      { id: 50, name: "Adult Cast" },
+      { id: 51, name: "Anthropomorphic" },
+      { id: 52, name: "CGDCT" },
+      { id: 53, name: "Childcare" },
+      { id: 54, name: "Combat Sports" },
+      { id: 55, name: "Delinquents" },
+      { id: 56, name: "Educational" },
+      { id: 57, name: "Gag Humor" },
+      { id: 58, name: "Gore" },
+      { id: 59, name: "High Stakes Game" },
+      { id: 60, name: "Idols (Female)" },
+      { id: 61, name: "Idols (Male)" },
+      { id: 62, name: "Isekai" },
+      { id: 63, name: "Iyashikei" },
+      { id: 64, name: "Love Polygon" },
+      { id: 65, name: "Magical Sex Shift" },
+      { id: 66, name: "Mahou Shoujo" },
+      { id: 67, name: "Medical" },
+      { id: 68, name: "Organized Crime" },
+      { id: 69, name: "Otaku Culture" },
+      { id: 70, name: "Performing Arts" },
+      { id: 71, name: "Pets" },
+      { id: 72, name: "Reincarnation" },
+      { id: 73, name: "Reverse Harem" },
+      { id: 74, name: "Love Status Quo" },
+      { id: 75, name: "Showbiz" },
+      { id: 76, name: "Survival" },
+      { id: 77, name: "Team Sports" },
+      { id: 78, name: "Time Travel" },
+      { id: 79, name: "Video Game" },
+      { id: 80, name: "Visual Arts" },
+      { id: 81, name: "Crossdressing" },
+      { id: 82, name: "Urban Fantasy" },
+      { id: 83, name: "Villainess" }
+    ];
+
+    const ANIME_DEMOGRAPHICS = [
+      { id: 15, name: "Kids" },
+      { id: 25, name: "Shoujo" },
+      { id: 27, name: "Shounen" },
+      { id: 42, name: "Seinen" },
+      { id: 43, name: "Josei" }
+    ];
+
+    // ------------------------------------------------------------
+    // Build unique combos (theme + demo)
+    // ------------------------------------------------------------
+    const combos = [];
+    ANIME_THEMES.forEach(theme => {
+      ANIME_DEMOGRAPHICS.forEach(demo => {
+        combos.push({
+          themeId: theme.id,
+          demoId: demo.id,
+          label: `${theme.name} + ${demo.name}`
+        });
+      });
+    });
+    const TOTAL_PAGES = combos.length;   // 48 * 5 = 240
+
+    // ------------------------------------------------------------
+    // State & cache
+    // ------------------------------------------------------------
+    let currentPage = 1;
+    const cache = {};                   // cache fetched anime arrays by combo index
+
+    const gridEl = document.getElementById('recfGrid');
+    const paginationEl = document.getElementById('recfPagination');
+
+    // ------------------------------------------------------------
+    // Fetch anime for a given combo index
+    // ------------------------------------------------------------
+    async function fetchAnimeForCombo(comboIndex) {
+      if (cache[comboIndex]) return cache[comboIndex];
+
+      const combo = combos[comboIndex];
+      // Jikan max limit is 25; use 25 to match the page requirement
+      const url = `https://api.jikan.moe/v4/anime?genres=${combo.themeId},${combo.demoId}&limit=25&sfw=true`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const animeList = json.data || [];
+        cache[comboIndex] = animeList;
+        return animeList;
+      } catch (err) {
+        console.error('Jikan fetch error:', err);
+        return [];
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Render one anime card
+    // ------------------------------------------------------------
+    function renderCard(anime) {
+      const title = anime.title_english || anime.title || 'Untitled';
+      const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
+      const score = anime.score ? anime.score.toFixed(1) : '?';
+      const year = anime.aired?.from ? new Date(anime.aired.from).getFullYear() : '';
+      const season = anime.season ? anime.season.charAt(0).toUpperCase() + anime.season.slice(1) : '';
+      const type = anime.type || 'TV';
+      const metaParts = [type];
+      if (year) metaParts.push(year);
+      if (season) metaParts.push(season);
+      const metaStr = metaParts.join(' · ');
+
+      // Note: Jikan does NOT provide sub/dub episode counts.
+      // We display placeholders; you can integrate AllAnime API if needed.
+      const subCount = '?';   // could be fetched from AllAnime in the future
+      const dubCount = '?';
+
+      const slug = (title || 'anime').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+
+      return `
+        <a href="${detailsUrl}" class="recf-card">
+          <div class="recf-poster">
+            ${poster ? `<img src="${poster}" alt="${title}" loading="lazy">` : ''}
+            <span class="recf-badge score"><i class="fa-solid fa-star"></i> ${score}</span>
+            <span class="recf-badge sub"><i class="fa-solid fa-closed-captioning"></i> ${subCount}</span>
+            <span class="recf-badge dub"><i class="fa-solid fa-microphone"></i> ${dubCount}</span>
+          </div>
+          <div class="recf-info">
+            <div class="recf-title">${title}</div>
+            <div class="recf-meta">${metaStr}</div>
+          </div>
+        </a>
+      `;
+    }
+
+    // ------------------------------------------------------------
+    // Render pagination component
+    // ------------------------------------------------------------
+    function renderPagination() {
+      const maxVisible = window.innerWidth < 1025 ? 5 : 7;   // mobile/tablet = 5, desktop = 7
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = startPage + maxVisible - 1;
+      if (endPage > TOTAL_PAGES) {
+        endPage = TOTAL_PAGES;
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      const pages = [];
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+
+      const isFirst = currentPage === 1;
+      const isLast = currentPage === TOTAL_PAGES;
+
+      paginationEl.innerHTML = `
+        <nav class="flex items-center gap-x-1">
+          <button type="button" class="btn btn-soft rounded-full pagination-prev" ${isFirst ? 'disabled' : ''}>
+            <span class="desktop-only">Previous</span>
+            <span class="mobile-only"><i class="fa-solid fa-chevron-left"></i></span>
+          </button>
+          <div class="flex items-center gap-x-1">
+            ${pages.map(p => `
+              <button type="button" class="btn btn-soft btn-circle pagination-page ${p === currentPage ? 'aria-[current="page"]:text-bg-soft-primary' : ''}" data-page="${p}" ${p === currentPage ? 'aria-current="page"' : ''}>${p}</button>
+            `).join('')}
+          </div>
+          <button type="button" class="btn btn-soft rounded-full pagination-next" ${isLast ? 'disabled' : ''}>
+            <span class="desktop-only">Next</span>
+            <span class="mobile-only"><i class="fa-solid fa-chevron-right"></i></span>
+          </button>
+        </nav>
+      `;
+
+      // Attach event listeners
+      paginationEl.querySelectorAll('.pagination-page').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const page = parseInt(e.currentTarget.dataset.page, 10);
+          if (page !== currentPage) loadPage(page);
+        });
+      });
+
+      const prevBtn = paginationEl.querySelector('.pagination-prev');
+      const nextBtn = paginationEl.querySelector('.pagination-next');
+      if (prevBtn) prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', () => { if (currentPage < TOTAL_PAGES) loadPage(currentPage + 1); });
+    }
+
+    // ------------------------------------------------------------
+    // Load a specific page (combo)
+    // ------------------------------------------------------------
+    async function loadPage(page) {
+      currentPage = page;
+      renderPagination();
+
+      gridEl.innerHTML = '<div class="loading-text">Loading recommendations…</div>';
+
+      const comboIndex = currentPage - 1;   // 0‑based
+      const animeList = await fetchAnimeForCombo(comboIndex);
+      
+      if (animeList.length === 0) {
+        gridEl.innerHTML = '<p class="loading-text">No anime found for this combination.</p>';
+      } else {
+        gridEl.innerHTML = animeList.map(renderCard).join('');
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Init section
+    // ------------------------------------------------------------
+    function initRecommendedForYou() {
+      // Add small CSS rule for mobile/desktop button text (hide on appropriate screens)
+      const style = document.createElement('style');
+      style.textContent = `
+        @media (max-width: 767px) {
+          .desktop-only { display: none; }
+          .mobile-only { display: inline; }
+        }
+        @media (min-width: 768px) {
+          .desktop-only { display: inline; }
+          .mobile-only { display: none; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      loadPage(1);
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initRecommendedForYou);
+    } else {
+      initRecommendedForYou();
+    }
+  })();
 </script>
+  </script>
+  
 </body>
 </html>
