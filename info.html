@@ -2726,12 +2726,15 @@ function renderAnimeRecCard(anime) {
   </a>`;
 }
 
-// Fallback – fetches top popular anime (no genre filter)
+// Reliable fallback – fetches current season anime (always populated)
 async function fetchPopularAnimeFallback(container) {
   try {
-    const url = 'https://api.jikan.moe/v4/top/anime?limit=30';
+    const url = 'https://api.jikan.moe/v4/seasons/now?limit=30';
+    console.log('🍂 Fallback URL:', url);
     const res = await fetch(url);
     const data = await res.json();
+    console.log('🍂 Fallback data:', data);
+
     if (data.data?.length) {
       container.innerHTML = data.data
         .map(anime => renderAnimeRecCard(anime))
@@ -2740,7 +2743,8 @@ async function fetchPopularAnimeFallback(container) {
       container.innerHTML = '<div class="loading-text">No anime available at the moment.</div>';
     }
   } catch (e) {
-    container.innerHTML = '<div class="loading-text">Unable to load anime.</div>';
+    console.error('❌ Fallback error:', e);
+    container.innerHTML = '<div class="loading-text">Unable to load anime. Please try again later.</div>';
   }
 }
 
