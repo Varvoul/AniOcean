@@ -2639,78 +2639,68 @@ img { max-width: 100%; height: auto; display: block; }
   const loaderMessage = document.getElementById('jikanRecLoading');
 
   loaderMessage.style.display = 'block';
-  loaderMessage.innerHTML = 'Loading test action anime…';
+  loaderMessage.innerHTML = 'Finding anime treasures…';
 
-  // Hardcoded Jikan genre ID 1 (Action)
-  const url = 'https://api.jikan.moe/v4/anime?genres=1&order_by=popularity&sort=desc&limit=30';
+  // Build the query parameters
+  let jikanType = 'tv';
+  let genreIds = [];
+
+  if (currentState.source === 'tmdb' && currentShow?.genres?.length) {
+    currentShow.genres.forEach(g => {
+      const jikanId = TMDB_TO_JIKAN_GENRES[g.id];
+      if (jikanId) genreIds.push(jikanId);
+    });
+  }
+
+  // Proxy URL – all calls go through our Vercel domain
+  const url = new URL('/jikan/anime', window.location.origin);
+  url.searchParams.append('order_by', 'popularity');
+  url.searchParams.append('sort', 'desc');
+  url.searchParams.append('limit', '30');
+  url.searchParams.append('sfw', 'true');
+
+  if (genreIds.length > 0) {
+    const unique = [...new Set(genreIds)].slice(0, 3);
+    url.searchParams.append('genres', unique.join(','));
+  }
+
+  console.log('🔗 Proxy Jikan URL:', url.toString());
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const payload = await response.json();
-    console.log('Test fetch received:', payload.data?.length, 'results');
+    console.log('✅ Received', payload.data?.length, 'results');
 
     if (payload.data?.length) {
       gridContainer.innerHTML = payload.data
+        .filter(anime => currentState.source !== 'jikan' || anime.mal_id !== currentState.id)
+        .slice(0, 30)
         .map(anime => renderAnimeRecCard(anime))
         .join('');
     } else {
-      gridContainer.innerHTML = '<div class="loading-text">No action anime found.</div>';
+      // Fallback to popular anime through the same proxy
+      const fallbackUrl = new URL('/jikan/top/anime', window.location.origin);
+      fallbackUrl.searchParams.append('limit', '30');
+      const fallRes = await fetch(fallbackUrl.toString());
+      const fallData = await fallRes.json();
+      if (fallData.data?.length) {
+        gridContainer.innerHTML = fallData.data
+          .map(anime => renderAnimeRecCard(anime))
+          .join('');
+      } else {
+        gridContainer.innerHTML = '<div class="loading-text">No anime available at the moment.</div>';
+      }
     }
+
     loaderMessage.style.display = 'none';
 
   } catch (error) {
-    console.error('Test fetch failed:', error);
+    console.error('❌ Sunken Treasures error:', error);
     loaderMessage.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">
-      <i class="fa-solid fa-triangle-exclamation"></i> Cannot reach Jikan API
+      <i class="fa-solid fa-triangle-exclamation"></i> Could not load anime
     </div>`;
-  }
-}
-
-// Helper – renders one anime card
-function renderAnimeRecCard(anime) {
-  const title = anime.title_english || anime.title;
-  const poster = anime.images?.jpg?.large_image_url || '';
-  const year = anime.aired?.from?.slice(0, 4) || 'N/A';
-  const type = anime.type || 'TV';
-  const slug = slugify(title);
-  const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-
-  return `<a href="${detailsUrl}" class="rec-card">
-    <div class="rec-poster" style="background-image: url('${poster}')">
-      <span class="quality-badge">HD</span>
-      <span class="score-badge">⭐ ${anime.score?.toFixed(1) || 'N/A'}</span>
-      <div class="play-overlay">
-        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
-      </div>
-    </div>
-    <div class="rec-info">
-      <div class="rec-meta">${type} · ${year}</div>
-      <div class="rec-title">${escapeHtml(title)}</div>
-    </div>
-  </a>`;
-}
-
-// Reliable fallback – fetches current season anime (always populated)
-async function fetchPopularAnimeFallback(container) {
-  try {
-    const url = 'https://api.jikan.moe/v4/seasons/now?limit=30';
-    console.log('🍂 Fallback URL:', url);
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log('🍂 Fallback data:', data);
-
-    if (data.data?.length) {
-      container.innerHTML = data.data
-        .map(anime => renderAnimeRecCard(anime))
-        .join('');
-    } else {
-      container.innerHTML = '<div class="loading-text">No anime available at the moment.</div>';
-    }
-  } catch (e) {
-    console.error('❌ Fallback error:', e);
-    container.innerHTML = '<div class="loading-text">Unable to load anime. Please try again later.</div>';
   }
 }
 
