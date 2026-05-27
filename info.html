@@ -1915,6 +1915,17 @@ img { max-width: 100%; height: auto; display: block; }
   <nav class="pagination-nav" id="recfPagination"></nav>
 </section>
 
+        <!-- Sunken Treasures (Top Airing) -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Sunken Treasures</h2>
+  </div>
+  <div class="grid-container" id="sunkenGrid">
+    <!-- Cards injected by JS -->
+  </div>
+  <nav class="pagination-nav" id="sunkenPagination"></nav>
+</section>
+
         <!-- Sunken Treasures -->
         <section class="recommendations-section">
           <h3>Sunken Treasures</h3>
@@ -3495,5 +3506,129 @@ img { max-width: 100%; height: auto; display: block; }
   })();
   
   </script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const JIKAN_BASE = 'https://api.jikan.moe/v4';
+    const ITEMS_PER_PAGE = 25;        // Jikan max = 25
+
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const gridEl = document.getElementById('sunkenGrid');
+    const paginationEl = document.getElementById('sunkenPagination');
+
+    async function fetchAiringPage(page) {
+      const url = `${JIKAN_BASE}/top/anime?filter=airing&limit=${ITEMS_PER_PAGE}&page=${page}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Jikan error: ${res.status}`);
+      const json = await res.json();
+      totalPages = Math.min(json.pagination?.last_visible_page || 1, 10); // cap at 10 pages for demo
+      return json.data || [];
+    }
+
+    function renderCard(anime) {
+      const title = anime.title_english || anime.title || 'Untitled';
+      const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
+      const score = anime.score ? anime.score.toFixed(1) : '?';
+      const year = anime.aired?.from ? new Date(anime.aired.from).getFullYear() : '';
+      const episodes = anime.episodes || '?';
+      const type = anime.type || 'TV';
+      const metaStr = `${type} · ${episodes} eps · ${year}`;
+
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+
+      return `
+        <a href="${detailsUrl}" class="show-card-grid">
+          <div class="card-poster" style="background-image:url('${poster}');">
+            ${poster ? `<img src="${poster}" alt="${title}" loading="lazy">` : ''}
+            <span class="poster-rating-badge recf-score"><i class="fa-solid fa-star"></i> ${score}</span>
+            <span class="poster-status-badge">Airing</span>
+            <div class="play-overlay">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
+            </div>
+          </div>
+          <div class="card-info-grid">
+            <div class="card-meta-sm">${metaStr}</div>
+            <div class="card-title">${title}</div>
+          </div>
+        </a>
+      `;
+    }
+
+    function renderPagination() {
+      const maxVisible = window.innerWidth < 1025 ? 5 : 7;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = startPage + maxVisible - 1;
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      const isFirst = currentPage === 1;
+      const isLast = currentPage === totalPages;
+
+      paginationEl.innerHTML = `
+        <button class="pagination-prev" ${isFirst ? 'disabled' : ''}>
+          <span class="nav-text">Previous</span>
+          <span class="nav-icon"><i class="fa-solid fa-chevron-left"></i></span>
+        </button>
+        ${Array.from({ length: endPage - startPage + 1 }, (_, i) => {
+          const page = startPage + i;
+          return `<button class="pagination-page${page === currentPage ? ' active' : ''}" data-page="${page}">${page}</button>`;
+        }).join('')}
+        <button class="pagination-next" ${isLast ? 'disabled' : ''}>
+          <span class="nav-text">Next</span>
+          <span class="nav-icon"><i class="fa-solid fa-chevron-right"></i></span>
+        </button>
+      `;
+
+      // Event handlers
+      paginationEl.querySelectorAll('.pagination-page').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const page = parseInt(e.currentTarget.dataset.page, 10);
+          if (page !== currentPage) loadPage(page);
+        });
+      });
+      const prevBtn = paginationEl.querySelector('.pagination-prev');
+      const nextBtn = paginationEl.querySelector('.pagination-next');
+      if (prevBtn) prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', () => { if (currentPage < totalPages) loadPage(currentPage + 1); });
+    }
+
+    async function loadPage(page) {
+      currentPage = page;
+      renderPagination();
+
+      gridEl.innerHTML = '<div class="loading-text">Fetching currently airing anime…</div>';
+
+      try {
+        const animeList = await fetchAiringPage(page);
+        if (animeList.length === 0) {
+          gridEl.innerHTML = '<p class="loading-text">No airing anime found.</p>';
+        } else {
+          gridEl.innerHTML = animeList.map(renderCard).join('');
+        }
+      } catch (err) {
+        console.error('Sunken Treasures error:', err);
+        gridEl.innerHTML = '<p class="loading-text">Failed to load. Please try again.</p>';
+      }
+    }
+
+    function init() {
+      loadPage(1);
+      window.addEventListener('resize', () => renderPagination());
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
 </body>
 </html>
