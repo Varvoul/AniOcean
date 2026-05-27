@@ -2635,132 +2635,36 @@ img { max-width: 100%; height: auto; display: block; }
       }
       
  async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
-   console.log('🔍 DEBUG - Sunken Treasures called with:', {
-    source: currentState.source,
-    type: currentState.type,
-    id: currentState.id,
-    hasData: !!currentShow,
-    genres: currentShow?.genres?.length || 0
-  });
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
   const loaderMessage = document.getElementById('jikanRecLoading');
-  
-  // Show loading state
+
   loaderMessage.style.display = 'block';
-  loaderMessage.textContent = 'Finding anime treasures...';
-  
-  console.log('🎬 Sunken Treasures - Source:', currentState.source, 'Type:', currentState.type);
-  
+  loaderMessage.innerHTML = 'Loading test action anime…';
+
+  // Hardcoded Jikan genre ID 1 (Action)
+  const url = 'https://api.jikan.moe/v4/anime?genres=1&order_by=popularity&sort=desc&limit=30';
+
   try {
-    // Build base parameters
-    const params = new URLSearchParams({
-      order_by: 'score',
-      sort: 'desc',
-      min_score: '7.0',
-      limit: '30',
-      sfw: 'true'
-    });
-    
-    // Determine anime type to fetch
-    let animeType = 'tv';
-    if (currentState.source === 'tmdb') {
-      animeType = currentState.type === 'movie' ? 'movie' : 'tv';
-    } else if (currentState.source === 'jikan' && currentShow?.type) {
-      animeType = currentShow.type.toLowerCase();
-      if (['ona', 'ova', 'special'].includes(animeType)) animeType = 'tv';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const payload = await response.json();
+    console.log('Test fetch received:', payload.data?.length, 'results');
+
+    if (payload.data?.length) {
+      gridContainer.innerHTML = payload.data
+        .map(anime => renderAnimeRecCard(anime))
+        .join('');
+    } else {
+      gridContainer.innerHTML = '<div class="loading-text">No action anime found.</div>';
     }
-    params.append('type', animeType);
-    
-    // Try to add genre filters
-    let genreParam = '';
-    if (currentShow?.genres?.length > 0) {
-      const genreIds = [];
-      
-      if (currentState.source === 'tmdb') {
-        // Map TMDB genres to Jikan
-        currentShow.genres.forEach(genre => {
-          const jikanId = TMDB_TO_JIKAN_GENRES[genre.id];
-          if (jikanId) genreIds.push(jikanId);
-        });
-      } else if (currentState.source === 'jikan') {
-        // Use Jikan genre IDs directly
-        currentShow.genres.forEach(genre => {
-          if (genre.mal_id) genreIds.push(genre.mal_id);
-        });
-      }
-      
-      // Add up to 3 unique genres
-      if (genreIds.length > 0) {
-        const unique = [...new Set(genreIds)].slice(0, 3);
-        genreParam = `&genres=${unique.join(',')}`;
-        console.log('🎯 Using genres:', unique);
-      }
-    }
-    
-    // Make API call with fallback
-    const baseUrl = 'https://api.jikan.moe/v4/anime';
-    let response = await fetch(`${baseUrl}?${params.toString()}${genreParam}`);
-    
-    // Fallback if genre query fails
-    if (!response.ok && genreParam) {
-      console.warn('Genre query failed, trying without genres...');
-      response = await fetch(`${baseUrl}?${params.toString()}`);
-    }
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('✅ Received', data.data?.length, 'results');
-    
-    // Hide loader
     loaderMessage.style.display = 'none';
-    
-    if (!data.data || data.data.length === 0) {
-      gridContainer.innerHTML = '<div class="loading-text">No recommendations found</div>';
-      return;
-    }
-    
-    // Filter out current show if viewing anime page
-    const currentId = currentState.source === 'jikan' ? currentState.id : null;
-    const results = currentId 
-      ? data.data.filter(a => a.mal_id !== currentId)
-      : data.data;
-    
-    // Render cards
-    gridContainer.innerHTML = results.slice(0, 30).map(anime => {
-      const year = anime.aired?.from?.slice(0, 4) || 'N/A';
-      const title = anime.title_english || anime.title;
-      const slug = slugify(title);
-      const url = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-      
-      return `
-        <a href="${url}" class="rec-card">
-          <div class="rec-poster" style="background-image: url('${anime.images.jpg.large_image_url}')">
-            <span class="quality-badge">HD</span>
-            <span class="score-badge">⭐ ${anime.score?.toFixed(1) || 'N/A'}</span>
-            <div class="play-overlay">
-              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
-            </div>
-          </div>
-          <div class="rec-info">
-            <div class="rec-meta">${anime.type} · ${year}</div>
-            <div class="rec-title">${escapeHtml(title)}</div>
-          </div>
-        </a>
-      `;
-    }).join('');
-    
+
   } catch (error) {
-    console.error('❌ Sunken Treasures error:', error);
-    loaderMessage.innerHTML = `
-      <div style="text-align:center; padding:20px;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px;"></i>
-        <p>Failed to load recommendations</p>
-        <small style="color:var(--text-muted);">${error.message}</small>
-      </div>
-    `;
+    console.error('Test fetch failed:', error);
+    loaderMessage.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">
+      <i class="fa-solid fa-triangle-exclamation"></i> Cannot reach Jikan API
+    </div>`;
   }
 }
 
