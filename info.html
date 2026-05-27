@@ -2634,7 +2634,7 @@ img { max-width: 100%; height: auto; display: block; }
         </a>`;
       }
       
-      async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
+ async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
   const loaderMessage = document.getElementById('jikanRecLoading');
   
@@ -2680,32 +2680,44 @@ img { max-width: 100%; height: auto; display: block; }
     console.log('🎯 Target Jikan genres:', targetGenres);
   }
   
-  // Build Jikan API URL
-  const jikanUrl = new URL("https://api.jikan.moe/v4/anime");
-  jikanUrl.searchParams.append("type", jikanType);
-  jikanUrl.searchParams.append("order_by", "score");
-  jikanUrl.searchParams.append("sort", "desc");
-  jikanUrl.searchParams.append("min_score", "7.0");
-  jikanUrl.searchParams.append("limit", "30");
-  jikanUrl.searchParams.append("sfw", "true");
-  
-  // Add genres if we have any
-  if (targetGenres.length > 0) {
-    jikanUrl.searchParams.append("genres", [...new Set(targetGenres)].slice(0, 3).join(','));
-  }
-  
-  console.log('🔗 Jikan API URL:', jikanUrl.toString());
-  
   try {
-    const response = await fetch(jikanUrl.toString());
+    let payload;
     
-    if (!response.ok) {
-      throw new Error(`Jikan API error: ${response.status} ${response.statusText}`);
+    // Try with genres first if we have any
+    if (targetGenres.length > 0) {
+      const uniqueGenres = [...new Set(targetGenres)].slice(0, 3); // Max 3 genres
+      const jikanUrl = `https://api.jikan.moe/v4/anime?type=${jikanType}&order_by=score&sort=desc&min_score=7.0&limit=30&sfw=true&genres=${uniqueGenres.join(',')}`;
+      
+      console.log('🔗 Jikan API URL (with genres):', jikanUrl);
+      
+      const response = await fetch(jikanUrl);
+      
+      if (!response.ok) {
+        console.warn('Genre-based query failed, trying without genres...');
+        // Fallback to simpler query without genres
+        const fallbackUrl = `https://api.jikan.moe/v4/anime?type=${jikanType}&order_by=score&sort=desc&min_score=7.0&limit=30&sfw=true`;
+        console.log('🔗 Fallback URL:', fallbackUrl);
+        const fallbackResponse = await fetch(fallbackUrl);
+        if (!fallbackResponse.ok) {
+          throw new Error(`Jikan API error: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+        }
+        payload = await fallbackResponse.json();
+      } else {
+        payload = await response.json();
+      }
+    } else {
+      // No genres, use simpler query
+      const jikanUrl = `https://api.jikan.moe/v4/anime?type=${jikanType}&order_by=score&sort=desc&min_score=7.0&limit=30&sfw=true`;
+      console.log('🔗 Jikan API URL (no genres):', jikanUrl);
+      
+      const response = await fetch(jikanUrl);
+      if (!response.ok) {
+        throw new Error(`Jikan API error: ${response.status} ${response.statusText}`);
+      }
+      payload = await response.json();
     }
     
-    const payload = await response.json();
     loaderMessage.style.display = "none";
-    
     console.log('✅ Received', payload.data?.length, 'anime recommendations');
     
     if (!payload.data?.length) {
