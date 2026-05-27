@@ -1905,6 +1905,17 @@ img { max-width: 100%; height: auto; display: block; }
           </div>
         </section>
 
+        <!-- Water Temple -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title"><i class="fa-solid fa-water"></i> Water Temple</h2>
+  </div>
+  <div class="grid-container" id="waterTempleGrid">
+    <!-- Cards injected by JS -->
+  </div>
+  <nav class="pagination-nav" id="waterTemplePagination"></nav>
+</section>
+
         <section class="section">
   <div class="section-header">
     <h2 class="section-title">Recommended for You</h2>
@@ -3593,6 +3604,172 @@ img { max-width: 100%; height: auto; display: block; }
       } catch (err) {
         console.error('Sunken Treasures error:', err);
         gridEl.innerHTML = '<p class="loading-text">Failed to load. Please try again.</p>';
+      }
+    }
+
+    function init() {
+      loadPage(1);
+      window.addEventListener('resize', () => renderPagination());
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Genres you supplied ──
+    const GENRE_IDS = [1,2,4,5,7,8,10,14,22,24,26,28,30,36,37,45,46,47];
+    const GENRE_LABELS = {
+      1:"Action",2:"Adventure",4:"Comedy",5:"Avant Garde",7:"Mystery",
+      8:"Drama",10:"Fantasy",14:"Horror",22:"Romance",24:"Sci-Fi",
+      26:"Girls Love",28:"Boys Love",30:"Sports",36:"Slice of Life",
+      37:"Supernatural",45:"Suspense",46:"Award Winning",47:"Gourmet"
+    };
+
+    // ── Build 30 unique 5‑genre combos (deterministic) ──
+    function buildCombos(count = 30) {
+      const combos = [];
+      const used = new Set();
+      const n = GENRE_IDS.length;
+      // Generate all 5-combinations (n=18 -> 8568), but we only need `count` unique ones.
+      // We'll generate systematically to be deterministic.
+      const indices = [0,1,2,3,4]; // start with first 5
+      while (combos.length < count) {
+        const combo = indices.map(i => GENRE_IDS[i]);
+        const key = combo.join(',');
+        if (!used.has(key)) {
+          combos.push(combo);
+          used.add(key);
+        }
+        // Advance to next combination (lexicographic)
+        let i = 4;
+        while (i >= 0 && indices[i] === n - 5 + i) i--;
+        if (i < 0) break; // ran out of combos – unlikely because only 30 needed
+        indices[i]++;
+        for (let j = i + 1; j < 5; j++) indices[j] = indices[j-1] + 1;
+      }
+      return combos;
+    }
+    const COMBO_LIST = buildCombos(30);   // 30 pages
+    const TOTAL_PAGES = COMBO_LIST.length;
+
+    let currentPage = 1;
+    const cache = {};
+
+    const gridEl = document.getElementById('waterTempleGrid');
+    const paginationEl = document.getElementById('waterTemplePagination');
+
+    // ── Fetch anime for a specific 5‑genre combo ──
+    async function fetchAnimeForCombo(comboIndex) {
+      if (cache[comboIndex]) return cache[comboIndex];
+      const genres = COMBO_LIST[comboIndex].join(',');
+      // TV, score 6.7‑10.0, sorted by score descending
+      const url = `https://api.jikan.moe/v4/anime?genres=${genres}&type=tv&min_score=6.7&max_score=10&order_by=score&sort=desc&limit=25&sfw=true`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const animeList = json.data || [];
+        cache[comboIndex] = animeList;
+        return animeList;
+      } catch (err) {
+        console.error('Water Temple fetch error:', err);
+        return [];
+      }
+    }
+
+    // ── Render one card (homepage style) ──
+    function renderCard(anime) {
+      const title = anime.title_english || anime.title || 'Untitled';
+      const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
+      const score = anime.score ? anime.score.toFixed(1) : '?';
+      const year = anime.aired?.from ? new Date(anime.aired.from).getFullYear() : '';
+      const episodes = anime.episodes || '?';
+      const type = anime.type || 'TV';
+      const rank = anime.rank ? `#${anime.rank}` : '';
+      const metaStr = [type, episodes + ' eps', year, rank].filter(Boolean).join(' · ');
+
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+
+      return `
+        <a href="${detailsUrl}" class="show-card-grid">
+          <div class="card-poster" style="background-image:url('${poster}');">
+            ${poster ? `<img src="${poster}" alt="${title}" loading="lazy">` : ''}
+            <span class="poster-rating-badge recf-score"><i class="fa-solid fa-star"></i> ${score}</span>
+            <div class="play-overlay">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
+            </div>
+          </div>
+          <div class="card-info-grid">
+            <div class="card-meta-sm">${metaStr}</div>
+            <div class="card-title">${title}</div>
+          </div>
+        </a>
+      `;
+    }
+
+    // ── Pagination (identical to previous sections) ──
+    function renderPagination() {
+      const maxVisible = window.innerWidth < 1025 ? 5 : 7;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = startPage + maxVisible - 1;
+      if (endPage > TOTAL_PAGES) {
+        endPage = TOTAL_PAGES;
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      const isFirst = currentPage === 1;
+      const isLast = currentPage === TOTAL_PAGES;
+
+      paginationEl.innerHTML = `
+        <button class="pagination-prev" ${isFirst ? 'disabled' : ''}>
+          <span class="nav-text">Previous</span>
+          <span class="nav-icon"><i class="fa-solid fa-chevron-left"></i></span>
+        </button>
+        ${Array.from({ length: endPage - startPage + 1 }, (_, i) => {
+          const page = startPage + i;
+          return `<button class="pagination-page${page === currentPage ? ' active' : ''}" data-page="${page}">${page}</button>`;
+        }).join('')}
+        <button class="pagination-next" ${isLast ? 'disabled' : ''}>
+          <span class="nav-text">Next</span>
+          <span class="nav-icon"><i class="fa-solid fa-chevron-right"></i></span>
+        </button>
+      `;
+
+      paginationEl.querySelectorAll('.pagination-page').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const page = parseInt(e.currentTarget.dataset.page, 10);
+          if (page !== currentPage) loadPage(page);
+        });
+      });
+      const prevBtn = paginationEl.querySelector('.pagination-prev');
+      const nextBtn = paginationEl.querySelector('.pagination-next');
+      if (prevBtn) prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', () => { if (currentPage < TOTAL_PAGES) loadPage(currentPage + 1); });
+    }
+
+    async function loadPage(page) {
+      currentPage = page;
+      renderPagination();
+
+      gridEl.innerHTML = '<div class="loading-text">Diving into the Water Temple…</div>';
+
+      const comboIndex = page - 1;
+      const animeList = await fetchAnimeForCombo(comboIndex);
+
+      if (animeList.length === 0) {
+        gridEl.innerHTML = '<p class="loading-text">No anime found for this genre mix.</p>';
+      } else {
+        gridEl.innerHTML = animeList.map(renderCard).join('');
       }
     }
 
