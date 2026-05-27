@@ -2638,69 +2638,81 @@ img { max-width: 100%; height: auto; display: block; }
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
   const loaderMessage = document.getElementById('jikanRecLoading');
 
+  console.log('🔍 loadPersonalizedAnimeRecs called', { 
+    source: currentState.source, 
+    id: currentState.id,
+    hasRenderFunc: typeof renderAnimeRecCard === 'function'
+  });
+
   loaderMessage.style.display = 'block';
   loaderMessage.innerHTML = 'Finding anime treasures…';
 
-  // Build the query parameters
-  let jikanType = 'tv';
-  let genreIds = [];
-
-  if (currentState.source === 'tmdb' && currentShow?.genres?.length) {
-    currentShow.genres.forEach(g => {
-      const jikanId = TMDB_TO_JIKAN_GENRES[g.id];
-      if (jikanId) genreIds.push(jikanId);
-    });
-  }
-
-  // Proxy URL – all calls go through our Vercel domain
-  const url = new URL('/jikan/anime', window.location.origin);
-  url.searchParams.append('order_by', 'popularity');
-  url.searchParams.append('sort', 'desc');
-  url.searchParams.append('limit', '30');
-  url.searchParams.append('sfw', 'true');
-
-  if (genreIds.length > 0) {
-    const unique = [...new Set(genreIds)].slice(0, 3);
-    url.searchParams.append('genres', unique.join(','));
-  }
-
-  console.log('🔗 Proxy Jikan URL:', url.toString());
-
   try {
-    const response = await fetch(url.toString());
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const payload = await response.json();
-    console.log('✅ Received', payload.data?.length, 'results');
-
-    if (payload.data?.length) {
-      gridContainer.innerHTML = payload.data
-        .filter(anime => currentState.source !== 'jikan' || anime.mal_id !== currentState.id)
-        .slice(0, 30)
-        .map(anime => renderAnimeRecCard(anime))
-        .join('');
-    } else {
-      // Fallback to popular anime through the same proxy
-      const fallbackUrl = new URL('/jikan/top/anime', window.location.origin);
-      fallbackUrl.searchParams.append('limit', '30');
-      const fallRes = await fetch(fallbackUrl.toString());
-      const fallData = await fallRes.json();
-      if (fallData.data?.length) {
-        gridContainer.innerHTML = fallData.data
-          .map(anime => renderAnimeRecCard(anime))
-          .join('');
-      } else {
-        gridContainer.innerHTML = '<div class="loading-text">No anime available at the moment.</div>';
-      }
+    // Use direct Jikan API (your proxy works, but direct is simpler for debugging)
+    const apiUrl = 'https://api.jikan.moe/v4/top/anime?limit=30&sfw=true';
+    
+    console.log('🔗 Fetching:', apiUrl);
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No error text');
+      throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 200)}`);
     }
 
+    const payload = await response.json();
+    console.log('✅ Response received:', { 
+      hasData: !!payload.data, 
+      dataLength: payload.data?.length,
+      firstItem: payload.data?.[0]?.title 
+    });
+
+    if (!payload.data?.length) {
+      throw new Error('No anime data in response');
+    }
+
+    // Debug: Check if render function exists
+    if (typeof renderAnimeRecCard !== 'function') {
+      throw new Error('renderAnimeRecCard is not defined!');
+    }
+
+    // Render cards
+    const html = payload.data
+      .filter(anime => {
+        // Only filter out current anime if we're on a jikan page
+        if (currentState.source === 'jikan' && currentState.id) {
+          return anime.mal_id !== currentState.id;
+        }
+        return true;
+      })
+      .slice(0, 30)
+      .map(anime => {
+        try {
+          return renderAnimeRecCard(anime);
+        } catch (e) {
+          console.error('❌ Error rendering card:', e, anime?.mal_id);
+          return '';
+        }
+      })
+      .join('');
+
+    console.log('🎨 Generated HTML length:', html.length);
+    
+    if (!html.trim()) {
+      throw new Error('Generated HTML is empty');
+    }
+
+    gridContainer.innerHTML = html;
     loaderMessage.style.display = 'none';
+    console.log('✅ Sunken Treasures rendered successfully');
 
   } catch (error) {
     console.error('❌ Sunken Treasures error:', error);
-    loaderMessage.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">
-      <i class="fa-solid fa-triangle-exclamation"></i> Could not load anime
-    </div>`;
+    loaderMessage.innerHTML = `
+      <div style="text-align:center;padding:20px;color:var(--text-muted);">
+        <i class="fa-solid fa-triangle-exclamation"></i> Could not load anime
+        <br><small style="opacity:0.7;font-size:0.8rem">${error.message}</small>
+        <br><button onclick="location.reload()" style="margin-top:10px;padding:6px 12px;background:var(--btn-primary);color:white;border:none;border-radius:4px;cursor:pointer">Retry</button>
+      </div>`;
   }
 }
 
@@ -3097,5 +3109,15 @@ img { max-width: 100%; height: auto; display: block; }
 
     })();
   </script>
+  <!-- Add before </body> for testing only -->
+<button id="debugRecs" style="position:fixed;bottom:10px;left:10px;z-index:9999;padding:8px 16px;background:#2b6cb0;color:white;border:none;border-radius:6px;cursor:pointer">
+  🔧 Debug Recs
+</button>
+<script>
+document.getElementById('debugRecs')?.addEventListener('click', async () => {
+  console.log('🔄 Force reloading recommendations...');
+  await loadPersonalizedAnimeRecs(currentState.data, currentState.type);
+});
+</script>
 </body>
 </html>
