@@ -3620,11 +3620,10 @@ img { max-width: 100%; height: auto; display: block; }
   })();
 </script>
 
-  <script>
+<script>
   (function() {
     'use strict';
 
-    // ── Genres you supplied ──
     const GENRE_IDS = [1,2,4,5,7,8,10,14,22,24,26,28,30,36,37,45,46,47];
     const GENRE_LABELS = {
       1:"Action",2:"Adventure",4:"Comedy",5:"Avant Garde",7:"Mystery",
@@ -3638,9 +3637,7 @@ img { max-width: 100%; height: auto; display: block; }
       const combos = [];
       const used = new Set();
       const n = GENRE_IDS.length;
-      // Generate all 5-combinations (n=18 -> 8568), but we only need `count` unique ones.
-      // We'll generate systematically to be deterministic.
-      const indices = [0,1,2,3,4]; // start with first 5
+      const indices = [0,1,2,3,4];   // start with first 5
       while (combos.length < count) {
         const combo = indices.map(i => GENRE_IDS[i]);
         const key = combo.join(',');
@@ -3648,15 +3645,16 @@ img { max-width: 100%; height: auto; display: block; }
           combos.push(combo);
           used.add(key);
         }
-        // Advance to next combination (lexicographic)
+        // advance to next combination (lexicographic)
         let i = 4;
         while (i >= 0 && indices[i] === n - 5 + i) i--;
-        if (i < 0) break; // ran out of combos – unlikely because only 30 needed
+        if (i < 0) break;   // should never happen with only 30 needed
         indices[i]++;
-        for (let j = i + 1; j < 5; j++) indices[j] = indices[j-1] + 1;
+        for (let j = i + 1; j < 5; j++) indices[j] = indices[j - 1] + 1;
       }
       return combos;
     }
+
     const COMBO_LIST = buildCombos(30);   // 30 pages
     const TOTAL_PAGES = COMBO_LIST.length;
 
@@ -3666,12 +3664,12 @@ img { max-width: 100%; height: auto; display: block; }
     const gridEl = document.getElementById('waterTempleGrid');
     const paginationEl = document.getElementById('waterTemplePagination');
 
-    // ── Fetch anime for a specific 5‑genre combo ──
     async function fetchAnimeForCombo(comboIndex) {
       if (cache[comboIndex]) return cache[comboIndex];
+
       const genres = COMBO_LIST[comboIndex].join(',');
-      // TV, score 6.7‑10.0, sorted by score descending
-      const url = `https://api.jikan.moe/v4/anime?genres=${genres}&type=tv&min_score=6.7&max_score=10&order_by=score&sort=desc&limit=25&sfw=true`;
+      // ⚡ Now: TV, score ≥ 7.5, sorted by POPULARITY (most popular first)
+      const url = `https://api.jikan.moe/v4/anime?genres=${genres}&type=tv&min_score=7.5&max_score=10&order_by=popularity&sort=asc&limit=25&sfw=true`;
 
       try {
         const res = await fetch(url);
@@ -3686,7 +3684,6 @@ img { max-width: 100%; height: auto; display: block; }
       }
     }
 
-    // ── Render one card (homepage style) ──
     function renderCard(anime) {
       const title = anime.title_english || anime.title || 'Untitled';
       const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
@@ -3717,7 +3714,6 @@ img { max-width: 100%; height: auto; display: block; }
       `;
     }
 
-    // ── Pagination (identical to previous sections) ──
     function renderPagination() {
       const maxVisible = window.innerWidth < 1025 ? 5 : 7;
       let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
