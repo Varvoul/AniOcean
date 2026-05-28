@@ -19,7 +19,7 @@
   
   <!-- Page-specific CSS -->
   <style>
-  /* ========================================
+ /* ========================================
    ANIOCEAN - SHOW INFO PAGE STYLES
    Uses CSS Variables from shared.js theme
    Layout matched to index.html
@@ -1164,12 +1164,12 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 0;
 }
 
-/* Pagination Styles */
+/* ✅ UPDATED: Pagination Styles - Matches index.html "Recently Completed" */
 .pagination-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-top: 20px;
   flex-wrap: wrap;
 }
@@ -1178,71 +1178,80 @@ img { max-width: 100%; height: auto; display: block; }
   background: var(--bg-surface);
   color: var(--text-secondary);
   border: none;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-width: 36px;
+  min-width: 80px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
 }
 
 .pagination-nav .btn-soft:hover:not(:disabled) {
   background: var(--btn-primary);
   color: #fff;
+  transform: translateY(-1px);
 }
 
 .pagination-nav .btn-soft:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
-.pagination-nav .btn-soft[aria-current="page"],
-.pagination-nav .btn-soft.active {
-  background: var(--btn-primary);
-  color: #fff;
+/* Page counter styling */
+.pagination-nav .page-counter {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 60px;
+  text-align: center;
+  user-select: none;
 }
 
-.pagination-nav .btn-circle {
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-
-    /* Ensure page numbers are in a row */
-.pagination-nav .page-numbers-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Mobile: chevrons for prev/next */
+/* Hide text on mobile, show chevrons */
 @media (max-width: 768px) {
-  .pagination-nav .btn-prev,
-  .pagination-nav .btn-next {
-    padding: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-  }
-  .pagination-nav .btn-prev::before,
-  .pagination-nav .btn-next::before {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 0.9rem;
-  }
-  .pagination-nav .btn-prev::before { content: "‹"; }
-  .pagination-nav .btn-next::before { content: "›"; }
-  .pagination-nav .btn-prev span,
-  .pagination-nav .btn-next span {
+  .pagination-nav .btn-soft .prev-text,
+  .pagination-nav .btn-soft .next-text {
     display: none;
   }
+  .pagination-nav .btn-soft .prev-chevron,
+  .pagination-nav .btn-soft .next-chevron {
+    display: inline;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .pagination-nav .btn-soft {
+    min-width: 40px;
+    padding: 8px 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .pagination-nav .btn-soft .prev-chevron,
+  .pagination-nav .btn-soft .next-chevron {
+    display: none;
+  }
+  .pagination-nav .btn-soft .prev-text,
+  .pagination-nav .btn-soft .next-text {
+    display: inline;
+  }
+}
+
+/* Loading state */
+.pagination-nav.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Smooth fade for grid updates */
+#sunkenTreasuresGrid {
+  transition: opacity 0.2s ease;
 }
 
 /* Alert Popup */
@@ -1506,10 +1515,10 @@ img { max-width: 100%; height: auto; display: block; }
   .recs-grid { grid-template-columns: repeat(2, 1fr); }
   
   .pagination-nav {
-    gap: 2px;
+    gap: 4px;
   }
   .pagination-nav .btn-soft {
-    min-width: 32px;
+    min-width: 40px;
     height: 32px;
     padding: 0;
     font-size: 0.75rem;
