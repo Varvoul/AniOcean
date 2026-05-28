@@ -1,4 +1,4 @@
-Make "More like this" section on the anime info page similar to the logic also. Here is my info page code update it and give me full complete page code: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -204,7 +204,7 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar-section h4 {
   display: flex;
   align-items: center;
-  gap: 8px; /* Adds space between icon and text */
+  gap: 8px;
   padding: 10px 12px;
   background: var(--bg-surface);
   font-size: 0.78rem;
@@ -1164,6 +1164,79 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 0;
 }
 
+/* Pagination Styles */
+.pagination-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.pagination-nav .btn-soft {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-nav .btn-soft:hover:not(:disabled) {
+  background: var(--btn-primary);
+  color: #fff;
+}
+
+.pagination-nav .btn-soft:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-nav .btn-soft[aria-current="page"],
+.pagination-nav .btn-soft.active {
+  background: var(--btn-primary);
+  color: #fff;
+}
+
+.pagination-nav .btn-circle {
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+/* Mobile: chevrons for prev/next */
+@media (max-width: 768px) {
+  .pagination-nav .btn-prev,
+  .pagination-nav .btn-next {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+  .pagination-nav .btn-prev::before,
+  .pagination-nav .btn-next::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.9rem;
+  }
+  .pagination-nav .btn-prev::before { content: "‹"; }
+  .pagination-nav .btn-next::before { content: "›"; }
+  .pagination-nav .btn-prev span,
+  .pagination-nav .btn-next span {
+    display: none;
+  }
+}
+
 /* Alert Popup */
 .alert-popup {
   position: fixed;
@@ -1423,6 +1496,16 @@ img { max-width: 100%; height: auto; display: block; }
   .sidebar-section { padding: 12px; }
   
   .recs-grid { grid-template-columns: repeat(2, 1fr); }
+  
+  .pagination-nav {
+    gap: 2px;
+  }
+  .pagination-nav .btn-soft {
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 0.75rem;
+  }
 }
 
 /* Landscape mobile */
@@ -1504,7 +1587,6 @@ img { max-width: 100%; height: auto; display: block; }
   outline: none;
   box-shadow: none;
 }
-
   </style>
 </head>
 <body>
@@ -1704,21 +1786,28 @@ img { max-width: 100%; height: auto; display: block; }
           </div>
         </section>
 
-        <!-- More Like This -->
-        <section class="recommendations-section">
-          <h3>More Like This</h3>
-          <div class="recs-grid" id="moreLikeThisGrid">
-            <!-- Dynamically populated -->
+        <!-- Water Temple (replaces More Like This, only on anime pages) -->
+        <section class="recommendations-section" id="waterTempleSection" style="display:none;">
+          <h3><i class="fa-sharp-duotone fa-solid fa-torii-gate" style="--fa-primary-color: rgb(132, 175, 208); --fa-secondary-color: rgb(132, 175, 208);"></i> Water Temple</h3>
+          <div class="recs-grid" id="waterTempleGrid">
+            <div class="loading-text">Loading recommendations...</div>
           </div>
         </section>
 
-    
+        <!-- Sunken Treasures -->
+        <section class="recommendations-section">
+          <h3>Sunken Treasures</h3>
+          <div class="recs-grid" id="sunkenTreasuresGrid">
+            <div class="loading-text" id="jikanRecLoading">Loading recommendations...</div>
+          </div>
+          <!-- Pagination will be inserted here dynamically -->
+          <div id="sunkenPagination" class="pagination-nav"></div>
+        </section>
 
       </div>
 
       <!-- Right Sidebar (32%) - MATCHED TO INDEX.HTML -->
       <!-- Right Sidebar (32%) - COMBINED CONTAINER -->
-<!-- Right Sidebar (32%) - COMBINED CONTAINER -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-combined">
     <div class="sidebar-section">
@@ -1774,47 +1863,21 @@ img { max-width: 100%; height: auto; display: block; }
         'm': 'data-start="m"', 'r': 'data-start="r"', 's': 'data-start="s"'
       };
 
-      const TMDB_TO_JIKAN_GENRES = {
-  // Standard genres (movie & TV)
-  28: 1,     // Action
-  12: 2,     // Adventure
-  16: 4,     // Animation → Anthropomorphic (51) as fallback, but map to Comedy (4) is okay; better 51
-  35: 4,     // Comedy
-  80: 7,     // Crime → Mystery (7)
-  99: 9,     // Documentary → No direct match, map to Educational (56) for broader reach
-  18: 8,     // Drama
-  10751: 11, // Family → Kids (15)? Actually 11 is Strategy Game, better use 15 (Kids) for Family
-  14: 10,    // Fantasy
-  36: 13,    // History → Historical (13)
-  27: 14,    // Horror
-  10402: 19, // Music
-  9648: 7,   // Mystery
-  10749: 22, // Romance
-  878: 24,   // Science Fiction → Sci‑Fi (24)
-  10770: 24, // TV Movie → Sci‑Fi (24) as fallback
-  53: 38,    // Thriller → Military? Better use 41 (Suspense)
-  10752: 38, // War → Military (38)
-  37: 21,    // Western → Samurai (21) loosely
-
-  // TV‑specific genres
-  10759: 1,  // Action & Adventure → Action (1)
-  10762: 15, // Kids (TV) → Kids (15)
-  10763: 56, // News → Educational (56)
-  10764: 70, // Reality → Performing Arts (70)
-  10765: 10, // Sci‑Fi & Fantasy → Fantasy (10)
-  10766: 22, // Soap → Romance (22)
-  10767: 75, // Talk → Showbiz (75)
-  10768: 38, // War & Politics → Military (38)
-
-  // Additional mappings for broader coverage
-  16: 51,    // Animation → Anthropomorphic (51)
-  99: 56,    // Documentary → Educational (56)
-  10751: 15, // Family → Kids (15)
-  53: 41,    // Thriller → Suspense (41)
-  10752: 38, // War → Military (38)
-  37: 21,    // Western → Samurai (21)
-  // If you encounter any other IDs, you can add them here
-};
+      // Jikan Genre IDs for Sunken Treasures (18 popular genres)
+      const JIKAN_GENRE_POOL = [1, 2, 4, 8, 10, 14, 22, 24, 37, 41, 46, 50, 62, 76, 81, 91, 104, 117];
+      
+      // Generate 30 unique 2-genre combinations for Sunken Treasures
+      function generateGenreCombos(pool, count = 30) {
+        const combos = [];
+        for (let i = 0; i < pool.length && combos.length < count; i++) {
+          for (let j = i + 1; j < pool.length && combos.length < count; j++) {
+            combos.push([pool[i], pool[j]]);
+          }
+        }
+        return combos.slice(0, count);
+      }
+      
+      const SUNKEN_GENRE_COMBOS = generateGenreCombos(JIKAN_GENRE_POOL, 30);
 
       let currentState = {
         source: null, id: null, type: null, title: '',
@@ -2107,7 +2170,12 @@ img { max-width: 100%; height: auto; display: block; }
         
         if (isAnime && data.season && data.year) {
           const season = data.season.charAt(0).toUpperCase() + data.season.slice(1);
-          details.push({ label: 'Premiered', value: `${season} ${data.year}` });
+          const seasonSlug = slugify(season);
+          details.push({ 
+            label: 'Premiered', 
+            value: `<a href="/season/${seasonSlug}+${data.year}">${season} ${data.year}</a>`, 
+            isHtml: true 
+          });
         }
         
         if ((isAnime || currentState.type === 'tv') && data.broadcast?.string) {
@@ -2122,8 +2190,13 @@ img { max-width: 100%; height: auto; display: block; }
               const { episodes_sub, episodes_dub } = currentState.allAnimeData;
               if (episodes_sub > 0 || episodes_dub > 0) {
                 episodeText = '';
-                if (episodes_sub > 0) episodeText += `<i class="fa-solid fa-closed-captioning" style="color:var(--badge-sub-border)"></i> ${episodes_sub}`;
-                if (episodes_dub > 0) episodeText += ` <i class="fa-solid fa-microphone" style="color:var(--badge-dub-border)"></i> ${episodes_dub}`;
+                if (episodes_sub > 0) {
+                  episodeText += `<wa-icon name="closed-captioning" family="utility-fill" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_sub}`;
+                }
+                if (episodes_dub > 0) {
+                  if (episodes_sub > 0) episodeText += ' | ';
+                  episodeText += `<wa-icon name="microphone" family="utility" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_dub}`;
+                }
               }
             }
             details.push({ label: 'Episodes', value: episodeText, isHtml: isAnime });
@@ -2143,8 +2216,11 @@ img { max-width: 100%; height: auto; display: block; }
         
         const studios = isAnime ? data.studios : data.production_companies || data.networks;
         if (studios?.length) {
-          const studioList = studios.slice(0, 5).map(s => s.name).join(', ');
-          details.push({ label: 'Studio' + (studios.length > 1 ? 's' : ''), value: studioList });
+          const studioLinks = studios.slice(0, 5).map(s => {
+            const studioSlug = slugify(s.name);
+            return `<a href="/studio/${studioSlug}">${s.name}</a>`;
+          }).join(', ');
+          details.push({ label: 'Studio' + (studios.length > 1 ? 's' : ''), value: studioLinks, isHtml: true });
         }
         
         if (isAnime && data.producers?.length) {
@@ -2579,43 +2655,269 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       async function loadRecommendations() {
-        await Promise.all([fetchMoreLikeThis(), loadPersonalizedAnimeRecs(currentState.data, currentState.type)]);
-      }
-
-      async function fetchMoreLikeThis() {
-        if (currentState.source !== 'tmdb') return;
-        const container = document.getElementById('moreLikeThisGrid');
-        const { data } = currentState;
-        try {
-          const endpoint = currentState.type;
-          const country = data.origin_country?.[0] || 'US';
-          const genreIds = data.genres?.map(g => g.id).join('|') || '';
-          const workerUrl = `${CONFIG.TMDB_WORKER}/3/discover/${endpoint}?api_key=proxy&language=en-US&sort_by=popularity.desc&page=1&with_genres=${genreIds}&with_origin_country=${country}`;
-          const res = await fetch(workerUrl);
-          const { results } = await res.json();
-          const filtered = results.filter(r => r.id !== data.id).slice(0, 30);
-          container.innerHTML = filtered.map(renderRecCard).join('');
-        } catch (e) { 
-          container.innerHTML = '<div class="loading-text">Failed to load recommendations</div>'; 
-          console.error('TMDB recommendations error:', e); 
+        // Load Water Temple only on anime pages, otherwise load Sunken Treasures
+        if (currentState.source === 'jikan') {
+          await Promise.all([
+            loadWaterTemple(),
+            loadSunkenTreasures(1)
+          ]);
+        } else {
+          await loadSunkenTreasures(1);
         }
       }
 
-      function renderRecCard(item) {
-        const title = item.title || item.name;
-        const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-        const score = item.vote_average;
-        const type = currentState.type;
-        const year = (item.release_date || item.first_air_date)?.slice(0, 4) || 'N/A';
+      // ✅ NEW: Water Temple section - only for anime info pages
+      async function loadWaterTemple() {
+        const section = document.getElementById('waterTempleSection');
+        const gridContainer = document.getElementById('waterTempleGrid');
         
-        const source = type === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+        // Only show on anime pages
+        if (currentState.source !== 'jikan') {
+          section.style.display = 'none';
+          return;
+        }
+        
+        section.style.display = 'block';
+        gridContainer.innerHTML = '<div class="loading-text">Loading recommendations...</div>';
+        
+        try {
+          const data = currentState.data;
+          const themes = data.themes?.map(t => t.mal_id).filter(Boolean) || [];
+          const demographics = data.demographics?.map(d => d.mal_id).filter(Boolean) || [];
+          
+          // Select up to 3 theme/demographic IDs
+          const selectedGenres = [...new Set([...themes, ...demographics])].slice(0, 3);
+          
+          // Build Jikan API URL
+          const params = new URLSearchParams({
+            order_by: 'popularity',
+            sort: 'asc',
+            limit: '24',
+            sfw: 'true',
+            type: data.type?.toLowerCase() || 'tv',
+            min_score: '6.4',
+            max_score: '8.7'
+          });
+          
+          if (selectedGenres.length > 0) {
+            params.append('genres', selectedGenres.join(','));
+          }
+          
+          const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
+          console.log('🔗 Water Temple:', apiUrl);
+          
+          // Check cache
+          const cacheKey = `watertemple_${selectedGenres.join('_')}_${data.type}`;
+          const cached = localStorage.getItem(cacheKey);
+          let results;
+          
+          if (cached) {
+            const { data: cachedData, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+              console.log('✅ Using cached Water Temple results');
+              results = cachedData;
+            }
+          }
+          
+          // Fetch if not cached
+          if (!results) {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
+            const apiData = await response.json();
+            results = apiData.data || [];
+            
+            // Cache results
+            localStorage.setItem(cacheKey, JSON.stringify({
+              data: results,
+              timestamp: Date.now()
+            }));
+          }
+          
+          // Filter out current show
+          const filtered = results.filter(a => a.mal_id !== currentState.id).slice(0, 24);
+          
+          if (filtered.length > 0) {
+            gridContainer.innerHTML = filtered.map(anime => renderAnimeRecCard(anime)).join('');
+          } else {
+            gridContainer.innerHTML = '<div class="loading-text">No recommendations found</div>';
+          }
+          
+        } catch (error) {
+          console.error('❌ Water Temple error:', error);
+          gridContainer.innerHTML = '<div class="loading-text">Failed to load recommendations</div>';
+        }
+      }
+
+      // ✅ UPDATED: loadSunkenTreasures with pagination
+      async function loadSunkenTreasures(page = 1) {
+        const gridContainer = document.getElementById('sunkenTreasuresGrid');
+        const loaderMessage = document.getElementById('jikanRecLoading');
+        const paginationContainer = document.getElementById('sunkenPagination');
+        
+        // Show loading state
+        loaderMessage.style.display = 'block';
+        loaderMessage.textContent = 'Discovering anime treasures...';
+        paginationContainer.innerHTML = '';
+        
+        try {
+          // Determine which genre combo to use for this page
+          const comboIndex = (page - 1) % SUNKEN_GENRE_COMBOS.length;
+          const [genreA, genreB] = SUNKEN_GENRE_COMBOS[comboIndex];
+          
+          // Build Jikan API URL with specified filters
+          const params = new URLSearchParams({
+            genres: `${genreA},${genreB}`,  // OR logic: matches either genre
+            type: 'tv',                      // TV series only
+            min_score: '6.5',
+            max_score: '10',
+            order_by: 'popularity',
+            sort: 'asc',                     // Most popular first
+            limit: '24',                     // 24 per page as requested
+            sfw: 'true'
+          });
+          
+          const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
+          console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
+          
+          // Check cache first (24-hour cache)
+          const cacheKey = `sunken_tv_${genreA}_${genreB}_page${page}`;
+          const cached = localStorage.getItem(cacheKey);
+          let data;
+          
+          if (cached) {
+            const { results, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+              console.log('✅ Using cached Sunken Treasures results');
+              data = { data: results };
+            }
+          }
+          
+          // Fetch from API if not cached
+          if (!data) {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
+            data = await response.json();
+            
+            // Cache the results
+            localStorage.setItem(cacheKey, JSON.stringify({
+              results: data.data,
+              timestamp: Date.now()
+            }));
+          }
+          
+          // Hide loader
+          loaderMessage.style.display = 'none';
+          
+          // Handle empty results with fallback to popular anime
+          if (!data.data || data.data.length === 0) {
+            console.log('⚠️ No results for this combo, fetching popular TV anime as fallback');
+            const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24`;
+            const fallbackRes = await fetch(fallbackUrl);
+            const fallbackData = await fallbackRes.json();
+            data.data = fallbackData.data || [];
+          }
+          
+          // Filter out current show if viewing anime page
+          const currentId = currentState.source === 'jikan' ? currentState.id : null;
+          const results = currentId 
+            ? data.data.filter(a => a.mal_id !== currentId)
+            : data.data;
+          
+          // Render cards
+          if (results.length > 0) {
+            gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
+            
+            // Add pagination controls
+            renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+          } else {
+            gridContainer.innerHTML = '<div class="loading-text">No anime found for this genre combination</div>';
+          }
+          
+        } catch (error) {
+          console.error('❌ Sunken Treasures error:', error);
+          loaderMessage.innerHTML = `
+            <div style="text-align:center; padding:20px;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px;"></i>
+              <p>Failed to load recommendations</p>
+              <small style="color:var(--text-muted);">${error.message}</small>
+            </div>
+          `;
+          paginationContainer.innerHTML = '';
+        }
+      }
+      
+      // ✅ NEW: Render pagination for Sunken Treasures
+      function renderSunkenPagination(currentPage, totalPages, container) {
+        container.innerHTML = '';
+        
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'btn btn-soft btn-prev rounded-full';
+        prevBtn.innerHTML = '<span>Previous</span>';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => loadSunkenTreasures(currentPage - 1);
+        container.appendChild(prevBtn);
+        
+        // Page numbers container
+        const pagesContainer = document.createElement('div');
+        pagesContainer.className = 'flex items-center gap-x-1';
+        
+        // Determine how many page buttons to show
+        const maxVisible = window.innerWidth < 768 ? 4 : 7;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+        
+        // Adjust if we're near the end
+        if (end - start < maxVisible - 1) {
+          start = Math.max(1, end - maxVisible + 1);
+        }
+        
+        for (let i = start; i <= end; i++) {
+          const pageBtn = document.createElement('button');
+          pageBtn.type = 'button';
+          pageBtn.className = `btn btn-soft btn-circle${i === currentPage ? ' active' : ''}`;
+          pageBtn.textContent = i;
+          if (i === currentPage) {
+            pageBtn.setAttribute('aria-current', 'page');
+          }
+          pageBtn.onclick = () => loadSunkenTreasures(i);
+          pagesContainer.appendChild(pageBtn);
+        }
+        
+        container.appendChild(pagesContainer);
+        
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'btn btn-soft btn-next rounded-full';
+        nextBtn.innerHTML = '<span>Next</span>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => loadSunkenTreasures(currentPage + 1);
+        container.appendChild(nextBtn);
+      }
+
+      // Unified anime card renderer for both sections
+      function renderAnimeRecCard(anime) {
+        const title = anime.title_english || anime.title || 'Unknown';
+        const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
+        const score = anime.score;
+        const year = anime.aired?.from?.slice(0, 4) || 'N/A';
+        const episodes = anime.episodes || '?';
+        const type = anime.type || 'TV';
         const slug = slugify(title);
-        const detailsUrl = `/info/${type}/${source}-${item.id}/${slug}`;
+        const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+        
+        // Fallback poster if image fails to load
+        const posterStyle = poster 
+          ? `background-image: url('${poster}')` 
+          : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
         
         return `<a href="${detailsUrl}" class="rec-card">
-          <div class="rec-poster" style="background-image: url('${poster}')">
-            <span class="quality-badge">HD</span>
-            <span class="score-badge">⭐ ${score?.toFixed(1) || 'N/A'}</span>
+          <div class="rec-poster" style="${posterStyle}">
+            ${poster ? `<img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
+            <span class="quality-badge">${type}</span>
+            <span class="score-badge"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span>
             <div class="play-overlay">
               <svg viewBox="0 0 24 24">
                 <polygon points="5,3 19,12 5,21" fill="white"/>
@@ -2623,126 +2925,11 @@ img { max-width: 100%; height: auto; display: block; }
             </div>
           </div>
           <div class="rec-info">
-            <div class="rec-meta">${type.toUpperCase()} · ${year}</div>
+            <div class="rec-meta">${episodes} eps · ${year}</div>
             <div class="rec-title">${escapeHtml(title)}</div>
           </div>
         </a>`;
       }
-      
- async function loadPersonalizedAnimeRecs(currentShow, activeType = 'tv') {
-  const gridContainer = document.getElementById('sunkenTreasuresGrid');
-  const loaderMessage = document.getElementById('jikanRecLoading');
-
-  console.log('🔍 loadPersonalizedAnimeRecs called', { 
-    source: currentState.source, 
-    id: currentState.id,
-    hasRenderFunc: typeof renderAnimeRecCard === 'function'
-  });
-
-  loaderMessage.style.display = 'block';
-  loaderMessage.innerHTML = 'Finding anime treasures…';
-
-  try {
-    // Use direct Jikan API (your proxy works, but direct is simpler for debugging)
-    const apiUrl = 'https://api.jikan.moe/v4/top/anime?limit=30&sfw=true';
-    
-    console.log('🔗 Fetching:', apiUrl);
-    const response = await fetch(apiUrl);
-    
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'No error text');
-      throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 200)}`);
-    }
-
-    const payload = await response.json();
-    console.log('✅ Response received:', { 
-      hasData: !!payload.data, 
-      dataLength: payload.data?.length,
-      firstItem: payload.data?.[0]?.title 
-    });
-
-    if (!payload.data?.length) {
-      throw new Error('No anime data in response');
-    }
-
-    // Debug: Check if render function exists
-    if (typeof renderAnimeRecCard !== 'function') {
-      throw new Error('renderAnimeRecCard is not defined!');
-    }
-
-    // Render cards
-    const html = payload.data
-      .filter(anime => {
-        // Only filter out current anime if we're on a jikan page
-        if (currentState.source === 'jikan' && currentState.id) {
-          return anime.mal_id !== currentState.id;
-        }
-        return true;
-      })
-      .slice(0, 30)
-      .map(anime => {
-        try {
-          return renderAnimeRecCard(anime);
-        } catch (e) {
-          console.error('❌ Error rendering card:', e, anime?.mal_id);
-          return '';
-        }
-      })
-      .join('');
-
-    console.log('🎨 Generated HTML length:', html.length);
-    
-    if (!html.trim()) {
-      throw new Error('Generated HTML is empty');
-    }
-
-    gridContainer.innerHTML = html;
-    loaderMessage.style.display = 'none';
-    console.log('✅ Sunken Treasures rendered successfully');
-
-  } catch (error) {
-    console.error('❌ Sunken Treasures error:', error);
-    loaderMessage.innerHTML = `
-      <div style="text-align:center;padding:20px;color:var(--text-muted);">
-        <i class="fa-solid fa-triangle-exclamation"></i> Could not load anime
-        <br><small style="opacity:0.7;font-size:0.8rem">${error.message}</small>
-        <br><button onclick="location.reload()" style="margin-top:10px;padding:6px 12px;background:var(--btn-primary);color:white;border:none;border-radius:4px;cursor:pointer">Retry</button>
-      </div>`;
-  }
-}
-
-      function renderAnimeRecCard(anime) {
-  const title = anime.title_english || anime.title || 'Unknown';
-  const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
-  const score = anime.score;
-  const year = anime.aired?.from?.slice(0, 4) || 'N/A';
-  const episodes = anime.episodes || '?';
-  const type = anime.type || 'TV';
-  const slug = slugify(title);
-  const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-  
-  // Fallback poster if image fails to load
-  const posterStyle = poster 
-    ? `background-image: url('${poster}')` 
-    : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
-  
-  return `<a href="${detailsUrl}" class="rec-card">
-    <div class="rec-poster" style="${posterStyle}">
-      ${poster ? `<img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
-      <span class="quality-badge">${type}</span>
-      <span class="score-badge"><i class="fa-solid fa-star"></i> ${score?.toFixed(1) || 'N/A'}</span>
-      <div class="play-overlay">
-        <svg viewBox="0 0 24 24">
-          <polygon points="5,3 19,12 5,21" fill="white"/>
-        </svg>
-      </div>
-    </div>
-    <div class="rec-info">
-      <div class="rec-meta">${episodes} eps · ${year}</div>
-      <div class="rec-title">${escapeHtml(title)}</div>
-    </div>
-  </a>`;
-}
 
       async function loadCastData() {
         const container = document.getElementById('castList');
@@ -3103,7 +3290,6 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
     })();
-
   </script>
 </body>
 </html>
