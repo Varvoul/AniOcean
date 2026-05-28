@@ -1214,6 +1214,14 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 0;
 }
 
+    /* Ensure page numbers are in a row */
+.pagination-nav .page-numbers-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Mobile: chevrons for prev/next */
 @media (max-width: 768px) {
   .pagination-nav .btn-prev,
@@ -2845,57 +2853,52 @@ img { max-width: 100%; height: auto; display: block; }
           paginationContainer.innerHTML = '';
         }
       }
-      
-      // ✅ NEW: Render pagination for Sunken Treasures
+
       function renderSunkenPagination(currentPage, totalPages, container) {
-        container.innerHTML = '';
-        
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.type = 'button';
-        prevBtn.className = 'btn btn-soft btn-prev rounded-full';
-        prevBtn.innerHTML = '<span>Previous</span>';
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => loadSunkenTreasures(currentPage - 1);
-        container.appendChild(prevBtn);
-        
-        // Page numbers container
-        const pagesContainer = document.createElement('div');
-        pagesContainer.className = 'flex items-center gap-x-1';
-        
-        // Determine how many page buttons to show
-        const maxVisible = window.innerWidth < 768 ? 4 : 7;
-        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let end = Math.min(totalPages, start + maxVisible - 1);
-        
-        // Adjust if we're near the end
-        if (end - start < maxVisible - 1) {
-          start = Math.max(1, end - maxVisible + 1);
-        }
-        
-        for (let i = start; i <= end; i++) {
-          const pageBtn = document.createElement('button');
-          pageBtn.type = 'button';
-          pageBtn.className = `btn btn-soft btn-circle${i === currentPage ? ' active' : ''}`;
-          pageBtn.textContent = i;
-          if (i === currentPage) {
-            pageBtn.setAttribute('aria-current', 'page');
-          }
-          pageBtn.onclick = () => loadSunkenTreasures(i);
-          pagesContainer.appendChild(pageBtn);
-        }
-        
-        container.appendChild(pagesContainer);
-        
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.type = 'button';
-        nextBtn.className = 'btn btn-soft btn-next rounded-full';
-        nextBtn.innerHTML = '<span>Next</span>';
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => loadSunkenTreasures(currentPage + 1);
-        container.appendChild(nextBtn);
-      }
+  container.innerHTML = '';
+
+  // Previous button
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'btn btn-soft btn-prev rounded-full';
+  prevBtn.innerHTML = '<span>Previous</span>';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.onclick = () => loadSunkenTreasures(currentPage - 1);
+  container.appendChild(prevBtn);
+
+  // Page numbers container – now a flex row
+  const pagesContainer = document.createElement('div');
+  pagesContainer.className = 'page-numbers-container';   // uses the new CSS
+
+  const maxVisible = window.innerWidth < 768 ? 4 : 7;
+  let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+  let end = Math.min(totalPages, start + maxVisible - 1);
+
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1);
+  }
+
+  for (let i = start; i <= end; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.type = 'button';
+    pageBtn.className = `btn btn-soft btn-circle${i === currentPage ? ' active' : ''}`;
+    pageBtn.textContent = i;
+    if (i === currentPage) pageBtn.setAttribute('aria-current', 'page');
+    pageBtn.onclick = () => loadSunkenTreasures(i);
+    pagesContainer.appendChild(pageBtn);
+  }
+
+  container.appendChild(pagesContainer);
+
+  // Next button
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'btn btn-soft btn-next rounded-full';
+  nextBtn.innerHTML = '<span>Next</span>';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.onclick = () => loadSunkenTreasures(currentPage + 1);
+  container.appendChild(nextBtn);
+}
 
       // Unified anime card renderer for both sections
       function renderAnimeRecCard(anime) {
