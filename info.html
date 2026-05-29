@@ -1562,17 +1562,83 @@ img { max-width: 100%; height: auto; display: block; }
   }
   
   .seasons-grid { grid-template-columns: 1fr; }
-  
+
   .tabs-container {
-    flex-wrap: wrap;
-    gap: 2px;
-    overflow-x: auto;
-    justify-content: flex-start;
-    padding: 4px 8px;
-  }
-  .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
-  .tab-indicator { display: none; }
-  .tab-btn.active { background: var(--btn-primary); color: #fff; }
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border-radius: 50px;
+  margin-bottom: 20px;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hide radio inputs */
+.tabs-container input[type="radio"] {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.3s;
+  position: relative;
+  z-index: 2;
+  user-select: none;
+}
+
+.glider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 50px;
+  background: var(--btn-primary);
+  z-index: 1;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+  pointer-events: none;
+}
+
+/* Glider positions for 5 tabs (width ≈ 1/5) */
+.tabs-container input#tab-radio-1:checked ~ .glider {
+  transform: translateX(0%);
+  width: calc(100% / 5);
+}
+.tabs-container input#tab-radio-2:checked ~ .glider {
+  transform: translateX(100%);
+  width: calc(100% / 5);
+}
+.tabs-container input#tab-radio-3:checked ~ .glider {
+  transform: translateX(200%);
+  width: calc(100% / 5);
+}
+.tabs-container input#tab-radio-4:checked ~ .glider {
+  transform: translateX(300%);
+  width: calc(100% / 5);
+}
+.tabs-container input#tab-radio-5:checked ~ .glider {
+  transform: translateX(400%);
+  width: calc(100% / 5);
+}
+
+/* When tab is checked, its label becomes white */
+.tabs-container input:checked + .tab {
+  color: var(--text-primary);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
   
   .dropdown-menu {
     left: 50%;
@@ -1902,48 +1968,53 @@ img { max-width: 100%; height: auto; display: block; }
         </section>
 
         <!-- Tab Navigation -->
-        <section class="tabs-section">
-          <div class="tabs-container">
-            <button class="tab-btn active" data-tab="cast">Cast/Crew</button>
-            <button class="tab-btn" data-tab="artwork">Artwork</button>
-            <button class="tab-btn" data-tab="trailer">Trailer</button>
-            <button class="tab-btn" data-tab="themes">Themes</button>
-            <button class="tab-btn" data-tab="statistics">Statistics</button>
-            <div class="tab-indicator" id="tabIndicator"></div>
-          </div>
-          
-          <!-- Tab Contents -->
-          <div class="tab-content active" id="castTab">
-            <div class="cast-list" id="castList"></div>
-          </div>
-          
-          <div class="tab-content" id="artworkTab">
-            <div class="artwork-grid" id="artworkGrid"></div>
-          </div>
-          
-          <div class="tab-content" id="trailerTab">
-            <div class="video-container" id="trailerContainer"></div>
-          </div>
-          
-          <div class="tab-content" id="themesTab">
-            <div class="themes-container" id="themesContainer"></div>
-          </div>
-          
-          <div class="tab-content" id="statisticsTab">
-            <div class="stats-module">
-              <h4>Score Distribution</h4>
-              <div class="histogram" id="scoreHistogram"></div>
-            </div>
-            <div class="stats-module">
-              <h4>Member Status</h4>
-              <div class="segmented-bar" id="statusBar"></div>
-            </div>
-            <div class="stats-module">
-              <h4>Ranks & Trends</h4>
-              <div class="metric-cards" id="metricCards"></div>
-            </div>
-          </div>
-        </section>
+      <section class="tabs-section">
+  <div class="tabs-container">
+    <input type="radio" id="tab-radio-1" name="info-tabs" checked />
+    <label class="tab" for="tab-radio-1">Cast Members</label>
+
+    <input type="radio" id="tab-radio-2" name="info-tabs" />
+    <label class="tab" for="tab-radio-2">Artwork</label>
+
+    <input type="radio" id="tab-radio-3" name="info-tabs" />
+    <label class="tab" for="tab-radio-3">Trailer</label>
+
+    <input type="radio" id="tab-radio-4" name="info-tabs" />
+    <label class="tab" for="tab-radio-4">Themes</label>
+
+    <input type="radio" id="tab-radio-5" name="info-tabs" />
+    <label class="tab" for="tab-radio-5">Statistics</label>
+
+    <span class="glider"></span>
+  </div>
+
+  <div class="tab-content active" id="castTab">
+    <div class="cast-list" id="castList"></div>
+  </div>
+  <div class="tab-content" id="artworkTab">
+    <div class="artwork-grid" id="artworkGrid"></div>
+  </div>
+  <div class="tab-content" id="trailerTab">
+    <div class="video-container" id="trailerContainer"></div>
+  </div>
+  <div class="tab-content" id="themesTab">
+    <div class="themes-container" id="themesContainer"></div>
+  </div>
+  <div class="tab-content" id="statisticsTab">
+    <div class="stats-module">
+      <h4>Score Distribution</h4>
+      <div class="histogram" id="scoreHistogram"></div>
+    </div>
+    <div class="stats-module">
+      <h4>Member Status</h4>
+      <div class="segmented-bar" id="statusBar"></div>
+    </div>
+    <div class="stats-module">
+      <h4>Ranks & Trends</h4>
+      <div class="metric-cards" id="metricCards"></div>
+    </div>
+  </div>
+</section>
 
         <!-- Water Temple (replaces More Like This, only on anime pages) -->
         <section class="recommendations-section" id="waterTempleSection" style="display:none;">
@@ -2043,6 +2114,8 @@ img { max-width: 100%; height: auto; display: block; }
         data: null, currentUser: null, userBookmarks: [],
         selectedStatuses: [], dropdownTimer: null, allAnimeData: null
       };
+
+      const seasonImageCache = new Map();
 
       document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
@@ -2250,18 +2323,48 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       function renderStats() {
-        const data = currentState.data;
-        const isAnime = currentState.source === 'jikan';
-        const platform = isAnime ? 'MAL' : 'TMDB';
-        const rating = isAnime ? data.score : data.vote_average;
-        const starColor = isAnime ? '#2e51a2' : '#01b4e4';
-        
-        document.getElementById('platformLabel').textContent = platform;
-        document.getElementById('platformStar').style.color = starColor;
-        document.getElementById('ratingValue').textContent = rating ? rating.toFixed(1) : 'N/A';
-        document.getElementById('formatValue').textContent = data.type || currentState.type;
-        document.getElementById('durationValue').textContent = formatDuration(data.duration, isAnime, currentState.type) || '—';
+  const data = currentState.data;
+  const isAnime = currentState.source === 'jikan';
+  const platform = isAnime ? 'MAL' : 'TMDB';
+  const rating = isAnime ? data.score : data.vote_average;
+  const starColor = isAnime ? '#2e51a2' : '#01b4e4';
+
+  document.getElementById('platformLabel').textContent = platform;
+  document.getElementById('platformStar').style.color = starColor;
+  document.getElementById('ratingValue').textContent = rating ? rating.toFixed(1) : 'N/A';
+  document.getElementById('formatValue').textContent = data.type || currentState.type;
+
+  // Duration – fixed for TMDB
+  let durationStr = '—';
+  if (isAnime) {
+    durationStr = formatDuration(data.duration, true, currentState.type) || '—';
+  } else {
+    if (currentState.type === 'movie') {
+      durationStr = data.runtime ? `${Math.floor(data.runtime / 60)}h ${data.runtime % 60}min` : '—';
+    } else if (currentState.type === 'tv') {
+      const runtime = data.episode_run_time?.[0];
+      durationStr = runtime ? `${runtime}min per ep` : '—';
+    }
+  }
+  document.getElementById('durationValue').textContent = durationStr;
+
+  // Age Rating
+  let ageRating = '—';
+  if (isAnime) {
+    ageRating = data.rating || '—';
+  } else {
+    try {
+      if (currentState.type === 'movie' && data.release_dates) {
+        const us = data.release_dates.results.find(r => r.iso_3166_1 === 'US');
+        if (us) ageRating = us.release_dates[0]?.certification || '—';
+      } else if (currentState.type === 'tv' && data.content_ratings) {
+        const us = data.content_ratings.results.find(r => r.iso_3166_1 === 'US');
+        ageRating = us?.rating || '—';
       }
+    } catch(e) {}
+  }
+  document.getElementById('ageRatingValue').textContent = ageRating;
+}
 
       function renderSynopsis() {
         const data = currentState.data;
@@ -2342,25 +2445,25 @@ img { max-width: 100%; height: auto; display: block; }
         }
         
         if (currentState.type !== 'movie') {
-          const episodes = isAnime ? data.episodes : data.number_of_episodes || data.number_of_seasons;
-          if (episodes) {
-            let episodeText = episodes.toString();
-            if (isAnime && currentState.allAnimeData) {
-              const { episodes_sub, episodes_dub } = currentState.allAnimeData;
-              if (episodes_sub > 0 || episodes_dub > 0) {
-                episodeText = '';
-                if (episodes_sub > 0) {
-                  episodeText += `<wa-icon name="closed-captioning" family="utility-fill" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_sub}`;
-                }
-                if (episodes_dub > 0) {
-                  if (episodes_sub > 0) episodeText += ' | ';
-                  episodeText += `<wa-icon name="microphone" family="utility" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_dub}`;
-                }
-              }
-            }
-            details.push({ label: 'Episodes', value: episodeText, isHtml: isAnime });
-          }
+  const episodes = isAnime ? data.episodes : data.number_of_episodes || data.number_of_seasons;
+  if (episodes) {
+    let episodeText = episodes.toString();
+    if (isAnime && currentState.allAnimeData) {
+      const { episodes_sub, episodes_dub } = currentState.allAnimeData;
+      if (episodes_sub > 0 || episodes_dub > 0) {
+        episodeText = `${episodes} `;
+        if (episodes_sub > 0) {
+          episodeText += `<i class="fa-solid fa-closed-captioning"></i> ${episodes_sub}`;
         }
+        if (episodes_dub > 0) {
+          if (episodes_sub > 0) episodeText += ' | ';
+          episodeText += `<i class="fa-solid fa-microphone"></i> ${episodes_dub}`;
+        }
+      }
+    }
+    details.push({ label: 'Episodes', value: episodeText, isHtml: isAnime });
+  }
+}
         
         if (isAnime && data.source) {
           details.push({ label: 'Source', value: data.source });
@@ -2408,78 +2511,93 @@ img { max-width: 100%; height: auto; display: block; }
         `).join('');
       }
 
-      function renderSeasons() {
-        const section = document.getElementById('seasonsSection');
-        const data = currentState.data;
-        const isAnime = currentState.source === 'jikan';
-        
-        let seasons = [];
-        if (isAnime) {
-          // data.relations is an array: [{relation: "Prequel", entry: [{mal_id,type,name}]}, ...]
-          const relationsArray = Array.isArray(data.relations) ? data.relations : [];
-          const relatedAnime = [];
-          for (const rel of relationsArray) {
-            const relType = (rel.relation || '').toLowerCase();
-            // Include prequels, sequels, side stories, alternative versions
-            if (['prequel','sequel','side story','alternative version','alternative setting','spin-off'].includes(relType)) {
-              for (const entry of (rel.entry || [])) {
-                if (entry.type === 'anime') relatedAnime.push({ ...entry, relation: rel.relation });
-              }
-            }
-          }
-          seasons = relatedAnime;
-          
-          // Always include the current show itself
-          if (!seasons.some(s => s.mal_id === currentState.id)) {
-            seasons.unshift({ mal_id: currentState.id, name: currentState.title, type: 'anime', relation: 'Current' });
-          }
-        } else if (currentState.type === 'tv') {
-          seasons = data.seasons?.filter(s => s.season_number > 0) || [];
-        }
-        
-        if (!seasons.length) {
-          section.style.display = 'none';
-          return;
-        }
-        
-        section.style.display = 'block';
-        const grid = document.getElementById('seasonsGrid');
-        
-        grid.innerHTML = seasons.map(season => {
-          const isAnimeEntry = isAnime;
-          const seasonId = isAnimeEntry ? season.mal_id : season.id;
-          const seasonTitle = season.title || season.name || currentState.title;
-          const seasonNumber = season.season_number || 1;
-          const slug = slugify(seasonTitle);
-          
-          let seasonUrl, backdrop;
-          if (isAnimeEntry) {
-            seasonUrl = `/info/anime/jikan-${seasonId}/${slug}`;
-            backdrop = season.images?.jpg?.large_image_url || season.images?.jpg?.image_url || '';
-          } else {
-            seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
-            backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
-          }
+      async function renderSeasons() {
+  const section = document.getElementById('seasonsSection');
+  const data = currentState.data;
+  const isAnime = currentState.source === 'jikan';
+  let seasons = [];
 
-          const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
-          
-          return `<a href="${seasonUrl}" class="season-card">
-            <img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.style.display='none'">
-            <div class="season-info-overlay">
-              ${relationLabel}
-              <span class="season-number">${escapeHtml(isAnimeEntry ? seasonTitle : `Season ${seasonNumber}`)}</span>
-            </div>
-          </a>`;
-        }).join('');
+  if (isAnime) {
+    const relationsArray = Array.isArray(data.relations) ? data.relations : [];
+    const relatedAnime = [];
+    for (const rel of relationsArray) {
+      if (['prequel','sequel','side story','alternative version','alternative setting','spin-off'].includes(rel.relation?.toLowerCase())) {
+        for (const entry of (rel.entry || [])) {
+          if (entry.type === 'anime') relatedAnime.push({ ...entry, relation: rel.relation });
+        }
       }
+    }
+    seasons = relatedAnime;
+    if (!seasons.some(s => s.mal_id === currentState.id)) {
+      seasons.unshift({ mal_id: currentState.id, name: currentState.title, type: 'anime', relation: 'Current' });
+    }
+  } else if (currentState.type === 'tv') {
+    seasons = data.seasons?.filter(s => s.season_number > 0) || [];
+  }
+
+  if (!seasons.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  const grid = document.getElementById('seasonsGrid');
+
+  // Build cards with placeholder images first
+  grid.innerHTML = seasons.map((season, idx) => {
+    const isAnimeEntry = isAnime;
+    const seasonId = isAnimeEntry ? season.mal_id : season.id;
+    const seasonTitle = season.title || season.name || currentState.title;
+    const seasonNumber = season.season_number || 1;
+    const slug = slugify(seasonTitle);
+    const seasonUrl = isAnimeEntry
+      ? `/info/anime/jikan-${seasonId}/${slug}`
+      : `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
+
+    const placeholder = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect fill="%231a3a5c" width="320" height="180"/></svg>';
+    const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
+
+    return `<a href="${seasonUrl}" class="season-card" data-season-index="${idx}">
+      <img class="season-card-img" src="${placeholder}" alt="${escapeHtml(seasonTitle)}" loading="lazy">
+      <div class="season-info-overlay">
+        ${relationLabel}
+        <span class="season-number">${escapeHtml(isAnimeEntry ? seasonTitle : `Season ${seasonNumber}`)}</span>
+      </div>
+    </a>`;
+  }).join('');
+
+  // Load real images for Jikan seasons
+  if (isAnime) {
+    for (let i = 0; i < seasons.length; i++) {
+      const s = seasons[i];
+      const card = grid.querySelector(`.season-card[data-season-index="${i}"]`);
+      if (!card) continue;
+      const img = card.querySelector('.season-card-img');
+      if (s.mal_id === currentState.id) {
+        img.src = data.images?.jpg?.image_url || data.images?.webp?.image_url || '';
+        continue;
+      }
+      if (!seasonImageCache.has(s.mal_id)) {
+        try {
+          const res = await fetch(`https://api.jikan.moe/v4/anime/${s.mal_id}?fields=images`);
+          const json = await res.json();
+          const imgUrl = json.data?.images?.jpg?.image_url || json.data?.images?.webp?.image_url || '';
+          seasonImageCache.set(s.mal_id, imgUrl);
+        } catch (e) {
+          seasonImageCache.set(s.mal_id, '');
+        }
+      }
+      img.src = seasonImageCache.get(s.mal_id) || img.src;
+    }
+  }
+}
 
       function renderTabs() {
-        loadCastData(); 
-        loadArtworkData(); 
-        loadTrailerData(); 
-        loadThemesData(); 
-        loadStatisticsData();
-      }
+  loadCastData();
+  loadArtworkData();
+  loadTrailerData();
+  loadThemesData();
+  loadStatisticsData();
+}
 
       function initUI() {
         const expandBtn = document.getElementById('expandSynopsis');
@@ -2577,9 +2695,24 @@ img { max-width: 100%; height: auto; display: block; }
 
       // FIXED: Tab indicator sync logic
       function initTabSwitching() {
-        const tabs = document.querySelectorAll('.tab-btn');
-        const indicator = document.getElementById('tabIndicator');
-        const contents = document.querySelectorAll('.tab-content');
+  const radioButtons = document.querySelectorAll('.tabs-container input[name="info-tabs"]');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const tabMap = {
+    'tab-radio-1': 'castTab',
+    'tab-radio-2': 'artworkTab',
+    'tab-radio-3': 'trailerTab',
+    'tab-radio-4': 'themesTab',
+    'tab-radio-5': 'statisticsTab'
+  };
+
+  radioButtons.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const targetId = tabMap[radio.id];
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      document.getElementById(targetId).classList.add('active');
+    });
+  });
+}
 
         function positionIndicator(activeTab) {
           // Only move indicator on desktop where it's visible
@@ -3239,34 +3372,36 @@ function renderSunkenPagination(currentPage, totalPages, container) {
       });
 
       async function loadArtworkData() {
-        const container = document.getElementById('artworkGrid');
-        const data = currentState.data;
-        const isAnime = currentState.source === 'jikan';
-        let images = [];
-        
-        if (isAnime) {
-          images = [
-            ...(data.images?.jpg?.large_image_url ? [{ type: 'backdrop', url: data.images.jpg.large_image_url }] : []),
-            ...(data.images?.webp?.large_image_url ? [{ type: 'backdrop', url: data.images.webp.large_image_url }] : [])
-          ];
-        } else {
-          images = [
-            ...(data.images?.backdrops?.slice(0, 5).map(b => ({ type: 'backdrop', url: `https://image.tmdb.org/t/p/w780${b.file_path}` })) || []),
-            ...(data.images?.posters?.slice(0, 5).map(p => ({ type: 'poster', url: `https://image.tmdb.org/t/p/w500${p.file_path}` })) || [])
-          ];
-        }
-        
-        if (!images.length) {
-          container.innerHTML = '<p class="loading-text">No artwork available</p>';
-          return;
-        }
-        
-        container.innerHTML = images.slice(0, 10).map(img => `
-          <div class="artwork-item">
-            <img src="${img.url}" alt="Artwork" loading="lazy">
-          </div>
-        `).join('');
-      }
+  const container = document.getElementById('artworkGrid');
+  const data = currentState.data;
+  const isAnime = currentState.source === 'jikan';
+  let images = [];
+
+  if (isAnime) {
+    const jpg = data.images?.jpg || {};
+    const webp = data.images?.webp || {};
+    images = [
+      { url: jpg.image_url, type: 'poster' },
+      { url: jpg.large_image_url, type: 'backdrop' },
+      { url: jpg.small_image_url, type: 'poster_small' },
+      { url: webp.image_url, type: 'poster' },
+      { url: webp.large_image_url, type: 'backdrop' },
+      { url: webp.small_image_url, type: 'poster_small' }
+    ].filter(i => i.url);
+  } else {
+    const backdrops = data.images?.backdrops?.map(b => ({ url: `https://image.tmdb.org/t/p/w780${b.file_path}`, type: 'backdrop' })) || [];
+    const posters = data.images?.posters?.map(p => ({ url: `https://image.tmdb.org/t/p/w500${p.file_path}`, type: 'poster' })) || [];
+    images = [...backdrops, ...posters];
+  }
+
+  container.innerHTML = images.length
+    ? images.slice(0, 20).map(img => `
+      <div class="artwork-item">
+        <img src="${img.url}" alt="${img.type}" loading="lazy">
+      </div>
+    `).join('')
+    : '<p class="loading-text">No artwork available</p>';
+}
 
       async function loadTrailerData() {
         const container = document.getElementById('trailerContainer');
@@ -3295,124 +3430,107 @@ function renderSunkenPagination(currentPage, totalPages, container) {
       }
 
       async function loadThemesData() {
-        const container = document.getElementById('themesContainer');
-        if (currentState.source !== 'jikan') { 
-          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
-          return; 
-        }
-        
-        const malId = currentState.data.mal_id;
-        if (!malId) {
-          container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
-          return;
-        }
-        
-        try {
-          const query = `
-            query GetAnimeByMalId($site: ExternalSiteEnum!, $id: Int!) {
-              findAnimesByExternalSite(site: $site, id: $id) {
+  const container = document.getElementById('themesContainer');
+  if (currentState.source !== 'jikan') { 
+    container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
+    return; 
+  }
+  
+  const malId = currentState.data.mal_id;
+  if (!malId) {
+    container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
+    return;
+  }
+  
+  try {
+    // ✅ Fixed GraphQL query (uses correct field "anime")
+    const query = `
+      query ($malId: Int!) {
+        anime(byExternal: { site: "myanimelist", id: $malId }) {
+          id
+          name
+          themes {
+            id
+            type
+            sequence
+            song {
+              title
+              artist
+            }
+            entries {
+              id
+              episodes
+              version
+              videos {
                 id
-                name
-                animethemes {
-                  id
-                  type
-                  sequence
-                  song {
-                    id
-                    title
-                    artist
-                  }
-                  animethemeentries {
-                    id
-                    version
-                    episodes
-                    videos {
-                      id
-                      link
-                      resolution
-                      nc
-                      audio
-                    }
-                  }
-                }
+                link
+                resolution
               }
             }
-          `;
-          
-          const response = await fetch(CONFIG.ANIMETHEMES_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              query,
-              variables: { site: 'MAL', id: malId }
-            })
-          });
-          
-          const { data: gqlData } = await response.json();
-          const animeEntry = gqlData?.findAnimesByExternalSite?.[0];
-          
-          if (!animeEntry?.animethemes?.length) {
-            container.innerHTML = '<p class="loading-text">No theme songs found</p>';
-            return;
           }
-          
-          const themes = animeEntry.animethemes;
-          const ops = themes.filter(t => t.type === 'OP');
-          const eds = themes.filter(t => t.type === 'ED');
-          
-          let html = '';
-          
-          if (ops.length) {
-            html += '<h4 style="margin: 16px 0 12px">Opening Themes</h4>';
-            ops.forEach((op, i) => {
-              const entry = op.animethemeentries?.[0];
-              const video = entry?.videos?.[0];
-              if (video?.link) {
-                const videoUrl = video.link;
-                const songTitle = op.song?.title || `OP ${op.sequence}`;
-                const artist = op.song?.artist || '';
-                html += `
-                  <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
-                  <div class="video-wrapper">
-                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url}">
-                      <source src="${videoUrl}" type="video/webm">
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                `;
-              }
-            });
-          }
-          
-          if (eds.length) {
-            html += '<h4 style="margin: 24px 0 12px">Ending Themes</h4>';
-            eds.forEach((ed, i) => {
-              const entry = ed.animethemeentries?.[0];
-              const video = entry?.videos?.[0];
-              if (video?.link) {
-                const videoUrl = video.link;
-                const songTitle = ed.song?.title || `ED ${ed.sequence}`;
-                const artist = ed.song?.artist || '';
-                html += `
-                  <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
-                  <div class="video-wrapper">
-                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url}">
-                      <source src="${videoUrl}" type="video/webm">
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                `;
-              }
-            });
-          }
-          
-          container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-          
-        } catch (e) { 
-          console.warn('AnimeThemes API error:', e); 
-          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
         }
       }
+    `;
+    
+    const response = await fetch(CONFIG.ANIMETHEMES_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        variables: { malId }
+      })
+    });
+    
+    const { data: gqlData } = await response.json();
+    const animeEntry = gqlData?.anime;   // Changed from findAnimesByExternalSite
+    
+    if (!animeEntry?.themes?.length) {
+      container.innerHTML = '<p class="loading-text">No theme songs found</p>';
+      return;
+    }
+    
+    const themes = animeEntry.themes;
+    const ops = themes.filter(t => t.type === 'OP');
+    const eds = themes.filter(t => t.type === 'ED');
+    
+    // Helper to build HTML for a single theme (now shows ALL videos)
+    const buildThemeBlock = (theme) => {
+      return theme.entries.flatMap(entry => {
+        return entry.videos.map(video => {
+          const title = theme.song?.title || `${theme.type} ${theme.sequence}`;
+          const artist = theme.song?.artist || '';
+          return `
+            <div class="video-title">${title}${artist ? ` - ${artist}` : ''} (${entry.version || entry.episodes || ''})</div>
+            <div class="video-wrapper">
+              <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url}">
+                <source src="${video.link}" type="video/webm">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          `;
+        }).join('');
+      }).join('');
+    };
+    
+    let html = '';
+    
+    if (ops.length) {
+      html += '<h4 style="margin: 16px 0 12px">Opening Themes</h4>';
+      ops.forEach(op => { html += buildThemeBlock(op); });
+    }
+    
+    if (eds.length) {
+      html += '<h4 style="margin: 24px 0 12px">Ending Themes</h4>';
+      eds.forEach(ed => { html += buildThemeBlock(ed); });
+    }
+    
+    container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
+    
+  } catch (e) { 
+    console.warn('AnimeThemes API error:', e); 
+    container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
+  }
+}
 
       async function loadStatisticsData() {
         renderHistogram(); 
