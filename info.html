@@ -2765,17 +2765,17 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ✅ UPDATED: loadSunkenTreasures with pagination
-     // ✅ UPDATED: Fetches NEW anime for each page + proper loading state
+      // ✅ FIXED: loadSunkenTreasures with working pagination
+      // Bug fix: jikanRecLoading element was inside gridContainer and got destroyed by
+      // gridContainer.innerHTML on first render, causing null-ref crash on page 2+.
+      // Now shows loading state by setting gridContainer HTML directly each time.
 async function loadSunkenTreasures(page = 1) {
   const gridContainer = document.getElementById('sunkenTreasuresGrid');
-  const loaderMessage = document.getElementById('jikanRecLoading');
   const paginationContainer = document.getElementById('sunkenPagination');
   
-  // Show loading state
-  loaderMessage.style.display = 'block';
-  loaderMessage.textContent = `Loading page ${page}...`;
-  gridContainer.style.opacity = '0.6';
+  // Show loading state — write directly into gridContainer (safe on every page)
+  gridContainer.style.opacity = '0.5';
+  gridContainer.innerHTML = `<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">Loading page ${page}...</div>`;
   paginationContainer.classList.add('loading');
   
   try {
@@ -2785,7 +2785,7 @@ async function loadSunkenTreasures(page = 1) {
     
     console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
     
-    // Build Jikan API URL
+    // Build Jikan API URL — include page param so API returns page-matched results
     const params = new URLSearchParams({
       genres: `${genreA},${genreB}`,
       type: 'tv',
@@ -2794,6 +2794,7 @@ async function loadSunkenTreasures(page = 1) {
       order_by: 'popularity',
       sort: 'asc',
       limit: '24',
+      page: String(page),
       sfw: 'true'
     });
     
@@ -2805,16 +2806,18 @@ async function loadSunkenTreasures(page = 1) {
     let data;
     
     if (cached) {
-      const { results, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-        console.log('✅ Using cached results for page', page);
-        data = { data: results };
-      }
+      try {
+        const { results, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          console.log('✅ Using cached results for page', page);
+          data = { data: results };
+        }
+      } catch (e) { /* ignore corrupt cache */ }
     }
     
     // Fetch fresh data if not cached
     if (!data) {
-      console.log('🌐 Fetching from Jikan API...');
+      console.log('🌐 Fetching from Jikan API:', apiUrl);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
       data = await response.json();
@@ -2827,12 +2830,7 @@ async function loadSunkenTreasures(page = 1) {
       }));
     }
     
-    // Hide loader and restore interactivity
-    loaderMessage.style.display = 'none';
-    gridContainer.style.opacity = '1';
-    paginationContainer.classList.remove('loading');
-    
-    // Handle empty results with fallback
+    // Handle empty results with fallback to top anime
     if (!data.data || data.data.length === 0) {
       console.log('⚠️ No results, fetching popular TV anime as fallback');
       const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24&page=${page}`;
@@ -2847,29 +2845,35 @@ async function loadSunkenTreasures(page = 1) {
       ? data.data.filter(a => a.mal_id !== currentId)
       : data.data;
     
-    // Render cards
+    // Restore opacity and render cards
+    gridContainer.style.opacity = '1';
+    
     if (results.length > 0) {
       console.log(`🎨 Rendering ${Math.min(24, results.length)} anime cards for page ${page}`);
       gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
       
-      // Update pagination with NEW page number
+      // Update pagination with current page number
       renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
       
       // Smooth scroll to section top
       gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      gridContainer.innerHTML = '<div class="loading-text">No anime found for this combination</div>';
+      gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
+      renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
     }
     
   } catch (error) {
     console.error('❌ Sunken Treasures error:', error);
-    loaderMessage.innerHTML = `
-      <div style="text-align:center; padding:20px;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px;"></i>
+    gridContainer.style.opacity = '1';
+    gridContainer.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px; display:block;"></i>
         <p>Failed to load recommendations</p>
         <small style="color:var(--text-muted);">${error.message}</small>
       </div>
     `;
+    // Re-render pagination so user can retry other pages
+    renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
   } finally {
     // Always restore interactivity
     gridContainer.style.opacity = '1';
