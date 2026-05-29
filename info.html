@@ -714,44 +714,99 @@ img { max-width: 100%; height: auto; display: block; }
   text-overflow: ellipsis;
 }
 
-/* Tabs Section */
+/* === SLIDING TOGGLE TABS === */
 .tabs-section { margin-bottom: 32px; }
 .tabs-container {
-  position: relative;
+  margin-bottom: 20px;
   display: flex;
   justify-content: center;
-  gap: 4px;
-  padding: 4px;
+}
+
+.tabs {
+  position: relative;
+  display: flex;
   background: var(--bg-surface);
   border-radius: 50px;
-  margin-bottom: 20px;
-  max-width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  padding: 4px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
-.tab-btn {
-  padding: 10px 18px;
-  border-radius: 50px;
+
+.tabs input[type="radio"] {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  padding: 10px 20px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary);
-  position: relative;
+  cursor: pointer;
   z-index: 2;
-  transition: color 0.15s;
+  transition: color 0.3s;
+  border-radius: 50px;
+  user-select: none;
 }
-.tab-btn.active, .tab-btn:hover { color: var(--text-primary); }
-.tab-indicator {
+
+.tab span { display: none; }
+
+.glider {
   position: absolute;
   top: 4px;
-  bottom: 4px;
-  border-radius: 50px;
+  left: 4px;
+  height: calc(100% - 8px);
   background: var(--btn-primary);
+  border-radius: 50px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s;
   z-index: 1;
-  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(43, 108, 176, 0.4);
 }
+
+/* Tab content switching */
 .tab-content { display: none; }
-.tab-content.active { display: block; }
+
+#tab-cast:checked ~ #castTab,
+#tab-artwork:checked ~ #artworkTab,
+#tab-trailer:checked ~ #trailerTab,
+#tab-themes:checked ~ #themesTab,
+#tab-statistics:checked ~ #statisticsTab {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Active tab text color */
+#tab-cast:checked ~ .tabs label[for="tab-cast"],
+#tab-artwork:checked ~ .tabs label[for="tab-artwork"],
+#tab-trailer:checked ~ .tabs label[for="tab-trailer"],
+#tab-themes:checked ~ .tabs label[for="tab-themes"],
+#tab-statistics:checked ~ .tabs label[for="tab-statistics"] {
+  color: var(--text-primary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 8px 16px; font-size: 0.8rem; white-space: nowrap; }
+  .glider { display: none; }
+  #tab-cast:checked ~ .tabs label[for="tab-cast"],
+  #tab-artwork:checked ~ .tabs label[for="tab-artwork"],
+  #tab-trailer:checked ~ .tabs label[for="tab-trailer"],
+  #tab-themes:checked ~ .tabs label[for="tab-themes"],
+  #tab-statistics:checked ~ .tabs label[for="tab-statistics"] {
+    background: var(--btn-primary);
+    color: var(--text-primary);
+  }
+}
 
 /* ── Cast List Grid (image-3 style) ─────────────────── */
 .cast-list-grid {
@@ -1563,17 +1618,6 @@ img { max-width: 100%; height: auto; display: block; }
   
   .seasons-grid { grid-template-columns: 1fr; }
   
-  .tabs-container {
-    flex-wrap: wrap;
-    gap: 2px;
-    overflow-x: auto;
-    justify-content: flex-start;
-    padding: 4px 8px;
-  }
-  .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
-  .tab-indicator { display: none; }
-  .tab-btn.active { background: var(--btn-primary); color: #fff; }
-  
   .dropdown-menu {
     left: 50%;
     transform: translateX(-50%);
@@ -1901,19 +1945,31 @@ img { max-width: 100%; height: auto; display: block; }
           </div>
         </section>
 
-        <!-- Tab Navigation -->
+        <!-- Tab Navigation with Sliding Toggle -->
         <section class="tabs-section">
           <div class="tabs-container">
-            <button class="tab-btn active" data-tab="cast">Cast/Crew</button>
-            <button class="tab-btn" data-tab="artwork">Artwork</button>
-            <button class="tab-btn" data-tab="trailer">Trailer</button>
-            <button class="tab-btn" data-tab="themes">Themes</button>
-            <button class="tab-btn" data-tab="statistics">Statistics</button>
-            <div class="tab-indicator" id="tabIndicator"></div>
+            <div class="tabs">
+              <input type="radio" id="tab-cast" name="tabs" checked />
+              <label class="tab" for="tab-cast">Cast/Crew<span></span></label>
+              
+              <input type="radio" id="tab-artwork" name="tabs" />
+              <label class="tab" for="tab-artwork">Artwork</label>
+              
+              <input type="radio" id="tab-trailer" name="tabs" />
+              <label class="tab" for="tab-trailer">Trailer</label>
+              
+              <input type="radio" id="tab-themes" name="tabs" />
+              <label class="tab" for="tab-themes">Themes</label>
+              
+              <input type="radio" id="tab-statistics" name="tabs" />
+              <label class="tab" for="tab-statistics">Statistics</label>
+              
+              <span class="glider"></span>
+            </div>
           </div>
           
-          <!-- Tab Contents -->
-          <div class="tab-content active" id="castTab">
+          <!-- Tab Contents - siblings of tabs-container -->
+          <div class="tab-content" id="castTab">
             <div class="cast-list" id="castList"></div>
           </div>
           
@@ -1965,24 +2021,23 @@ img { max-width: 100%; height: auto; display: block; }
 
       </div>
 
-      <!-- Right Sidebar (32%) - MATCHED TO INDEX.HTML -->
       <!-- Right Sidebar (32%) - COMBINED CONTAINER -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-combined">
-    <div class="sidebar-section">
-      <h4><i class="fa-solid fa-gem"></i> Hidden Gem</h4>
-      <div class="sidebar-list" id="hiddenGemList"></div>
-    </div>
-    <div class="sidebar-section">
-      <h4><i class="fa-solid fa-star"></i> Top Ranking</h4>
-      <div class="sidebar-list" id="topRankingList"></div>
-    </div>
-    <div class="sidebar-section">
-      <h4><i class="fa-solid fa-heart"></i> Most Favourite</h4>
-      <div class="sidebar-list" id="mostFavouriteList"></div>
-    </div>
-  </div>
-</aside>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-combined">
+          <div class="sidebar-section">
+            <h4><i class="fa-solid fa-gem"></i> Hidden Gem</h4>
+            <div class="sidebar-list" id="hiddenGemList"></div>
+          </div>
+          <div class="sidebar-section">
+            <h4><i class="fa-solid fa-star"></i> Top Ranking</h4>
+            <div class="sidebar-list" id="topRankingList"></div>
+          </div>
+          <div class="sidebar-section">
+            <h4><i class="fa-solid fa-heart"></i> Most Favourite</h4>
+            <div class="sidebar-list" id="mostFavouriteList"></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 
@@ -2221,17 +2276,20 @@ img { max-width: 100%; height: auto; display: block; }
         if (!duration || duration === 'Unknown') return null;
         
         if (type === 'movie') {
-          const match = duration.match(/(\d+)\s*min/);
-          if (match) {
-            const mins = parseInt(match[1]);
+          const mins = typeof duration === 'number' ? duration : parseInt(duration);
+          if (!isNaN(mins)) {
             const hours = Math.floor(mins / 60);
             const remaining = mins % 60;
-            return hours > 0 ? `${hours}h ${remaining}min` : `${remaining}min`;
+            return hours > 0 ? `${hours}h ${remaining}m` : `${remaining}m`;
           }
           return duration;
-        } else {
-          return duration.replace(/ per ep.*/, '').replace(' min', ' min').trim();
+        } else if (isAnime) {
+          const match = duration.match(/(\d+)\s*min/);
+          if (match) return `${match[1]} min`;
+        } else if (type === 'tv' && currentState.data?.episode_run_time?.length) {
+          return `${currentState.data.episode_run_time[0]} min`;
         }
+        return duration.toString();
       }
 
       function getFirstStudio(data, isAnime) {
@@ -2260,7 +2318,18 @@ img { max-width: 100%; height: auto; display: block; }
         document.getElementById('platformStar').style.color = starColor;
         document.getElementById('ratingValue').textContent = rating ? rating.toFixed(1) : 'N/A';
         document.getElementById('formatValue').textContent = data.type || currentState.type;
-        document.getElementById('durationValue').textContent = formatDuration(data.duration, isAnime, currentState.type) || '—';
+        
+        // Get duration - handle both Jikan and TMDB formats
+        let duration = null;
+        if (isAnime) {
+          duration = formatDuration(data.duration, true, 'anime');
+        } else if (currentState.type === 'movie' && data.runtime) {
+          duration = formatDuration(data.runtime, false, 'movie');
+        } else if (currentState.type === 'tv' && data.episode_run_time?.length) {
+          duration = `${data.episode_run_time[0]} min`;
+        }
+        
+        document.getElementById('durationValue').textContent = duration || '—';
       }
 
       function renderSynopsis() {
@@ -2345,20 +2414,27 @@ img { max-width: 100%; height: auto; display: block; }
           const episodes = isAnime ? data.episodes : data.number_of_episodes || data.number_of_seasons;
           if (episodes) {
             let episodeText = episodes.toString();
+            
+            // Show sub/dub info for anime using AllAnime API data
             if (isAnime && currentState.allAnimeData) {
               const { episodes_sub, episodes_dub } = currentState.allAnimeData;
+              episodeText = `${episodes}`;
+              
               if (episodes_sub > 0 || episodes_dub > 0) {
-                episodeText = '';
+                episodeText += ' <span style="color: var(--text-muted); margin: 0 4px;">|</span> ';
+                
                 if (episodes_sub > 0) {
-                  episodeText += `<wa-icon name="closed-captioning" family="utility-fill" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_sub}`;
+                  episodeText += `<i class="fa-solid fa-closed-captioning" style="color: #3184c4; margin-right: 2px;"></i>${episodes_sub}`;
                 }
+                
                 if (episodes_dub > 0) {
-                  if (episodes_sub > 0) episodeText += ' | ';
-                  episodeText += `<wa-icon name="microphone" family="utility" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_dub}`;
+                  if (episodes_sub > 0) episodeText += ' ';
+                  episodeText += `<i class="fa-solid fa-microphone" style="color: #ef4444; margin-right: 2px;"></i>${episodes_dub}`;
                 }
               }
             }
-            details.push({ label: 'Episodes', value: episodeText, isHtml: isAnime });
+            
+            details.push({ label: 'Episodes', value: episodeText, isHtml: true });
           }
         }
         
@@ -2415,26 +2491,38 @@ img { max-width: 100%; height: auto; display: block; }
         
         let seasons = [];
         if (isAnime) {
-          // data.relations is an array: [{relation: "Prequel", entry: [{mal_id,type,name}]}, ...]
           const relationsArray = Array.isArray(data.relations) ? data.relations : [];
           const relatedAnime = [];
           for (const rel of relationsArray) {
             const relType = (rel.relation || '').toLowerCase();
-            // Include prequels, sequels, side stories, alternative versions
             if (['prequel','sequel','side story','alternative version','alternative setting','spin-off'].includes(relType)) {
               for (const entry of (rel.entry || [])) {
-                if (entry.type === 'anime') relatedAnime.push({ ...entry, relation: rel.relation });
+                if (entry.type === 'anime') {
+                  relatedAnime.push({ 
+                    ...entry, 
+                    relation: rel.relation,
+                    image: entry.images?.jpg?.large_image_url || entry.images?.jpg?.image_url || ''
+                  });
+                }
               }
             }
           }
           seasons = relatedAnime;
           
-          // Always include the current show itself
           if (!seasons.some(s => s.mal_id === currentState.id)) {
-            seasons.unshift({ mal_id: currentState.id, name: currentState.title, type: 'anime', relation: 'Current' });
+            seasons.unshift({ 
+              mal_id: currentState.id, 
+              name: currentState.title, 
+              type: 'anime', 
+              relation: 'Current',
+              image: data.images?.jpg?.large_image_url || data.images?.jpg?.image_url || ''
+            });
           }
         } else if (currentState.type === 'tv') {
-          seasons = data.seasons?.filter(s => s.season_number > 0) || [];
+          seasons = data.seasons?.filter(s => s.season_number > 0).map(s => ({
+            ...s,
+            image: s.poster_path ? `https://image.tmdb.org/t/p/w500${s.poster_path}` : ''
+          })) || [];
         }
         
         if (!seasons.length) {
@@ -2455,16 +2543,16 @@ img { max-width: 100%; height: auto; display: block; }
           let seasonUrl, backdrop;
           if (isAnimeEntry) {
             seasonUrl = `/info/anime/jikan-${seasonId}/${slug}`;
-            backdrop = season.images?.jpg?.large_image_url || season.images?.jpg?.image_url || '';
+            backdrop = season.image || '';
           } else {
             seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
-            backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
+            backdrop = season.image || '';
           }
 
           const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
           
           return `<a href="${seasonUrl}" class="season-card">
-            <img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.style.display='none'">
+            <img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 320 140%22><rect fill=%22%23132f4c%22 width=%22320%22 height=%22140%22/><text fill=%22%2394a3b8%22 font-size=%2214%22 x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22>No Image</text></svg>'">
             <div class="season-info-overlay">
               ${relationLabel}
               <span class="season-number">${escapeHtml(isAnimeEntry ? seasonTitle : `Season ${seasonNumber}`)}</span>
@@ -2575,53 +2663,37 @@ img { max-width: 100%; height: auto; display: block; }
         lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('show'); });
       }
 
-      // FIXED: Tab indicator sync logic
       function initTabSwitching() {
-        const tabs = document.querySelectorAll('.tab-btn');
-        const indicator = document.getElementById('tabIndicator');
-        const contents = document.querySelectorAll('.tab-content');
-
-        function positionIndicator(activeTab) {
-          // Only move indicator on desktop where it's visible
-          if (window.innerWidth > 768 && indicator && activeTab) {
-            const container = activeTab.parentElement;
-            const rect = activeTab.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            const left = rect.left - containerRect.left;
-            const width = rect.width;
-            indicator.style.width = `${width}px`;
-            indicator.style.transform = `translateX(${left}px)`;
-          }
+        const glider = document.querySelector('.glider');
+        if (!glider) return;
+        
+        function updateGlider() {
+          const checkedRadio = document.querySelector('.tabs input[type="radio"]:checked');
+          if (!checkedRadio) return;
+          
+          const label = document.querySelector(`label[for="${checkedRadio.id}"]`);
+          if (!label) return;
+          
+          const tabsContainer = label.parentElement;
+          const containerRect = tabsContainer.getBoundingClientRect();
+          const labelRect = label.getBoundingClientRect();
+          
+          const left = labelRect.left - containerRect.left;
+          const width = labelRect.width;
+          
+          glider.style.transform = `translateX(${left - 4}px)`;
+          glider.style.width = `${width - 8}px`;
         }
-
-        function activateTab(tab) {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          positionIndicator(tab);
-          const tabName = tab.dataset.tab;
-          contents.forEach(c => c.classList.remove('active'));
-          document.getElementById(`${tabName}Tab`).classList.add('active');
-        }
-
-        tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
-
-        // Initial positioning — defer until after layout/fonts settle
-        const activeTab = document.querySelector('.tab-btn.active');
-        if (activeTab) {
-          if (indicator) indicator.style.transition = 'none';
-          // Double rAF ensures fonts and layout are fully painted before measuring
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            positionIndicator(activeTab);
-            if (indicator) {
-              indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
-            }
-          }));
-        }
-
-        // Reposition on resize
-        window.addEventListener('resize', () => {
-          const currentActive = document.querySelector('.tab-btn.active');
-          if (currentActive) positionIndicator(currentActive);
+        
+        // Initial positioning with delay for layout
+        setTimeout(updateGlider, 100);
+        
+        // Update on resize
+        window.addEventListener('resize', updateGlider);
+        
+        // Update on tab change
+        document.querySelectorAll('.tabs input[type="radio"]').forEach(radio => {
+          radio.addEventListener('change', updateGlider);
         });
       }
 
@@ -2826,7 +2898,6 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       async function loadRecommendations() {
-        // Load Water Temple only on anime pages, otherwise load Sunken Treasures
         if (currentState.source === 'jikan') {
           await Promise.all([
             loadWaterTemple(),
@@ -2837,12 +2908,10 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ✅ NEW: Water Temple section - only for anime info pages
       async function loadWaterTemple() {
         const section = document.getElementById('waterTempleSection');
         const gridContainer = document.getElementById('waterTempleGrid');
         
-        // Only show on anime pages
         if (currentState.source !== 'jikan') {
           section.style.display = 'none';
           return;
@@ -2856,10 +2925,8 @@ img { max-width: 100%; height: auto; display: block; }
           const themes = data.themes?.map(t => t.mal_id).filter(Boolean) || [];
           const demographics = data.demographics?.map(d => d.mal_id).filter(Boolean) || [];
           
-          // Select up to 3 theme/demographic IDs
           const selectedGenres = [...new Set([...themes, ...demographics])].slice(0, 3);
           
-          // Build Jikan API URL
           const params = new URLSearchParams({
             order_by: 'popularity',
             sort: 'asc',
@@ -2877,7 +2944,6 @@ img { max-width: 100%; height: auto; display: block; }
           const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
           console.log('🔗 Water Temple:', apiUrl);
           
-          // Check cache
           const cacheKey = `watertemple_${selectedGenres.join('_')}_${data.type}`;
           const cached = localStorage.getItem(cacheKey);
           let results;
@@ -2890,21 +2956,18 @@ img { max-width: 100%; height: auto; display: block; }
             }
           }
           
-          // Fetch if not cached
           if (!results) {
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
             const apiData = await response.json();
             results = apiData.data || [];
             
-            // Cache results
             localStorage.setItem(cacheKey, JSON.stringify({
               data: results,
               timestamp: Date.now()
             }));
           }
           
-          // Filter out current show
           const filtered = results.filter(a => a.mal_id !== currentState.id).slice(0, 24);
           
           if (filtered.length > 0) {
@@ -2919,159 +2982,134 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ✅ FIXED: loadSunkenTreasures with working pagination
-      // Bug fix: jikanRecLoading element was inside gridContainer and got destroyed by
-      // gridContainer.innerHTML on first render, causing null-ref crash on page 2+.
-      // Now shows loading state by setting gridContainer HTML directly each time.
-async function loadSunkenTreasures(page = 1) {
-  const gridContainer = document.getElementById('sunkenTreasuresGrid');
-  const paginationContainer = document.getElementById('sunkenPagination');
-  
-  // Show loading state — write directly into gridContainer (safe on every page)
-  gridContainer.style.opacity = '0.5';
-  gridContainer.innerHTML = `<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">Loading page ${page}...</div>`;
-  paginationContainer.classList.add('loading');
-  
-  try {
-    // Each page uses a DIFFERENT genre combo for unique results
-    const comboIndex = (page - 1) % SUNKEN_GENRE_COMBOS.length;
-    const [genreA, genreB] = SUNKEN_GENRE_COMBOS[comboIndex];
-    
-    console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
-    
-    // Build Jikan API URL — include page param so API returns page-matched results
-    const params = new URLSearchParams({
-      genres: `${genreA},${genreB}`,
-      type: 'tv',
-      min_score: '6.5',
-      max_score: '10',
-      order_by: 'popularity',
-      sort: 'asc',
-      limit: '24',
-      page: String(page),
-      sfw: 'true'
-    });
-    
-    const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
-    
-    // Cache key includes page + genre combo
-    const cacheKey = `sunken_tv_page${page}_g${genreA}_${genreB}`;
-    const cached = localStorage.getItem(cacheKey);
-    let data;
-    
-    if (cached) {
-      try {
-        const { results, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-          console.log('✅ Using cached results for page', page);
-          data = { data: results };
+      async function loadSunkenTreasures(page = 1) {
+        const gridContainer = document.getElementById('sunkenTreasuresGrid');
+        const paginationContainer = document.getElementById('sunkenPagination');
+        
+        gridContainer.style.opacity = '0.5';
+        gridContainer.innerHTML = `<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">Loading page ${page}...</div>`;
+        paginationContainer.classList.add('loading');
+        
+        try {
+          const comboIndex = (page - 1) % SUNKEN_GENRE_COMBOS.length;
+          const [genreA, genreB] = SUNKEN_GENRE_COMBOS[comboIndex];
+          
+          console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
+          
+          const params = new URLSearchParams({
+            genres: `${genreA},${genreB}`,
+            type: 'tv',
+            min_score: '6.5',
+            max_score: '10',
+            order_by: 'popularity',
+            sort: 'asc',
+            limit: '24',
+            page: String(page),
+            sfw: 'true'
+          });
+          
+          const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
+          const cacheKey = `sunken_tv_page${page}_g${genreA}_${genreB}`;
+          const cached = localStorage.getItem(cacheKey);
+          let data;
+          
+          if (cached) {
+            try {
+              const { results, timestamp } = JSON.parse(cached);
+              if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+                console.log('✅ Using cached results for page', page);
+                data = { data: results };
+              }
+            } catch (e) { /* ignore corrupt cache */ }
+          }
+          
+          if (!data) {
+            console.log('🌐 Fetching from Jikan API:', apiUrl);
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
+            data = await response.json();
+            console.log(`✅ Received ${data.data?.length || 0} results`);
+            
+            localStorage.setItem(cacheKey, JSON.stringify({
+              results: data.data,
+              timestamp: Date.now()
+            }));
+          }
+          
+          if (!data.data || data.data.length === 0) {
+            console.log('⚠️ No results, fetching popular TV anime as fallback');
+            const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24&page=${page}`;
+            const fallbackRes = await fetch(fallbackUrl);
+            const fallbackData = await fallbackRes.json();
+            data.data = fallbackData.data || [];
+          }
+          
+          const currentId = currentState.source === 'jikan' ? currentState.id : null;
+          const results = currentId 
+            ? data.data.filter(a => a.mal_id !== currentId)
+            : data.data;
+          
+          gridContainer.style.opacity = '1';
+          
+          if (results.length > 0) {
+            console.log(`🎨 Rendering ${Math.min(24, results.length)} anime cards for page ${page}`);
+            gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
+            renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+            gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
+            renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+          }
+          
+        } catch (error) {
+          console.error('❌ Sunken Treasures error:', error);
+          gridContainer.style.opacity = '1';
+          gridContainer.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px; display:block;"></i>
+              <p>Failed to load recommendations</p>
+              <small style="color:var(--text-muted);">${error.message}</small>
+            </div>
+          `;
+          renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+        } finally {
+          gridContainer.style.opacity = '1';
+          paginationContainer.classList.remove('loading');
         }
-      } catch (e) { /* ignore corrupt cache */ }
-    }
-    
-    // Fetch fresh data if not cached
-    if (!data) {
-      console.log('🌐 Fetching from Jikan API:', apiUrl);
-      const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
-      data = await response.json();
-      console.log(`✅ Received ${data.data?.length || 0} results`);
-      
-      // Cache the results
-      localStorage.setItem(cacheKey, JSON.stringify({
-        results: data.data,
-        timestamp: Date.now()
-      }));
-    }
-    
-    // Handle empty results with fallback to top anime
-    if (!data.data || data.data.length === 0) {
-      console.log('⚠️ No results, fetching popular TV anime as fallback');
-      const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24&page=${page}`;
-      const fallbackRes = await fetch(fallbackUrl);
-      const fallbackData = await fallbackRes.json();
-      data.data = fallbackData.data || [];
-    }
-    
-    // Filter out current show if on anime page
-    const currentId = currentState.source === 'jikan' ? currentState.id : null;
-    const results = currentId 
-      ? data.data.filter(a => a.mal_id !== currentId)
-      : data.data;
-    
-    // Restore opacity and render cards
-    gridContainer.style.opacity = '1';
-    
-    if (results.length > 0) {
-      console.log(`🎨 Rendering ${Math.min(24, results.length)} anime cards for page ${page}`);
-      gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
-      
-      // Update pagination with current page number
-      renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
-      
-      // Smooth scroll to section top
-      gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
-      renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
-    }
-    
-  } catch (error) {
-    console.error('❌ Sunken Treasures error:', error);
-    gridContainer.style.opacity = '1';
-    gridContainer.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px; display:block;"></i>
-        <p>Failed to load recommendations</p>
-        <small style="color:var(--text-muted);">${error.message}</small>
-      </div>
-    `;
-    // Re-render pagination so user can retry other pages
-    renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
-  } finally {
-    // Always restore interactivity
-    gridContainer.style.opacity = '1';
-    paginationContainer.classList.remove('loading');
-  }
-}
+      }
 
- // ✅ UPDATED: Matches index.html "Recently Completed" pagination style
-function renderSunkenPagination(currentPage, totalPages, container) {
-  container.innerHTML = '';
-  container.className = 'pagination-nav';
-  
-  // Previous button (chevron on mobile, text on desktop)
-  const prevBtn = document.createElement('button');
-  prevBtn.type = 'button';
-  prevBtn.className = 'btn btn-soft btn-prev rounded-full';
-  prevBtn.innerHTML = '<span class="prev-text">Previous</span><span class="prev-chevron">‹</span>';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.onclick = (e) => {
-    e.preventDefault();
-    if (currentPage > 1) loadSunkenTreasures(currentPage - 1);
-  };
-  container.appendChild(prevBtn);
-  
-  // Page counter: "1 / 30"
-  const pageCounter = document.createElement('div');
-  pageCounter.className = 'page-counter';
-  pageCounter.innerHTML = `<span class="current-page">${currentPage}</span> / <span class="total-pages">${totalPages}</span>`;
-  container.appendChild(pageCounter);
-  
-  // Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.type = 'button';
-  nextBtn.className = 'btn btn-soft btn-next rounded-full';
-  nextBtn.innerHTML = '<span class="next-text">Next</span><span class="next-chevron">›</span>';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.onclick = (e) => {
-    e.preventDefault();
-    if (currentPage < totalPages) loadSunkenTreasures(currentPage + 1);
-  };
-  container.appendChild(nextBtn);
-}
+      function renderSunkenPagination(currentPage, totalPages, container) {
+        container.innerHTML = '';
+        container.className = 'pagination-nav';
+        
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'btn btn-soft btn-prev rounded-full';
+        prevBtn.innerHTML = '<span class="prev-text">Previous</span><span class="prev-chevron">‹</span>';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = (e) => {
+          e.preventDefault();
+          if (currentPage > 1) loadSunkenTreasures(currentPage - 1);
+        };
+        container.appendChild(prevBtn);
+        
+        const pageCounter = document.createElement('div');
+        pageCounter.className = 'page-counter';
+        pageCounter.innerHTML = `<span class="current-page">${currentPage}</span> / <span class="total-pages">${totalPages}</span>`;
+        container.appendChild(pageCounter);
+        
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'btn btn-soft btn-next rounded-full';
+        nextBtn.innerHTML = '<span class="next-text">Next</span><span class="next-chevron">›</span>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = (e) => {
+          e.preventDefault();
+          if (currentPage < totalPages) loadSunkenTreasures(currentPage + 1);
+        };
+        container.appendChild(nextBtn);
+      }
 
-      // Unified anime card renderer for both sections
       function renderAnimeRecCard(anime) {
         const title = anime.title_english || anime.title || 'Unknown';
         const poster = anime.images?.jpg?.image_url || anime.images?.webp?.image_url || '';
@@ -3082,7 +3120,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         const slug = slugify(title);
         const detailsUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
         
-        // Fallback poster if image fails to load
         const posterStyle = poster 
           ? `background-image: url('${poster}')` 
           : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
@@ -3117,7 +3154,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             if (!res.ok) throw new Error(`Jikan characters error: ${res.status}`);
             const { data: charsData } = await res.json();
             const chars = (charsData || []).sort((a, b) => {
-              // Main roles first, then by favorites
               if (a.role === 'Main' && b.role !== 'Main') return -1;
               if (b.role === 'Main' && a.role !== 'Main') return 1;
               return (b.favorites || 0) - (a.favorites || 0);
@@ -3128,13 +3164,11 @@ function renderSunkenPagination(currentPage, totalPages, container) {
               return;
             }
             
-            // Build list layout matching image 3 style
             const castRows = chars.slice(0, 20).map(c => {
               const character = c.character;
               const charImg = character.images?.jpg?.image_url || character.images?.webp?.image_url || '';
               const charName = character.name || 'Unknown';
               const role = c.role || 'Supporting';
-              // Prefer Japanese VA, fallback to first
               const va = c.voice_actors?.find(v => v.language === 'Japanese') || c.voice_actors?.[0];
               const vaName = va ? va.person.name.replace(/,\s*/, ' ').split(' ').reverse().join(' ') : 'Unknown';
               const vaImg = va?.person?.images?.jpg?.image_url || '';
@@ -3172,7 +3206,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             container.innerHTML = '<p class="loading-text">Failed to load cast</p>';
           }
         } else {
-          // TMDB cast — same row layout
           const cast = data.credits?.cast || [];
           if (!cast.length) {
             container.innerHTML = '<p class="loading-text">No cast data available</p>';
@@ -3208,36 +3241,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         }
       }
 
-      window.updateArrowVisibility = function(container) {
-        if (!container) return;
-        const leftArrow = container.parentElement.querySelector('.left-arrow');
-        const rightArrow = container.parentElement.querySelector('.right-arrow');
-        if (!leftArrow || !rightArrow) return;
-        
-        const canScrollLeft = container.scrollLeft > 0;
-        const canScrollRight = container.scrollWidth > container.clientWidth + container.scrollLeft;
-        
-        leftArrow.style.display = canScrollLeft ? 'flex' : 'none';
-        rightArrow.style.display = canScrollRight ? 'flex' : 'none';
-      };
-
-      document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.cast-nav-arrow.left-arrow').forEach(arrow => {
-          arrow.addEventListener('click', (e) => {
-            e.preventDefault();
-            const container = arrow.closest('.cast-scroll-container')?.parentElement?.querySelector('.cast-scroll-container');
-            if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
-          });
-        });
-        document.querySelectorAll('.cast-nav-arrow.right-arrow').forEach(arrow => {
-          arrow.addEventListener('click', (e) => {
-            e.preventDefault();
-            const container = arrow.closest('.cast-scroll-container')?.parentElement?.querySelector('.cast-scroll-container');
-            if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
-          });
-        });
-      });
-
       async function loadArtworkData() {
         const container = document.getElementById('artworkGrid');
         const data = currentState.data;
@@ -3245,25 +3248,51 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         let images = [];
         
         if (isAnime) {
-          images = [
-            ...(data.images?.jpg?.large_image_url ? [{ type: 'backdrop', url: data.images.jpg.large_image_url }] : []),
-            ...(data.images?.webp?.large_image_url ? [{ type: 'backdrop', url: data.images.webp.large_image_url }] : [])
-          ];
+          try {
+            const res = await fetch(`https://api.jikan.moe/v4/anime/${currentState.id}/pictures`);
+            if (res.ok) {
+              const { data: picsData } = await res.json();
+              const pics = picsData || [];
+              images = pics.map(pic => ({
+                type: 'image',
+                url: pic.jpg?.large_image_url || pic.jpg?.image_url || ''
+              })).filter(img => img.url);
+            }
+          } catch (e) {
+            console.warn('Failed to fetch additional pictures:', e);
+          }
+          
+          if (data.images?.jpg?.large_image_url) {
+            images.unshift({ type: 'backdrop', url: data.images.jpg.large_image_url });
+          }
+          if (data.images?.jpg?.image_url) {
+            images.unshift({ type: 'poster', url: data.images.jpg.image_url });
+          }
         } else {
+          const backdrops = data.images?.backdrops?.slice(0, 10) || [];
+          const posters = data.images?.posters?.slice(0, 10) || [];
+          
           images = [
-            ...(data.images?.backdrops?.slice(0, 5).map(b => ({ type: 'backdrop', url: `https://image.tmdb.org/t/p/w780${b.file_path}` })) || []),
-            ...(data.images?.posters?.slice(0, 5).map(p => ({ type: 'poster', url: `https://image.tmdb.org/t/p/w500${p.file_path}` })) || [])
+            ...backdrops.map(b => ({ type: 'backdrop', url: `https://image.tmdb.org/t/p/original${b.file_path}` })),
+            ...posters.map(p => ({ type: 'poster', url: `https://image.tmdb.org/t/p/w500${p.file_path}` }))
           ];
         }
+        
+        const uniqueUrls = new Set();
+        images = images.filter(img => {
+          if (uniqueUrls.has(img.url)) return false;
+          uniqueUrls.add(img.url);
+          return true;
+        }).slice(0, 20);
         
         if (!images.length) {
           container.innerHTML = '<p class="loading-text">No artwork available</p>';
           return;
         }
         
-        container.innerHTML = images.slice(0, 10).map(img => `
+        container.innerHTML = images.map(img => `
           <div class="artwork-item">
-            <img src="${img.url}" alt="Artwork" loading="lazy">
+            <img src="${img.url}" alt="${img.type} artwork" loading="lazy" onerror="this.style.display='none'">
           </div>
         `).join('');
       }
@@ -3308,30 +3337,22 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         }
         
         try {
+          container.innerHTML = '<p class="loading-text">Loading themes...</p>';
+          
           const query = `
-            query GetAnimeByMalId($site: ExternalSiteEnum!, $id: Int!) {
-              findAnimesByExternalSite(site: $site, id: $id) {
-                id
-                name
+            query {
+              findAnimesByExternalSite(site: MAL, id: ${malId}) {
                 animethemes {
                   id
                   type
                   sequence
                   song {
-                    id
                     title
                     artist
                   }
                   animethemeentries {
-                    id
-                    version
-                    episodes
                     videos {
-                      id
                       link
-                      resolution
-                      nc
-                      audio
                     }
                   }
                 }
@@ -3342,40 +3363,49 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           const response = await fetch(CONFIG.ANIMETHEMES_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              query,
-              variables: { site: 'MAL', id: malId }
-            })
+            body: JSON.stringify({ query })
           });
           
-          const { data: gqlData } = await response.json();
-          const animeEntry = gqlData?.findAnimesByExternalSite?.[0];
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
           
-          if (!animeEntry?.animethemes?.length) {
+          const { data: gqlData, errors } = await response.json();
+          
+          if (errors) {
+            console.warn('GraphQL errors:', errors);
+            container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
+            return;
+          }
+          
+          const animeList = gqlData?.findAnimesByExternalSite;
+          if (!animeList || animeList.length === 0) {
             container.innerHTML = '<p class="loading-text">No theme songs found</p>';
             return;
           }
           
-          const themes = animeEntry.animethemes;
-          const ops = themes.filter(t => t.type === 'OP');
-          const eds = themes.filter(t => t.type === 'ED');
+          const themes = animeList[0].animethemes || [];
+          if (!themes.length) {
+            container.innerHTML = '<p class="loading-text">No theme songs found</p>';
+            return;
+          }
+          
+          const ops = themes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+          const eds = themes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
           
           let html = '';
           
           if (ops.length) {
-            html += '<h4 style="margin: 16px 0 12px">Opening Themes</h4>';
-            ops.forEach((op, i) => {
+            html += '<h4 style="margin: 16px 0 12px; font-size: 1.1rem; color: var(--text-primary);">Opening Themes</h4>';
+            ops.forEach((op) => {
               const entry = op.animethemeentries?.[0];
               const video = entry?.videos?.[0];
               if (video?.link) {
-                const videoUrl = video.link;
-                const songTitle = op.song?.title || `OP ${op.sequence}`;
+                const songTitle = op.song?.title || `OP ${op.sequence || 1}`;
                 const artist = op.song?.artist || '';
                 html += `
                   <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
                   <div class="video-wrapper">
-                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url}">
-                      <source src="${videoUrl}" type="video/webm">
+                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url || ''}">
+                      <source src="${video.link}" type="video/webm">
                       Your browser does not support the video tag.
                     </video>
                   </div>
@@ -3385,19 +3415,18 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           }
           
           if (eds.length) {
-            html += '<h4 style="margin: 24px 0 12px">Ending Themes</h4>';
-            eds.forEach((ed, i) => {
+            html += '<h4 style="margin: 24px 0 12px; font-size: 1.1rem; color: var(--text-primary);">Ending Themes</h4>';
+            eds.forEach((ed) => {
               const entry = ed.animethemeentries?.[0];
               const video = entry?.videos?.[0];
               if (video?.link) {
-                const videoUrl = video.link;
-                const songTitle = ed.song?.title || `ED ${ed.sequence}`;
+                const songTitle = ed.song?.title || `ED ${ed.sequence || 1}`;
                 const artist = ed.song?.artist || '';
                 html += `
                   <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
                   <div class="video-wrapper">
-                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url}">
-                      <source src="${videoUrl}" type="video/webm">
+                    <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url || ''}">
+                      <source src="${video.link}" type="video/webm">
                       Your browser does not support the video tag.
                     </video>
                   </div>
