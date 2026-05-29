@@ -19,7 +19,7 @@
   
   <!-- Page-specific CSS -->
   <style>
-  /* ========================================
+ /* ========================================
    ANIOCEAN - SHOW INFO PAGE STYLES
    Uses CSS Variables from shared.js theme
    Layout matched to index.html
@@ -1164,12 +1164,12 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 0;
 }
 
-/* Pagination Styles */
+/* ✅ UPDATED: Pagination Styles - Matches index.html "Recently Completed" */
 .pagination-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-top: 20px;
   flex-wrap: wrap;
 }
@@ -1178,63 +1178,80 @@ img { max-width: 100%; height: auto; display: block; }
   background: var(--bg-surface);
   color: var(--text-secondary);
   border: none;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-width: 36px;
+  min-width: 80px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
 }
 
 .pagination-nav .btn-soft:hover:not(:disabled) {
   background: var(--btn-primary);
   color: #fff;
+  transform: translateY(-1px);
 }
 
 .pagination-nav .btn-soft:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
-.pagination-nav .btn-soft[aria-current="page"],
-.pagination-nav .btn-soft.active {
-  background: var(--btn-primary);
-  color: #fff;
+/* Page counter styling */
+.pagination-nav .page-counter {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 60px;
+  text-align: center;
+  user-select: none;
 }
 
-.pagination-nav .btn-circle {
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-
-/* Mobile: chevrons for prev/next */
+/* Hide text on mobile, show chevrons */
 @media (max-width: 768px) {
-  .pagination-nav .btn-prev,
-  .pagination-nav .btn-next {
-    padding: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-  }
-  .pagination-nav .btn-prev::before,
-  .pagination-nav .btn-next::before {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 0.9rem;
-  }
-  .pagination-nav .btn-prev::before { content: "‹"; }
-  .pagination-nav .btn-next::before { content: "›"; }
-  .pagination-nav .btn-prev span,
-  .pagination-nav .btn-next span {
+  .pagination-nav .btn-soft .prev-text,
+  .pagination-nav .btn-soft .next-text {
     display: none;
   }
+  .pagination-nav .btn-soft .prev-chevron,
+  .pagination-nav .btn-soft .next-chevron {
+    display: inline;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .pagination-nav .btn-soft {
+    min-width: 40px;
+    padding: 8px 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .pagination-nav .btn-soft .prev-chevron,
+  .pagination-nav .btn-soft .next-chevron {
+    display: none;
+  }
+  .pagination-nav .btn-soft .prev-text,
+  .pagination-nav .btn-soft .next-text {
+    display: inline;
+  }
+}
+
+/* Loading state */
+.pagination-nav.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Smooth fade for grid updates */
+#sunkenTreasuresGrid {
+  transition: opacity 0.2s ease;
 }
 
 /* Alert Popup */
@@ -1498,10 +1515,10 @@ img { max-width: 100%; height: auto; display: block; }
   .recs-grid { grid-template-columns: repeat(2, 1fr); }
   
   .pagination-nav {
-    gap: 2px;
+    gap: 4px;
   }
   .pagination-nav .btn-soft {
-    min-width: 32px;
+    min-width: 40px;
     height: 32px;
     padding: 0;
     font-size: 0.75rem;
@@ -2748,154 +2765,157 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ✅ UPDATED: loadSunkenTreasures with pagination
-      async function loadSunkenTreasures(page = 1) {
-        const gridContainer = document.getElementById('sunkenTreasuresGrid');
-        const loaderMessage = document.getElementById('jikanRecLoading');
-        const paginationContainer = document.getElementById('sunkenPagination');
-        
-        // Show loading state
-        loaderMessage.style.display = 'block';
-        loaderMessage.textContent = 'Discovering anime treasures...';
-        paginationContainer.innerHTML = '';
-        
-        try {
-          // Determine which genre combo to use for this page
-          const comboIndex = (page - 1) % SUNKEN_GENRE_COMBOS.length;
-          const [genreA, genreB] = SUNKEN_GENRE_COMBOS[comboIndex];
-          
-          // Build Jikan API URL with specified filters
-          const params = new URLSearchParams({
-            genres: `${genreA},${genreB}`,  // OR logic: matches either genre
-            type: 'tv',                      // TV series only
-            min_score: '6.5',
-            max_score: '10',
-            order_by: 'popularity',
-            sort: 'asc',                     // Most popular first
-            limit: '24',                     // 24 per page as requested
-            sfw: 'true'
-          });
-          
-          const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
-          console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
-          
-          // Check cache first (24-hour cache)
-          const cacheKey = `sunken_tv_${genreA}_${genreB}_page${page}`;
-          const cached = localStorage.getItem(cacheKey);
-          let data;
-          
-          if (cached) {
-            const { results, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-              console.log('✅ Using cached Sunken Treasures results');
-              data = { data: results };
-            }
-          }
-          
-          // Fetch from API if not cached
-          if (!data) {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
-            data = await response.json();
-            
-            // Cache the results
-            localStorage.setItem(cacheKey, JSON.stringify({
-              results: data.data,
-              timestamp: Date.now()
-            }));
-          }
-          
-          // Hide loader
-          loaderMessage.style.display = 'none';
-          
-          // Handle empty results with fallback to popular anime
-          if (!data.data || data.data.length === 0) {
-            console.log('⚠️ No results for this combo, fetching popular TV anime as fallback');
-            const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24`;
-            const fallbackRes = await fetch(fallbackUrl);
-            const fallbackData = await fallbackRes.json();
-            data.data = fallbackData.data || [];
-          }
-          
-          // Filter out current show if viewing anime page
-          const currentId = currentState.source === 'jikan' ? currentState.id : null;
-          const results = currentId 
-            ? data.data.filter(a => a.mal_id !== currentId)
-            : data.data;
-          
-          // Render cards
-          if (results.length > 0) {
-            gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
-            
-            // Add pagination controls
-            renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
-          } else {
-            gridContainer.innerHTML = '<div class="loading-text">No anime found for this genre combination</div>';
-          }
-          
-        } catch (error) {
-          console.error('❌ Sunken Treasures error:', error);
-          loaderMessage.innerHTML = `
-            <div style="text-align:center; padding:20px;">
-              <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px;"></i>
-              <p>Failed to load recommendations</p>
-              <small style="color:var(--text-muted);">${error.message}</small>
-            </div>
-          `;
-          paginationContainer.innerHTML = '';
+      // ✅ FIXED: loadSunkenTreasures with working pagination
+      // Bug fix: jikanRecLoading element was inside gridContainer and got destroyed by
+      // gridContainer.innerHTML on first render, causing null-ref crash on page 2+.
+      // Now shows loading state by setting gridContainer HTML directly each time.
+async function loadSunkenTreasures(page = 1) {
+  const gridContainer = document.getElementById('sunkenTreasuresGrid');
+  const paginationContainer = document.getElementById('sunkenPagination');
+  
+  // Show loading state — write directly into gridContainer (safe on every page)
+  gridContainer.style.opacity = '0.5';
+  gridContainer.innerHTML = `<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">Loading page ${page}...</div>`;
+  paginationContainer.classList.add('loading');
+  
+  try {
+    // Each page uses a DIFFERENT genre combo for unique results
+    const comboIndex = (page - 1) % SUNKEN_GENRE_COMBOS.length;
+    const [genreA, genreB] = SUNKEN_GENRE_COMBOS[comboIndex];
+    
+    console.log(`🔗 Sunken Treasures - Page ${page}, Combo ${comboIndex + 1}/30: [${genreA},${genreB}]`);
+    
+    // Build Jikan API URL — include page param so API returns page-matched results
+    const params = new URLSearchParams({
+      genres: `${genreA},${genreB}`,
+      type: 'tv',
+      min_score: '6.5',
+      max_score: '10',
+      order_by: 'popularity',
+      sort: 'asc',
+      limit: '24',
+      page: String(page),
+      sfw: 'true'
+    });
+    
+    const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
+    
+    // Cache key includes page + genre combo
+    const cacheKey = `sunken_tv_page${page}_g${genreA}_${genreB}`;
+    const cached = localStorage.getItem(cacheKey);
+    let data;
+    
+    if (cached) {
+      try {
+        const { results, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          console.log('✅ Using cached results for page', page);
+          data = { data: results };
         }
-      }
+      } catch (e) { /* ignore corrupt cache */ }
+    }
+    
+    // Fetch fresh data if not cached
+    if (!data) {
+      console.log('🌐 Fetching from Jikan API:', apiUrl);
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error(`Jikan API error: ${response.status}`);
+      data = await response.json();
+      console.log(`✅ Received ${data.data?.length || 0} results`);
       
-      // ✅ NEW: Render pagination for Sunken Treasures
-      function renderSunkenPagination(currentPage, totalPages, container) {
-        container.innerHTML = '';
-        
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.type = 'button';
-        prevBtn.className = 'btn btn-soft btn-prev rounded-full';
-        prevBtn.innerHTML = '<span>Previous</span>';
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => loadSunkenTreasures(currentPage - 1);
-        container.appendChild(prevBtn);
-        
-        // Page numbers container
-        const pagesContainer = document.createElement('div');
-        pagesContainer.className = 'flex items-center gap-x-1';
-        
-        // Determine how many page buttons to show
-        const maxVisible = window.innerWidth < 768 ? 4 : 7;
-        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let end = Math.min(totalPages, start + maxVisible - 1);
-        
-        // Adjust if we're near the end
-        if (end - start < maxVisible - 1) {
-          start = Math.max(1, end - maxVisible + 1);
-        }
-        
-        for (let i = start; i <= end; i++) {
-          const pageBtn = document.createElement('button');
-          pageBtn.type = 'button';
-          pageBtn.className = `btn btn-soft btn-circle${i === currentPage ? ' active' : ''}`;
-          pageBtn.textContent = i;
-          if (i === currentPage) {
-            pageBtn.setAttribute('aria-current', 'page');
-          }
-          pageBtn.onclick = () => loadSunkenTreasures(i);
-          pagesContainer.appendChild(pageBtn);
-        }
-        
-        container.appendChild(pagesContainer);
-        
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.type = 'button';
-        nextBtn.className = 'btn btn-soft btn-next rounded-full';
-        nextBtn.innerHTML = '<span>Next</span>';
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => loadSunkenTreasures(currentPage + 1);
-        container.appendChild(nextBtn);
-      }
+      // Cache the results
+      localStorage.setItem(cacheKey, JSON.stringify({
+        results: data.data,
+        timestamp: Date.now()
+      }));
+    }
+    
+    // Handle empty results with fallback to top anime
+    if (!data.data || data.data.length === 0) {
+      console.log('⚠️ No results, fetching popular TV anime as fallback');
+      const fallbackUrl = `https://api.jikan.moe/v4/top/anime?type=tv&limit=24&page=${page}`;
+      const fallbackRes = await fetch(fallbackUrl);
+      const fallbackData = await fallbackRes.json();
+      data.data = fallbackData.data || [];
+    }
+    
+    // Filter out current show if on anime page
+    const currentId = currentState.source === 'jikan' ? currentState.id : null;
+    const results = currentId 
+      ? data.data.filter(a => a.mal_id !== currentId)
+      : data.data;
+    
+    // Restore opacity and render cards
+    gridContainer.style.opacity = '1';
+    
+    if (results.length > 0) {
+      console.log(`🎨 Rendering ${Math.min(24, results.length)} anime cards for page ${page}`);
+      gridContainer.innerHTML = results.slice(0, 24).map(anime => renderAnimeRecCard(anime)).join('');
+      
+      // Update pagination with current page number
+      renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+      
+      // Smooth scroll to section top
+      gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
+      renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+    }
+    
+  } catch (error) {
+    console.error('❌ Sunken Treasures error:', error);
+    gridContainer.style.opacity = '1';
+    gridContainer.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px; display:block;"></i>
+        <p>Failed to load recommendations</p>
+        <small style="color:var(--text-muted);">${error.message}</small>
+      </div>
+    `;
+    // Re-render pagination so user can retry other pages
+    renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
+  } finally {
+    // Always restore interactivity
+    gridContainer.style.opacity = '1';
+    paginationContainer.classList.remove('loading');
+  }
+}
+
+ // ✅ UPDATED: Matches index.html "Recently Completed" pagination style
+function renderSunkenPagination(currentPage, totalPages, container) {
+  container.innerHTML = '';
+  container.className = 'pagination-nav';
+  
+  // Previous button (chevron on mobile, text on desktop)
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'btn btn-soft btn-prev rounded-full';
+  prevBtn.innerHTML = '<span class="prev-text">Previous</span><span class="prev-chevron">‹</span>';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.onclick = (e) => {
+    e.preventDefault();
+    if (currentPage > 1) loadSunkenTreasures(currentPage - 1);
+  };
+  container.appendChild(prevBtn);
+  
+  // Page counter: "1 / 30"
+  const pageCounter = document.createElement('div');
+  pageCounter.className = 'page-counter';
+  pageCounter.innerHTML = `<span class="current-page">${currentPage}</span> / <span class="total-pages">${totalPages}</span>`;
+  container.appendChild(pageCounter);
+  
+  // Next button
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'btn btn-soft btn-next rounded-full';
+  nextBtn.innerHTML = '<span class="next-text">Next</span><span class="next-chevron">›</span>';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.onclick = (e) => {
+    e.preventDefault();
+    if (currentPage < totalPages) loadSunkenTreasures(currentPage + 1);
+  };
+  container.appendChild(nextBtn);
+}
 
       // Unified anime card renderer for both sections
       function renderAnimeRecCard(anime) {
