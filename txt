@@ -690,9 +690,8 @@ img { max-width: 100%; height: auto; display: block; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85) 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%);
+  z-index: 1;
 }
 .season-card img {
   width: 100%;
@@ -701,18 +700,18 @@ img { max-width: 100%; height: auto; display: block; }
   filter: brightness(0.85);
 }
 .season-number {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 20px;
-  background: rgba(43, 108, 176, 0.95);
-  border-radius: 20px;
   font-weight: 700;
   font-size: 0.9rem;
   color: #fff;
-  z-index: 2;
+  text-align: center;
+  padding: 6px 20px;
+  background: rgba(43, 108, 176, 0.95);
+  border-radius: 20px;
   backdrop-filter: blur(4px);
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tabs Section */
@@ -754,8 +753,151 @@ img { max-width: 100%; height: auto; display: block; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* Cast Tab */
-.cast-list { display: flex; flex-direction: column; gap: 12px; }
+/* ── Cast List Grid (image-3 style) ─────────────────── */
+.cast-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.cast-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 72px;
+  transition: background var(--transition-fast);
+}
+.cast-row:last-child { border-bottom: none; }
+.cast-row:hover { background: var(--bg-surface); }
+
+/* Left side: character */
+.cast-char-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+/* Right side: voice actor */
+.cast-va-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: inherit;
+  justify-content: flex-end;
+  min-width: 0;
+  border-left: 1px solid var(--border-subtle);
+}
+.cast-va-empty { border-left: 1px solid var(--border-subtle); }
+
+.cast-portrait {
+  width: 46px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+/* Character info (left-aligned) */
+.cast-char-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cast-char-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cast-role-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+.role-main {
+  background: rgba(43, 108, 176, 0.25);
+  color: #7ec8f7;
+  border: 1px solid rgba(43, 108, 176, 0.45);
+}
+.role-supporting {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* VA info (right-aligned) */
+.cast-va-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: right;
+  min-width: 0;
+}
+.cast-va-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cast-va-lang {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Season relation tag */
+.season-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+.season-relation-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(236, 201, 75, 0.2);
+  border: 1px solid rgba(236, 201, 75, 0.5);
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .cast-portrait { width: 38px; height: 56px; }
+  .cast-char-side, .cast-va-side { padding: 8px 10px; gap: 8px; }
+  .cast-char-name, .cast-va-name { font-size: 0.8rem; }
+}
+
+/* ── Legacy cast card styles (kept for any remaining references) ── */
 .cast-scroll-container {
   overflow-x: auto;
   scroll-behavior: smooth;
@@ -2273,19 +2415,23 @@ img { max-width: 100%; height: auto; display: block; }
         
         let seasons = [];
         if (isAnime) {
-          const relations = data.relations || {};
-          seasons = [
-            ...(relations.sequel || []),
-            ...(relations.prequel || []),
-            ...(relations.side_story || []).filter(r => r.type === 'anime')
-          ].filter(r => r.title.toLowerCase().includes('season') || r.title.toLowerCase().includes('part') || /\d+/.test(r.title));
+          // data.relations is an array: [{relation: "Prequel", entry: [{mal_id,type,name}]}, ...]
+          const relationsArray = Array.isArray(data.relations) ? data.relations : [];
+          const relatedAnime = [];
+          for (const rel of relationsArray) {
+            const relType = (rel.relation || '').toLowerCase();
+            // Include prequels, sequels, side stories, alternative versions
+            if (['prequel','sequel','side story','alternative version','alternative setting','spin-off'].includes(relType)) {
+              for (const entry of (rel.entry || [])) {
+                if (entry.type === 'anime') relatedAnime.push({ ...entry, relation: rel.relation });
+              }
+            }
+          }
+          seasons = relatedAnime;
           
+          // Always include the current show itself
           if (!seasons.some(s => s.mal_id === currentState.id)) {
-            seasons.unshift({
-              mal_id: currentState.id,
-              title: currentState.title,
-              type: 'anime'
-            });
+            seasons.unshift({ mal_id: currentState.id, name: currentState.title, type: 'anime', relation: 'Current' });
           }
         } else if (currentState.type === 'tv') {
           seasons = data.seasons?.filter(s => s.season_number > 0) || [];
@@ -2300,23 +2446,29 @@ img { max-width: 100%; height: auto; display: block; }
         const grid = document.getElementById('seasonsGrid');
         
         grid.innerHTML = seasons.map(season => {
-          const seasonId = isAnime ? season.mal_id : season.id;
+          const isAnimeEntry = isAnime;
+          const seasonId = isAnimeEntry ? season.mal_id : season.id;
           const seasonTitle = season.title || season.name || currentState.title;
           const seasonNumber = season.season_number || 1;
           const slug = slugify(seasonTitle);
           
           let seasonUrl, backdrop;
-          if (isAnime) {
+          if (isAnimeEntry) {
             seasonUrl = `/info/anime/jikan-${seasonId}/${slug}`;
-            backdrop = season.images?.jpg?.large_image_url || '';
+            backdrop = season.images?.jpg?.large_image_url || season.images?.jpg?.image_url || '';
           } else {
             seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
             backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
           }
+
+          const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
           
           return `<a href="${seasonUrl}" class="season-card">
-            <img src="${backdrop}" alt="${seasonTitle}" loading="lazy">
-            <span class="season-number">${isAnime ? seasonTitle : `Season ${seasonNumber}`}</span>
+            <img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.style.display='none'">
+            <div class="season-info-overlay">
+              ${relationLabel}
+              <span class="season-number">${escapeHtml(isAnimeEntry ? seasonTitle : `Season ${seasonNumber}`)}</span>
+            </div>
           </a>`;
         }).join('');
       }
@@ -2453,15 +2605,17 @@ img { max-width: 100%; height: auto; display: block; }
 
         tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
 
-        // Initial positioning
+        // Initial positioning — defer until after layout/fonts settle
         const activeTab = document.querySelector('.tab-btn.active');
         if (activeTab) {
           if (indicator) indicator.style.transition = 'none';
-          activateTab(activeTab);
-          if (indicator) {
-            void indicator.offsetHeight; // force reflow
-            indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
-          }
+          // Double rAF ensures fonts and layout are fully painted before measuring
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            positionIndicator(activeTab);
+            if (indicator) {
+              indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
+            }
+          }));
         }
 
         // Reposition on resize
@@ -2957,80 +3111,100 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         const isAnime = currentState.source === 'jikan';
         
         if (isAnime) {
+          container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading cast...</p>';
           try {
             const res = await fetch(`https://api.jikan.moe/v4/anime/${currentState.id}/characters`);
-            if (!res.ok) throw new Error('Jikan characters error');
+            if (!res.ok) throw new Error(`Jikan characters error: ${res.status}`);
             const { data: charsData } = await res.json();
-            const chars = charsData || [];
+            const chars = (charsData || []).sort((a, b) => {
+              // Main roles first, then by favorites
+              if (a.role === 'Main' && b.role !== 'Main') return -1;
+              if (b.role === 'Main' && a.role !== 'Main') return 1;
+              return (b.favorites || 0) - (a.favorites || 0);
+            });
             
             if (!chars.length) {
               container.innerHTML = '<p class="loading-text">No cast data available</p>';
               return;
             }
             
-            container.innerHTML = `
-              <div class="cast-scroll-container" onscroll="updateArrowVisibility(this)">
-                <div class="cast-scroll-inner">
-                  ${chars.slice(0, 14).map(c => {
-                    const actor = c.voice_actors?.[0];
-                    const character = c.character;
-                    return `
-                      <a href="/cast/${encodeURIComponent(character.name)}" class="cast-card">
-                        <div class="cast-card-img">
-                          <img src="${actor?.images?.jpg?.image_url || ''}" alt="${actor?.name || character.name}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect fill=\'%231e2633\' width=\'100\' height=\'100\'/></svg>'">
-                        </div>
-                        <div class="cast-card-name">${escapeHtml(actor?.name || 'Unknown')}</div>
-                        <div class="cast-card-role">${escapeHtml(character.name)} (${actor?.language || 'JP'})</div>
-                      </a>
-                    `;
-                  }).join('')}
+            // Build list layout matching image 3 style
+            const castRows = chars.slice(0, 20).map(c => {
+              const character = c.character;
+              const charImg = character.images?.jpg?.image_url || character.images?.webp?.image_url || '';
+              const charName = character.name || 'Unknown';
+              const role = c.role || 'Supporting';
+              // Prefer Japanese VA, fallback to first
+              const va = c.voice_actors?.find(v => v.language === 'Japanese') || c.voice_actors?.[0];
+              const vaName = va ? va.person.name.replace(/,\s*/, ' ').split(' ').reverse().join(' ') : 'Unknown';
+              const vaImg = va?.person?.images?.jpg?.image_url || '';
+              const vaLang = va?.language || '';
+
+              return `
+                <div class="cast-row">
+                  <a href="/character/${character.mal_id}/${slugify(charName)}" class="cast-char-side">
+                    <img class="cast-portrait cast-char-portrait" src="${escapeHtml(charImg)}" alt="${escapeHtml(charName)}"
+                      loading="lazy"
+                      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 90%22><rect fill=%22%231e2633%22 width=%2260%22 height=%2290%22/></svg>'">
+                    <div class="cast-char-info">
+                      <span class="cast-char-name">${escapeHtml(charName)}</span>
+                      <span class="cast-role-badge ${role === 'Main' ? 'role-main' : 'role-supporting'}">${role.toUpperCase()}</span>
+                    </div>
+                  </a>
+                  ${va ? `
+                  <a href="/person/${va.person.mal_id}/${slugify(vaName)}" class="cast-va-side">
+                    <div class="cast-va-info">
+                      <span class="cast-va-name">${escapeHtml(vaName)}</span>
+                      <span class="cast-va-lang">${escapeHtml(vaLang)}</span>
+                    </div>
+                    <img class="cast-portrait cast-va-portrait" src="${escapeHtml(vaImg)}" alt="${escapeHtml(vaName)}"
+                      loading="lazy"
+                      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 90%22><rect fill=%22%231e2633%22 width=%2260%22 height=%2290%22/></svg>'">
+                  </a>` : '<div class="cast-va-side cast-va-empty"></div>'}
                 </div>
-              </div>
-              <div style="text-align: right; margin-top: 8px; color: var(--text-muted); font-size: 0.75rem; display: flex; align-items: center; justify-content: flex-end; gap: 5px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Swipe to scroll more</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            `;
+              `;
+            }).join('');
             
-            if (window.innerWidth > 768) {
-              updateArrowVisibility(container.querySelector('.cast-scroll-container'));
-            }
+            container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
+            
           } catch (e) {
             console.error('Cast fetch error:', e);
             container.innerHTML = '<p class="loading-text">Failed to load cast</p>';
           }
         } else {
+          // TMDB cast — same row layout
           const cast = data.credits?.cast || [];
           if (!cast.length) {
             container.innerHTML = '<p class="loading-text">No cast data available</p>';
             return;
           }
           
-          container.innerHTML = `
-            <div class="cast-scroll-container" onscroll="updateArrowVisibility(this)">
-              <div class="cast-scroll-inner">
-                ${cast.slice(0, 14).map(c => `
-                  <a href="/cast/${encodeURIComponent(c.name)}" class="cast-card">
-                    <div class="cast-card-img">
-                      <img src="${c.profile_path ? `https://image.tmdb.org/t/p/w92${c.profile_path}` : ''}" alt="${c.name}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect fill=\'%231e2633\' width=\'100\' height=\'100\'/></svg>'">
-                    </div>
-                    <div class="cast-card-name">${escapeHtml(c.name)}</div>
-                    <div class="cast-card-role">${escapeHtml(c.character)}</div>
-                  </a>
-                `).join('')}
+          const castRows = cast.slice(0, 20).map(c => {
+            const actorImg = c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '';
+            const actorName = c.name || 'Unknown';
+            const character = c.character || '';
+            return `
+              <div class="cast-row">
+                <div class="cast-char-side" style="cursor:default;">
+                  <img class="cast-portrait cast-char-portrait" src="${escapeHtml(actorImg)}" alt="${escapeHtml(actorName)}"
+                    loading="lazy"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 90%22><rect fill=%22%231e2633%22 width=%2260%22 height=%2290%22/></svg>'">
+                  <div class="cast-char-info">
+                    <span class="cast-char-name">${escapeHtml(actorName)}</span>
+                    <span class="cast-role-badge role-supporting">ACTOR</span>
+                  </div>
+                </div>
+                <div class="cast-va-side">
+                  <div class="cast-va-info">
+                    <span class="cast-va-name">${escapeHtml(character)}</span>
+                    <span class="cast-va-lang">Character</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style="text-align: right; margin-top: 8px; color: var(--text-muted); font-size: 0.75rem; display: flex; align-items: center; justify-content: flex-end; gap: 5px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span>Swipe to scroll more</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          `;
+            `;
+          }).join('');
           
-          if (window.innerWidth > 768) {
-            updateArrowVisibility(container.querySelector('.cast-scroll-container'));
-          }
+          container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
         }
       }
 
