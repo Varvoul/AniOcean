@@ -1135,7 +1135,124 @@ img { max-width: 100%; height: auto; display: block; }
   pointer-events: none;
 }
 
-/* Theme blocks */
+/* Theme tab — vertically scrollable so long OP/ED lists are easy to browse */
+#themesTab {
+  max-height: 700px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--btn-primary) rgba(255,255,255,0.06);
+  padding-right: 4px;
+}
+#themesTab::-webkit-scrollbar { width: 5px; }
+#themesTab::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
+#themesTab::-webkit-scrollbar-thumb { background: var(--btn-primary); border-radius: 3px; }
+
+/* themes-container fills the scrollable area */
+.themes-container { padding: 4px 0; }
+
+/* Section heading (Opening / Ending) */
+.themes-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+}
+.themes-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+/* Individual theme card */
+.theme-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.theme-card:last-child { margin-bottom: 0; }
+
+.theme-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.theme-card-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: #7ec8f7;
+  background: rgba(126, 200, 247, 0.12);
+  border: 1px solid rgba(126, 200, 247, 0.3);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.theme-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.theme-song-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-artist {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Video entry inside a theme card */
+.theme-video-entry { padding: 12px 14px; border-top: 1px solid var(--border-subtle); }
+.theme-video-entry:first-of-type { border-top: none; }
+.theme-video-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 18px;
+}
+.theme-ver-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(236, 201, 75, 0.15);
+  border: 1px solid rgba(236, 201, 75, 0.4);
+  color: var(--accent-gold);
+}
+.theme-ep-range {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Theme block (legacy — keep for compat) */
 .theme-block { margin-bottom: 20px; }
 .theme-block:last-child { margin-bottom: 0; }
 
@@ -2081,6 +2198,14 @@ img { max-width: 100%; height: auto; display: block; }
         <section class="recommendations-section" id="waterTempleSection" style="display:none;">
           <h3><i class="fa-sharp-duotone fa-solid fa-torii-gate" style="--fa-primary-color: rgb(132, 175, 208); --fa-secondary-color: rgb(132, 175, 208);"></i> Water Temple</h3>
           <div class="recs-grid" id="waterTempleGrid">
+            <div class="loading-text">Loading recommendations...</div>
+          </div>
+        </section>
+
+        <!-- Recommend for You (TMDB movie/tv only) -->
+        <section class="recommendations-section" id="recommendForYouSection" style="display:none;">
+          <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#a78bfa;"></i> Recommend for You</h3>
+          <div class="recs-grid" id="recommendForYouGrid">
             <div class="loading-text">Loading recommendations...</div>
           </div>
         </section>
@@ -3166,88 +3291,211 @@ img { max-width: 100%; height: auto; display: block; }
 
       async function loadRecommendations() {
         if (currentState.source === 'jikan') {
-          // Run water temple and sunken in parallel — each already has its own internal delay
+          // Anime: water temple + sunken in parallel
           await Promise.all([
             loadWaterTemple(),
             loadSunkenTreasures(1)
           ]);
         } else {
-          await loadSunkenTreasures(1);
+          // TMDB: recommend-for-you + sunken in parallel
+          await Promise.all([
+            loadRecommendForYou(),
+            loadSunkenTreasures(1)
+          ]);
         }
       }
 
-      // Water Temple section - genre-matched recommendations for anime pages
+      // Water Temple — genre-matched anime recommendations using the current show's actual genres
       async function loadWaterTemple() {
         const section = document.getElementById('waterTempleSection');
         const gridContainer = document.getElementById('waterTempleGrid');
-        
-        if (currentState.source !== 'jikan') {
-          section.style.display = 'none';
-          return;
-        }
-        
+
+        if (currentState.source !== 'jikan') { section.style.display = 'none'; return; }
+
         section.style.display = 'block';
         gridContainer.innerHTML = '<div class="loading-text">Loading recommendations...</div>';
-        
+
         try {
           const data = currentState.data;
-          const themes = data.themes?.map(t => t.mal_id).filter(Boolean) || [];
-          const demographics = data.demographics?.map(d => d.mal_id).filter(Boolean) || [];
-          const selectedGenres = [...new Set([...themes, ...demographics])].slice(0, 3);
 
-          // Use a random page (1-3) for variety on each visit
-          const randomPage = Math.floor(Math.random() * 3) + 1;
+          // Collect all genre/theme/demographic MAL IDs from the current show
+          // These come from show details: genres + themes + demographics
+          const genreIds  = (data.genres       || []).map(g => g.mal_id).filter(Boolean);
+          const themeIds  = (data.themes        || []).map(t => t.mal_id).filter(Boolean);
+          const demoIds   = (data.demographics  || []).map(d => d.mal_id).filter(Boolean);
+
+          // Use all genres for a broad, accurate match — up to 3 to stay within Jikan limits
+          // Priority: genres first (most accurate), then demographics, then themes
+          const combinedIds = [...new Set([...genreIds, ...demoIds, ...themeIds])];
+          const selectedGenres = combinedIds.slice(0, 3);
+
+          // Random page 1–4 for variety on each visit without hitting empty pages
+          const randomPage = Math.floor(Math.random() * 4) + 1;
 
           const params = new URLSearchParams({
-            order_by: 'popularity',
-            sort: 'asc',
-            limit: '24',
-            sfw: 'true',
-            type: data.type?.toLowerCase() || 'tv',
-            min_score: '6.4',
-            max_score: '8.7',
-            page: String(randomPage)
+            order_by:  'score',       // sort by score so results are genuinely good
+            sort:      'desc',
+            limit:     '24',
+            sfw:       'true',
+            type:      (data.type || 'tv').toLowerCase(),
+            min_score: '6.0',
+            max_score: '9.7',
+            page:      String(randomPage)
           });
+
           if (selectedGenres.length > 0) params.append('genres', selectedGenres.join(','));
-          
+
           const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
-          
-          // Cache per genre combo + page (5 min TTL so it refreshes for variety)
-          const cacheKey = `watertemple_${selectedGenres.join('_')}_${data.type}_p${randomPage}`;
-          const cached = localStorage.getItem(cacheKey);
+
+          // Cache key: genre ids + anime type + page — 10 min TTL for freshness+variety
+          const cacheKey = `wt2_${selectedGenres.join('_')}_${(data.type||'tv').toLowerCase()}_p${randomPage}`;
           let results;
-          
+
+          const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            const { data: cachedData, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < 5 * 60 * 1000) {
-              results = cachedData;
-            }
+            try {
+              const { data: cd, timestamp } = JSON.parse(cached);
+              if (Date.now() - timestamp < 10 * 60 * 1000) results = cd;
+            } catch(e) {}
           }
-          
+
           if (!results) {
-            // Delay start to let the main fetchJikanData request clear the rate-limit window
-            await new Promise(r => setTimeout(r, 1200));
             const response = await fetchWithRetry(apiUrl);
-            const apiData = await response.json();
+            const apiData  = await response.json();
             results = apiData.data || [];
-            localStorage.setItem(cacheKey, JSON.stringify({ data: results, timestamp: Date.now() }));
+            try { localStorage.setItem(cacheKey, JSON.stringify({ data: results, timestamp: Date.now() })); } catch(e) {}
           }
-          
+
+          // Filter out the current show itself
           const filtered = results.filter(a => a.mal_id !== currentState.id).slice(0, 24);
-          
+
           if (filtered.length > 0) {
             gridContainer.innerHTML = filtered.map(anime => renderAnimeRecCard(anime)).join('');
           } else {
-            gridContainer.innerHTML = '<div class="loading-text">No recommendations found</div>';
+            // Fallback: top-scored anime of same type, no genre filter
+            const fbParams = new URLSearchParams({ order_by: 'score', sort: 'desc', limit: '24', sfw: 'true', type: (data.type || 'tv').toLowerCase(), min_score: '7.5' });
+            const fbRes  = await fetchWithRetry(`https://api.jikan.moe/v4/anime?${fbParams.toString()}`);
+            const fbData = await fbRes.json();
+            const fbFiltered = (fbData.data || []).filter(a => a.mal_id !== currentState.id).slice(0, 24);
+            gridContainer.innerHTML = fbFiltered.length
+              ? fbFiltered.map(anime => renderAnimeRecCard(anime)).join('')
+              : '<div class="loading-text">No recommendations found</div>';
           }
-          
+
         } catch (error) {
           console.error('❌ Water Temple error:', error);
           gridContainer.innerHTML = '<div class="loading-text">Failed to load recommendations</div>';
         }
       }
 
-      // ✅ FIXED: loadSunkenTreasures with working pagination
+      // Recommend for You — TMDB movie/TV genre+popularity+score based recommendations
+      async function loadRecommendForYou() {
+        const section = document.getElementById('recommendForYouSection');
+        const gridContainer = document.getElementById('recommendForYouGrid');
+
+        if (currentState.source !== 'tmdb') { section.style.display = 'none'; return; }
+
+        section.style.display = 'block';
+        gridContainer.innerHTML = '<div class="loading-text">Loading recommendations...</div>';
+
+        try {
+          const data = currentState.data;
+          const mediaType = currentState.type; // 'movie' or 'tv'
+
+          // Extract genre IDs from current show
+          const genreIds = (data.genres || []).map(g => g.id).filter(Boolean);
+
+          // TMDB discover — match genres, filter by vote quality, sort by popularity+vote combo
+          // We try two strategies and merge: TMDB /recommendations (official) + /discover (filtered)
+          const [recsRes, discoverRes] = await Promise.all([
+            // Strategy 1: TMDB's own recommendation engine for this show
+            fetch(`${CONFIG.TMDB_WORKER}/3/${mediaType}/${currentState.id}/recommendations?page=1`),
+            // Strategy 2: Discover with matching genres + quality filter
+            (() => {
+              const p = new URLSearchParams({
+                sort_by:              'vote_average.desc',
+                'vote_count.gte':     mediaType === 'movie' ? '200' : '100',
+                'vote_average.gte':   '6.5',
+                with_genres:          genreIds.slice(0, 3).join(','),
+                without_genres:       '',   // no exclusions — keep broad
+                page:                 '1'
+              });
+              return fetch(`${CONFIG.TMDB_WORKER}/3/discover/${mediaType}?${p.toString()}`);
+            })()
+          ]);
+
+          const recsData    = recsRes.ok    ? await recsRes.json()    : { results: [] };
+          const discoverData = discoverRes.ok ? await discoverRes.json() : { results: [] };
+
+          // Merge, de-duplicate by id, remove current show, sort by vote_average desc
+          const seen = new Set([currentState.id]);
+          const merged = [];
+
+          for (const item of [...(recsData.results || []), ...(discoverData.results || [])]) {
+            if (!item.id || seen.has(item.id)) continue;
+            seen.add(item.id);
+            merged.push(item);
+          }
+
+          // Sort: weighted score (vote_average × log10(vote_count+1)) for quality+popularity balance
+          merged.sort((a, b) => {
+            const scoreA = (a.vote_average || 0) * Math.log10((a.vote_count || 1) + 1);
+            const scoreB = (b.vote_average || 0) * Math.log10((b.vote_count || 1) + 1);
+            return scoreB - scoreA;
+          });
+
+          const final = merged.slice(0, 24);
+
+          if (final.length > 0) {
+            gridContainer.innerHTML = final.map(item => renderTMDBRecCard(item, mediaType)).join('');
+          } else {
+            // Fallback: popular content of same type
+            const fbRes  = await fetch(`${CONFIG.TMDB_WORKER}/3/${mediaType}/popular?page=1`);
+            const fbData = fbRes.ok ? await fbRes.json() : { results: [] };
+            const fbFinal = (fbData.results || []).filter(i => i.id !== currentState.id).slice(0, 24);
+            gridContainer.innerHTML = fbFinal.length
+              ? fbFinal.map(item => renderTMDBRecCard(item, mediaType)).join('')
+              : '<div class="loading-text">No recommendations found</div>';
+          }
+
+        } catch (error) {
+          console.error('❌ Recommend for You error:', error);
+          gridContainer.innerHTML = '<div class="loading-text">Failed to load recommendations</div>';
+        }
+      }
+
+      // TMDB rec card renderer — matches renderAnimeRecCard style
+      function renderTMDBRecCard(item, mediaType) {
+        const title = item.title || item.name || 'Unknown';
+        const poster = item.poster_path
+          ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+          : '';
+        const score = item.vote_average;
+        const year  = (item.release_date || item.first_air_date || '').slice(0, 4) || 'N/A';
+        const type  = mediaType === 'movie' ? 'Movie' : 'TV';
+        const slug  = slugify(title);
+        const src   = mediaType === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
+        const detailsUrl = `/info/${mediaType}/${src}-${item.id}/${slug}`;
+
+        const posterStyle = poster
+          ? `background-image: url('${poster}')`
+          : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
+
+        return `<a href="${detailsUrl}" class="rec-card">
+          <div class="rec-poster" style="${posterStyle}">
+            ${poster ? `<img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
+            <span class="quality-badge">${type}</span>
+            <span class="score-badge"><i class="fa-solid fa-star"></i> ${score ? score.toFixed(1) : 'N/A'}</span>
+            <div class="play-overlay">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
+            </div>
+          </div>
+          <div class="rec-info">
+            <div class="rec-meta">${year}</div>
+            <div class="rec-title">${escapeHtml(title)}</div>
+          </div>
+        </a>`;
+      }
       // Bug fix: jikanRecLoading element was inside gridContainer and got destroyed by
       // gridContainer.innerHTML on first render, causing null-ref crash on page 2+.
       // Now shows loading state by setting gridContainer HTML directly each time.
@@ -3680,82 +3928,94 @@ function renderSunkenPagination(currentPage, totalPages, container) {
 
       async function loadThemesData() {
         const container = document.getElementById('themesContainer');
-        if (currentState.source !== 'jikan') { 
-          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
-          return; 
-        }
-        
-        const malId = currentState.data?.mal_id || currentState.id;
-        if (!malId) {
-          container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
+        if (currentState.source !== 'jikan') {
+          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>';
           return;
         }
 
-        container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
-        
-        try {
-          // Use animethemes.moe REST API (more reliable than GraphQL for MAL lookups)
-          const res = await fetch(
-            `https://api.animethemes.moe/anime?filter[external_id]=${malId}&filter[external_site]=myanimelist&include=animethemes.animethemeentries.videos,animethemes.song.artists&fields[anime]=slug,name&fields[animetheme]=type,sequence&fields[song]=title&fields[artist]=name&fields[animethemeentry]=version,episodes&fields[video]=link,resolution`
-          );
+        const malId = currentState.data?.mal_id || currentState.id;
+        if (!malId) { container.innerHTML = '<p class="loading-text">No MAL ID available</p>'; return; }
 
-          if (!res.ok) throw new Error(`AnimThemes REST error: ${res.status}`);
+        container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
+
+        try {
+          // Correct REST endpoint — filter by MAL site + external_id, include song + entries + videos
+          const url = `https://api.animethemes.moe/anime?filter[has]=resources&filter[site]=MyAnimeList&filter[external_id]=${malId}&include=animethemes.song,animethemes.animethemeentries.videos`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`AnimThemes error: ${res.status}`);
           const json = await res.json();
-          const animeArr = json.anime || [];
-          const animeEntry = animeArr[0];
+          const animeEntry = (json.anime || [])[0];
 
           if (!animeEntry?.animethemes?.length) {
             container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
             return;
           }
 
-          const themes = animeEntry.animethemes;
-          const ops = themes.filter(t => t.type === 'OP').sort((a,b) => (a.sequence||1)-(b.sequence||1));
-          const eds = themes.filter(t => t.type === 'ED').sort((a,b) => (a.sequence||1)-(b.sequence||1));
-          
-          let html = '';
+          const allThemes = animeEntry.animethemes;
+          const ops = allThemes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+          const eds = allThemes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
           const posterImg = currentState.data.images?.jpg?.image_url || '';
 
-          function buildThemeSection(list, heading) {
-            let out = `<h4 style="margin:16px 0 12px;font-size:1rem;">${heading}</h4>`;
-            list.forEach(theme => {
-              const seqLabel = theme.sequence ? ` ${theme.sequence}` : '';
-              const song = theme.song;
-              const songTitle = song?.title || `${theme.type}${seqLabel}`;
-              const artists = song?.artists?.map(a => a.name).join(', ') || '';
-              const displayTitle = `${theme.type}${seqLabel}: ${songTitle}${artists ? ` — ${artists}` : ''}`;
+          // Build a compact theme card: song title + artist row + collapsible video per version
+          function buildThemeCards(list, sectionType) {
+            return list.map(theme => {
+              const seq      = theme.sequence || '';
+              const label    = `${sectionType}${seq}`;
+              const songTitle = theme.song?.title || label;
+              // animethemes REST returns song.artists only when artists include is added;
+              // the endpoint above includes animethemes.song so artists may not be present —
+              // fall back gracefully
+              const artists  = (theme.song?.artists || []).map(a => a.name).join(', ');
 
-              // All entries (versions) for this theme
+              // Collect all video entries across all versions
               const entries = theme.animethemeentries || [];
-              entries.forEach(entry => {
+              const videoBlocks = entries.map(entry => {
                 const video = entry.videos?.[0];
-                if (!video?.link) return;
-                const versionLabel = entry.version ? ` (v${entry.version})` : '';
-                const epLabel = entry.episodes ? ` [eps ${entry.episodes}]` : '';
-                out += `
-                  <div class="theme-block">
-                    <div class="video-title">${escapeHtml(displayTitle)}${escapeHtml(versionLabel)}${escapeHtml(epLabel)}</div>
+                if (!video?.link) return '';
+                const verTag  = entry.version && entry.version > 1 ? ` <span class="theme-ver-tag">v${entry.version}</span>` : '';
+                const epRange = entry.episodes ? `<span class="theme-ep-range">eps ${entry.episodes}</span>` : '';
+                return `
+                  <div class="theme-video-entry">
+                    <div class="theme-video-meta">${verTag}${epRange}</div>
                     <div class="video-wrapper">
-                      <video controls preload="metadata" ${posterImg ? `poster="${posterImg}"` : ''}>
+                      <video controls preload="none" ${posterImg ? `poster="${escapeHtml(posterImg)}"` : ''}>
                         <source src="${escapeHtml(video.link)}" type="video/webm">
-                        Your browser does not support the video tag.
                       </video>
                     </div>
+                  </div>`;
+              }).join('');
+
+              if (!videoBlocks.trim()) return ''; // skip themes with no video
+
+              return `
+                <div class="theme-card">
+                  <div class="theme-card-header">
+                    <div class="theme-card-label">${escapeHtml(label)}</div>
+                    <div class="theme-card-titles">
+                      <span class="theme-song-title">${escapeHtml(songTitle)}</span>
+                      ${artists ? `<span class="theme-artist"><i class="fa-solid fa-music" style="font-size:0.65rem;opacity:0.7;"></i> ${escapeHtml(artists)}</span>` : ''}
+                    </div>
                   </div>
-                `;
-              });
-            });
-            return out;
+                  ${videoBlocks}
+                </div>`;
+            }).join('');
           }
 
-          if (ops.length) html += buildThemeSection(ops, '🎵 Opening Themes');
-          if (eds.length) html += buildThemeSection(eds, '🎵 Ending Themes');
-          
+          let html = '';
+          if (ops.length) {
+            html += `<div class="themes-section-heading"><i class="fa-solid fa-arrow-right-to-bracket" style="transform:rotate(-90deg);color:#7ec8f7;"></i> Opening Themes <span class="themes-count">${ops.length}</span></div>`;
+            html += buildThemeCards(ops, 'OP');
+          }
+          if (eds.length) {
+            html += `<div class="themes-section-heading" style="margin-top:20px;"><i class="fa-solid fa-arrow-right-from-bracket" style="transform:rotate(-90deg);color:#f6ad55;"></i> Ending Themes <span class="themes-count">${eds.length}</span></div>`;
+            html += buildThemeCards(eds, 'ED');
+          }
+
           container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-          
-        } catch (e) { 
-          console.warn('AnimeThemes API error:', e); 
-          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
+
+        } catch (e) {
+          console.warn('AnimeThemes error:', e);
+          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>';
         }
       }
 
