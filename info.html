@@ -2297,7 +2297,7 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, userBookmarks: [],
+        data: null, currentUser: null, currentUserProfile: null, userBookmarks: [],
         selectedStatuses: [], dropdownTimer: null, allAnimeData: null
       };
 
@@ -2896,25 +2896,44 @@ img { max-width: 100%; height: auto; display: block; }
           item.addEventListener('click', async (e) => {
             e.stopPropagation();
             const status = item.dataset.status;
-            if (status === 'remove') { 
-              await removeBookmark(); 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open'); 
-              return; 
+
+            // ── Remove all ──────────────────────────────────────
+            if (status === 'remove') {
+              clearTimeout(currentState.dropdownTimer);
+              await removeBookmark();
+              dropdown.classList.remove('show');
+              dropdownBtn.classList.remove('open');
+              dropdownBtn.setAttribute('aria-expanded', 'false');
+              return;
             }
+
+            // ── Toggle status ───────────────────────────────────
             const index = currentState.selectedStatuses.indexOf(status);
-            if (index > -1) { 
-              currentState.selectedStatuses.splice(index, 1); 
-              item.classList.remove('selected'); 
+            if (index > -1) {
+              currentState.selectedStatuses.splice(index, 1);
+              item.classList.remove('selected');
+            } else if (currentState.selectedStatuses.length < 2) {
+              currentState.selectedStatuses.push(status);
+              item.classList.add('selected');
             }
-            else if (currentState.selectedStatuses.length < 2) { 
-              currentState.selectedStatuses.push(status); 
-              item.classList.add('selected'); 
-            }
-            updateDropdownButtonText(); 
+
+            updateDropdownButtonText();
             await saveBookmarks();
-            if (currentState.selectedStatuses.length >= 2) { 
-              dropdown.classList.remove('show'); 
+
+            // ── 5-sec auto-close after FIRST selection ──────────
+            clearTimeout(currentState.dropdownTimer);
+            if (currentState.selectedStatuses.length === 1) {
+              currentState.dropdownTimer = setTimeout(() => {
+                dropdown.classList.remove('show');
+                dropdownBtn.classList.remove('open');
+                dropdownBtn.setAttribute('aria-expanded', 'false');
+              }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);  // 5000 ms
+            }
+
+            // ── Immediate close after SECOND selection ──────────
+            if (currentState.selectedStatuses.length >= 2) {
+              clearTimeout(currentState.dropdownTimer);
+              dropdown.classList.remove('show');
               dropdownBtn.classList.remove('open');
               dropdownBtn.setAttribute('aria-expanded', 'false');
             }
@@ -3036,18 +3055,232 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
+      // ─────────────────────────────────────────────────────────────
+      //  BOOKMARK HELPERS  (full schema: all user_bookmarks columns)
+      // ─────────────────────────────────────────────────────────────
+
+      /** Build the rich payload matching every column in user_bookmarks */
+      function buildBookmarkPayload(statusList) {
+        const data  = currentState.data;
+        const isAnime = currentState.source === 'jikan';
+        const sb    = window.supabaseClient;
+
+        // ── ID columns ─────────────────────────────────────
+        const mal_id  = isAnime ? currentState.id : null;
+        const tmdb_id = !isAnime ? currentState.id : null;
+
+        // ── Media type string ───────────────────────────────
+        let media_type;
+        if (isAnime)                      media_type = 'jikan-anime';
+        else if (currentState.type === 'movie') media_type = 'tmdb-movie';
+        else                              media_type = 'tmdb-tv';
+
+        // ── Titles ──────────────────────────────────────────
+        const eng_title      = isAnime ? (data.title_english || null) : (data.title || data.name || null);
+        const default_title  = isAnime ? (data.title || null) : (data.title || data.name || null);
+        const original_title = isAnime ? null : (data.original_title || data.original_name || null);
+        const romanji_title  = isAnime ? (data.title !== data.title_english ? data.title : null) : null;
+        const japanese_title = isAnime ? (data.title_japanese || null) : null;
+        const synonyms       = isAnime && data.title_synonyms?.length
+                                ? data.title_synonyms.join(', ') : null;
+
+        // ── Country (full name) ─────────────────────────────
+        const COUNTRY_MAP = {
+          'US':'United States','GB':'United Kingdom','JP':'Japan','KR':'South Korea',
+          'CN':'China','FR':'France','DE':'Germany','IN':'India','IT':'Italy',
+          'ES':'Spain','CA':'Canada','AU':'Australia','BR':'Brazil','MX':'Mexico',
+          'RU':'Russia','SE':'Sweden','NO':'Norway','DK':'Denmark','FI':'Finland',
+          'NL':'Netherlands','BE':'Belgium','AT':'Austria','CH':'Switzerland',
+          'PL':'Poland','TR':'Turkey','TH':'Thailand','TW':'Taiwan','HK':'Hong Kong',
+          'SG':'Singapore','PH':'Philippines','ID':'Indonesia','MY':'Malaysia','VN':'Vietnam'
+        };
+        let country_name = 'Japan'; // anime default
+        if (!isAnime) {
+          const iso = data.origin_country?.[0] || data.production_countries?.[0]?.iso_3166_1 || '';
+          country_name = COUNTRY_MAP[iso] || iso || null;
+        }
+
+        // ── Genres ─────────────────────────────────────────
+        let genreList = [];
+        if (isAnime) {
+          genreList = [
+            ...(data.genres?.map(g => g.name) || []),
+            ...(data.themes?.map(g => g.name) || []),
+            ...(data.demographics?.map(g => g.name) || [])
+          ];
+        } else {
+          genreList = data.genres?.map(g => g.name) || [];
+        }
+        const genres = genreList.length ? [...new Set(genreList)].join(', ') : null;
+
+        // ── Show status & dates ─────────────────────────────
+        const show_status = data.status || null;
+        let aired_date = null;
+        if (isAnime && data.aired?.from) {
+          const from = new Date(data.aired.from).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+          const to   = data.aired.to
+            ? new Date(data.aired.to).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+            : 'Ongoing';
+          aired_date = `${from} to ${to}`;
+        } else if (!isAnime) {
+          aired_date = data.release_date || data.first_air_date || null;
+        }
+        const broadcast_day_time = isAnime ? (data.broadcast?.string || null) : null;
+
+        // ── Source (manga / light novel / etc.) ────────────
+        const source = isAnime ? (data.source || null) : null;
+
+        // ── Rank & popularity ───────────────────────────────
+        const rank       = data.rank       ?? null;
+        const popularity = data.popularity ?? null;
+
+        // ── Studios & producers ─────────────────────────────
+        const studio_name    = isAnime
+          ? (data.studios?.map(s => s.name).join(', ') || null)
+          : (data.production_companies?.map(c => c.name).join(', ') || data.networks?.map(n => n.name).join(', ') || null);
+        const producers_name = isAnime
+          ? (data.producers?.map(p => p.name).join(', ') || null)
+          : null;
+
+        // ── Episode counts ──────────────────────────────────
+        const total_epi_num = isAnime ? (data.episodes ?? null)
+                                      : (data.number_of_episodes ?? null);
+        const sub_epi_num   = currentState.allAnimeData?.episodes_sub ?? null;
+        const dub_epi_num   = currentState.allAnimeData?.episodes_dub ?? null;
+
+        // ── Format ──────────────────────────────────────────
+        const format = isAnime ? (data.type || null)
+                               : (currentState.type === 'movie' ? 'Movie' : (data.type || 'Scripted'));
+
+        // ── Synopsis / Overview ─────────────────────────────
+        const synopsis_context = isAnime ? (data.synopsis || null) : null;
+        const overview_context = !isAnime ? (data.overview || null) : null;
+
+        // ── Scores ──────────────────────────────────────────
+        const mal_score        = isAnime ? (data.score ?? null) : null;
+        const tmdb_average_score = !isAnime ? (data.vote_average ?? null) : null;
+
+        // ── Content rating ──────────────────────────────────
+        let content_rating = null;
+        if (isAnime) {
+          content_rating = data.rating ? data.rating.replace(/\s*-.*/, '').trim() : null;
+        } else if (currentState.type === 'movie') {
+          content_rating = data.release_dates?.results?.find(r => r.iso_3166_1 === 'US')?.release_dates?.[0]?.certification || null;
+        } else {
+          content_rating = data.content_ratings?.results?.find(r => r.iso_3166_1 === 'US')?.rating || null;
+        }
+
+        // ── Duration / Runtime ──────────────────────────────
+        const anime_duration_time = isAnime ? (data.duration || null) : null;
+        let tmdb_movie_tv_runtime = null;
+        if (!isAnime) {
+          tmdb_movie_tv_runtime = currentState.type === 'movie'
+            ? (data.runtime ?? null)
+            : (data.episode_run_time?.[0] ?? null);
+        }
+
+        // ── Images ──────────────────────────────────────────
+        const show_poster_link = isAnime
+          ? (data.images?.jpg?.image_url || null)
+          : (data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null);
+        const show_backdrop_landscape_image_link = isAnime
+          ? (data.images?.jpg?.large_image_url || null)
+          : (data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : null);
+
+        // ── External links ──────────────────────────────────
+        const external_link_mal  = isAnime && data.mal_id
+          ? `https://myanimelist.net/anime/${data.mal_id}` : null;
+        const external_link_tmdb = !isAnime
+          ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : null;
+
+        // ── Username (from profile) ─────────────────────────
+        const username = currentState.currentUserProfile?.username || null;
+
+        return {
+          user_id:   currentState.currentUser.id,
+          username,
+          show_id:   currentState.id,   // legacy column, keep for backwards compat
+          source:    currentState.source,
+          show_type: currentState.type,
+          title:     currentState.title,
+          media_type,
+          mal_id,
+          tmdb_id,
+          // bookmark_status stores comma-joined list of all selected statuses
+          bookmark_status: statusList.join(', '),
+          // also keep legacy `status` column as first status for old queries
+          status: statusList[0] || null,
+          eng_title,
+          default_title,
+          original_title,
+          romanji_title,
+          japanese_title,
+          synonyms,
+          country_name,
+          genres,
+          show_status,
+          aired_date,
+          broadcast_day_time,
+          source: source,  // manga / light novel / original / etc. (Jikan source field)
+          rank,
+          popularity,
+          studio_name,
+          producers_name,
+          total_epi_num,
+          dub_epi_num,
+          sub_epi_num,
+          format,
+          synopsis_context,
+          overview_context,
+          mal_score,
+          tmdb_average_score,
+          content_rating,
+          anime_duration_time,
+          tmdb_movie_tv_runtime,
+          show_poster_link,
+          show_backdrop_landscape_image_link,
+          external_link_mal,
+          external_link_tmdb,
+          updated_at: new Date().toISOString()
+        };
+      }
+
       async function fetchUserBookmarks() {
         if (!currentState.currentUser) return;
         try {
+          const isAnime = currentState.source === 'jikan';
+          const idCol   = isAnime ? 'mal_id' : 'tmdb_id';
+
+          // Fetch profile for username
+          if (!currentState.currentUserProfile) {
+            const { data: profile } = await window.supabaseClient
+              .from('profiles')
+              .select('username, avatar_url')
+              .eq('user_id', currentState.currentUser.id)
+              .maybeSingle();
+            currentState.currentUserProfile = profile || {};
+          }
+
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('*')
+            .select('id, bookmark_status, status, mal_id, tmdb_id, show_id, source')
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
+            .eq(idCol, currentState.id);
+
           if (error) throw error;
-          currentState.userBookmarks = data || []; 
-          currentState.selectedStatuses = data?.map(d => d.status) || [];
+
+          currentState.userBookmarks = data || [];
+
+          // Parse bookmark_status (comma-separated) or fall back to legacy `status`
+          const allStatuses = new Set();
+          for (const row of (data || [])) {
+            if (row.bookmark_status) {
+              row.bookmark_status.split(',').map(s => s.trim()).filter(Boolean).forEach(s => allStatuses.add(s));
+            } else if (row.status) {
+              allStatuses.add(row.status);
+            }
+          }
+          currentState.selectedStatuses = [...allStatuses];
           updateBookmarkUI();
         } catch (e) { console.error('Failed to fetch bookmarks:', e); }
       }
@@ -3055,47 +3288,55 @@ img { max-width: 100%; height: auto; display: block; }
       async function saveBookmarks() {
         if (!currentState.currentUser) return;
         try {
-          for (const status of currentState.selectedStatuses) {
-            await window.supabaseClient.from('user_bookmarks').upsert({
-              user_id: currentState.currentUser.id, 
-              show_id: currentState.id, 
-              source: currentState.source,
-              show_type: currentState.type, 
-              title: currentState.title,
-              poster_url: currentState.data.images?.jpg?.image_url || currentState.data.poster_path,
-              status: status,
-              metadata: { 
-                rating: currentState.data.score || currentState.data.vote_average, 
-                year: currentState.data.aired?.from?.slice(0,4) || currentState.data.release_date?.slice(0,4), 
-                genres: currentState.data.genres?.map(g => g.name) || [] 
-              },
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,show_id,source,status' });
+          const isAnime = currentState.source === 'jikan';
+          const idCol   = isAnime ? 'mal_id' : 'tmdb_id';
+
+          const payload = buildBookmarkPayload(currentState.selectedStatuses);
+
+          // Use a single upsert row per user+show (identified by user_id + mal_id/tmdb_id)
+          // Find existing row id if present
+          const existingRow = currentState.userBookmarks[0];
+
+          if (existingRow) {
+            // Update existing row
+            const { error } = await window.supabaseClient
+              .from('user_bookmarks')
+              .update(payload)
+              .eq('id', existingRow.id);
+            if (error) throw error;
+          } else {
+            // Insert new row
+            const { error } = await window.supabaseClient
+              .from('user_bookmarks')
+              .upsert(payload, { onConflict: `user_id,${idCol}` });
+            if (error) throw error;
           }
-          const toRemove = currentState.userBookmarks
-            .filter(b => !currentState.selectedStatuses.includes(b.status))
-            .map(b => b.id);
-          if (toRemove.length) {
-            await window.supabaseClient.from('user_bookmarks').delete().in('id', toRemove);
-          }
+
           await fetchUserBookmarks();
-        } catch (e) { 
-          console.error('Failed to save bookmarks:', e); 
-          showToast('Failed to update watchlist', 'error'); 
+          showToast('Watchlist updated!');
+        } catch (e) {
+          console.error('Failed to save bookmarks:', e);
+          showToast('Failed to update watchlist', 'error');
         }
       }
 
       async function removeBookmark() {
         if (!currentState.currentUser) return;
         try {
-          await window.supabaseClient
-            .from('user_bookmarks')
-            .delete()
-            .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
-          currentState.selectedStatuses = []; 
-          updateBookmarkUI(); 
+          const isAnime = currentState.source === 'jikan';
+          const idCol   = isAnime ? 'mal_id' : 'tmdb_id';
+
+          const ids = currentState.userBookmarks.map(b => b.id).filter(Boolean);
+          if (ids.length) {
+            const { error } = await window.supabaseClient
+              .from('user_bookmarks')
+              .delete()
+              .in('id', ids);
+            if (error) throw error;
+          }
+          currentState.userBookmarks    = [];
+          currentState.selectedStatuses = [];
+          updateBookmarkUI();
           showToast('Removed from watchlist');
         } catch (e) { console.error('Failed to remove bookmark:', e); }
       }
