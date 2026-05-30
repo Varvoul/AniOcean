@@ -491,7 +491,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* Stats Container */
 .stats-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -519,6 +519,11 @@ img { max-width: 100%; height: auto; display: block; }
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.stat-value-rating {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 .star-icon { color: var(--accent-gold); }
 
@@ -714,9 +719,73 @@ img { max-width: 100%; height: auto; display: block; }
   text-overflow: ellipsis;
 }
 
-/* Tabs Section */
+/* ── Tabs Section ─────────────────────────────────── */
 .tabs-section { margin-bottom: 32px; }
-.tabs-container {
+
+/* ── Desktop: radio + glider sliding tabs ── */
+.tabs-radio-wrap {
+  display: none; /* hidden on mobile */
+  justify-content: center;
+  margin-bottom: 20px;
+}
+@media (min-width: 769px) {
+  .tabs-radio-wrap { display: flex; }
+  .tabs-mobile-only { display: none !important; }
+}
+
+.tabs-radio {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: var(--bg-surface);
+  border-radius: 99px;
+  padding: 4px;
+  gap: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+/* Hide native radio buttons */
+.tabs-radio input[type="radio"] {
+  display: none;
+}
+
+.tab-radio-label {
+  display: flex;
+  align-items: center;
+  padding: 9px 20px;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  transition: color 0.25s ease;
+  user-select: none;
+}
+
+/* Active label text turns white */
+.tabs-radio input[type="radio"]:checked + .tab-radio-label {
+  color: #fff;
+}
+
+/* Glider — the sliding pill */
+.tab-glider {
+  position: absolute;
+  height: calc(100% - 8px);
+  top: 4px;
+  left: 4px;
+  border-radius: 99px;
+  background: var(--btn-primary);
+  z-index: 1;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(43,108,176,0.4);
+}
+
+/* ── Mobile: original pill button tabs ── */
+.tabs-mobile-only {
   position: relative;
   display: flex;
   justify-content: center;
@@ -725,10 +794,10 @@ img { max-width: 100%; height: auto; display: block; }
   background: var(--bg-surface);
   border-radius: 50px;
   margin-bottom: 20px;
-  max-width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tabs-mobile-only::-webkit-scrollbar { display: none; }
 .tab-btn {
   padding: 10px 18px;
   border-radius: 50px;
@@ -738,6 +807,8 @@ img { max-width: 100%; height: auto; display: block; }
   position: relative;
   z-index: 2;
   transition: color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tab-btn.active, .tab-btn:hover { color: var(--text-primary); }
 .tab-indicator {
@@ -864,6 +935,17 @@ img { max-width: 100%; height: auto; display: block; }
 .cast-va-lang {
   font-size: 0.72rem;
   color: var(--text-muted);
+}
+
+/* Season placeholder */
+.season-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  z-index: 0;
 }
 
 /* Season relation tag */
@@ -1011,23 +1093,51 @@ img { max-width: 100%; height: auto; display: block; }
 /* Artwork Grid */
 .artwork-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 .artwork-item {
-  aspect-ratio: 16/9;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   position: relative;
+  aspect-ratio: 2/3; /* default: poster */
+  background: var(--bg-surface);
+}
+.artwork-item--backdrop {
+  aspect-ratio: 16/9;
+  grid-column: span 2;
+}
+.artwork-item--logo {
+  aspect-ratio: 2/1;
+  grid-column: span 2;
 }
 .artwork-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.2s;
+  display: block;
 }
-.artwork-item:hover img { transform: scale(1.03); }
+.artwork-item:hover img { transform: scale(1.04); }
+.artwork-type-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.65);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* Theme blocks */
+.theme-block { margin-bottom: 20px; }
+.theme-block:last-child { margin-bottom: 0; }
 
 /* Video Players */
 .video-container {
@@ -1640,8 +1750,8 @@ img { max-width: 100%; height: auto; display: block; }
     justify-content: center;
   }
 
-  .stats-container { grid-template-columns: repeat(2, 1fr); }
-  .stat-column:nth-child(3) { display: none; }
+  .stats-container { grid-template-columns: repeat(3, 1fr); }
+  .stat-col-duration { display: none; }
   .details-grid { grid-template-columns: 1fr; }
   .metric-cards { grid-template-columns: 1fr; }
   .alert-content {
@@ -1865,9 +1975,13 @@ img { max-width: 100%; height: auto; display: block; }
             <span class="stat-label">Format</span>
             <span class="stat-value" id="formatValue">—</span>
           </div>
-          <div class="stat-column">
+          <div class="stat-column stat-col-duration">
             <span class="stat-label">Duration</span>
             <span class="stat-value" id="durationValue">—</span>
+          </div>
+          <div class="stat-column">
+            <span class="stat-label">Rating</span>
+            <span class="stat-value stat-value-rating" id="contentRating">—</span>
           </div>
         </div>
 
@@ -1901,9 +2015,27 @@ img { max-width: 100%; height: auto; display: block; }
           </div>
         </section>
 
-        <!-- Tab Navigation -->
+        <!-- Tab Navigation — desktop: radio/glider sliding tabs; mobile: scroll buttons -->
         <section class="tabs-section">
-          <div class="tabs-container">
+          <!-- Desktop sliding tabs (radio+glider) -->
+          <div class="tabs-radio-wrap" id="tabsRadioWrap">
+            <div class="tabs-radio">
+              <input type="radio" id="tab-r-cast" name="info-tabs" checked>
+              <label class="tab-radio-label" for="tab-r-cast" data-tab="cast">Cast/Crew</label>
+              <input type="radio" id="tab-r-artwork" name="info-tabs">
+              <label class="tab-radio-label" for="tab-r-artwork" data-tab="artwork">Artwork</label>
+              <input type="radio" id="tab-r-trailer" name="info-tabs">
+              <label class="tab-radio-label" for="tab-r-trailer" data-tab="trailer">Trailer</label>
+              <input type="radio" id="tab-r-themes" name="info-tabs">
+              <label class="tab-radio-label" for="tab-r-themes" data-tab="themes">Themes</label>
+              <input type="radio" id="tab-r-statistics" name="info-tabs">
+              <label class="tab-radio-label" for="tab-r-statistics" data-tab="statistics">Statistics</label>
+              <span class="tab-glider"></span>
+            </div>
+          </div>
+
+          <!-- Mobile pill tabs (scroll buttons, unchanged from before) -->
+          <div class="tabs-container tabs-mobile-only" id="tabsMobileWrap">
             <button class="tab-btn active" data-tab="cast">Cast/Crew</button>
             <button class="tab-btn" data-tab="artwork">Artwork</button>
             <button class="tab-btn" data-tab="trailer">Trailer</button>
@@ -2111,7 +2243,7 @@ img { max-width: 100%; height: auto; display: block; }
           renderStats(); 
           renderSynopsis(); 
           renderDetails();
-          renderSeasons(); 
+          renderSeasons(); // async — runs independently, no await needed
           renderTabs();
           
         } catch (error) {
@@ -2152,23 +2284,45 @@ img { max-width: 100%; height: auto; display: block; }
       async function fetchAllAnimeData(query) {
         if (currentState.source !== 'jikan' || !query) return;
         try {
-          const encoded = encodeURIComponent(query.toLowerCase().replace(/\s+/g, '%20'));
+          // Use the English title or romaji title as search query
+          const searchTitle = currentState.data?.title_english || query;
+          const encoded = encodeURIComponent(searchTitle);
           const res = await fetch(`${CONFIG.ALLANIME_API}/search?query=${encoded}`);
+          if (!res.ok) return;
           const results = await res.json();
+          if (!Array.isArray(results)) return;
           
-          const match = results.find(r => 
-            r.id === currentState.id && 
-            (r.title.toLowerCase() === query.toLowerCase() || query.toLowerCase().includes(r.title.toLowerCase()))
-          ) || results.find(r => 
-            r.title.toLowerCase().includes(query.toLowerCase()) ||
-            query.toLowerCase().includes(r.title.toLowerCase())
-          );
+          const malId = currentState.id;
+          // Priority 1: exact MAL id match
+          let match = results.find(r => r.id === malId);
+          // Priority 2: title similarity
+          if (!match) {
+            const qLower = (searchTitle || '').toLowerCase();
+            match = results.find(r => r.title?.toLowerCase() === qLower)
+              || results.find(r => r.title?.toLowerCase().includes(qLower) || qLower.includes(r.title?.toLowerCase()));
+          }
           
           if (match) {
             currentState.allAnimeData = match;
             renderLanguageBadges(match.episodes_sub, match.episodes_dub);
+            // Update episode display in details grid if already rendered
+            updateEpisodeDetail(match.episodes_sub, match.episodes_dub);
           }
         } catch (e) { console.warn('AllAnime API fetch failed:', e); }
+      }
+
+      function updateEpisodeDetail(subCount, dubCount) {
+        const epEl = document.getElementById('episodeDetailValue');
+        if (!epEl) return;
+        const data = currentState.data;
+        const total = data.episodes || '?';
+        let html = `<span>${total}</span>`;
+        if (subCount > 0 || dubCount > 0) {
+          html = `<span>${total}</span>`;
+          if (subCount > 0) html += ` <span style="color:var(--text-muted);font-size:0.8em;">|</span> <i class="fa-solid fa-closed-captioning" style="color:#7ec8f7;" title="Subtitled"></i> ${subCount}`;
+          if (dubCount > 0) html += ` <span style="color:var(--text-muted);font-size:0.8em;">|</span> <i class="fa-solid fa-microphone" style="color:#7ec8f7;" title="Dubbed"></i> ${dubCount}`;
+        }
+        epEl.innerHTML = html;
       }
 
       function renderHero() {
@@ -2260,7 +2414,36 @@ img { max-width: 100%; height: auto; display: block; }
         document.getElementById('platformStar').style.color = starColor;
         document.getElementById('ratingValue').textContent = rating ? rating.toFixed(1) : 'N/A';
         document.getElementById('formatValue').textContent = data.type || currentState.type;
-        document.getElementById('durationValue').textContent = formatDuration(data.duration, isAnime, currentState.type) || '—';
+        
+        // Duration — for TMDB use runtime (movie) or episode_run_time (TV)
+        let duration = null;
+        if (isAnime) {
+          duration = formatDuration(data.duration, true, currentState.type);
+        } else if (currentState.type === 'movie') {
+          const mins = data.runtime;
+          if (mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            duration = h > 0 ? `${h}h ${m}min` : `${m}min`;
+          }
+        } else if (currentState.type === 'tv') {
+          const runTimes = data.episode_run_time;
+          if (runTimes?.length) duration = `${runTimes[0]} min`;
+        }
+        document.getElementById('durationValue').textContent = duration || '—';
+        
+        // Content rating
+        let contentRating = '—';
+        if (isAnime) {
+          contentRating = data.rating ? data.rating.split(' - ')[0] : '—';
+        } else if (currentState.type === 'movie') {
+          const usRelease = data.release_dates?.results?.find(r => r.iso_3166_1 === 'US');
+          contentRating = usRelease?.release_dates?.[0]?.certification || '—';
+        } else if (currentState.type === 'tv') {
+          const usRating = data.content_ratings?.results?.find(r => r.iso_3166_1 === 'US');
+          contentRating = usRating?.rating || '—';
+        }
+        document.getElementById('contentRating').textContent = contentRating;
       }
 
       function renderSynopsis() {
@@ -2344,21 +2527,22 @@ img { max-width: 100%; height: auto; display: block; }
         if (currentState.type !== 'movie') {
           const episodes = isAnime ? data.episodes : data.number_of_episodes || data.number_of_seasons;
           if (episodes) {
-            let episodeText = episodes.toString();
-            if (isAnime && currentState.allAnimeData) {
-              const { episodes_sub, episodes_dub } = currentState.allAnimeData;
+            // Build episode HTML with sub/dub counts if available
+            const allAnime = currentState.allAnimeData;
+            let episodeHtml = `<span>${episodes}</span>`;
+            if (isAnime && allAnime) {
+              const { episodes_sub, episodes_dub } = allAnime;
               if (episodes_sub > 0 || episodes_dub > 0) {
-                episodeText = '';
-                if (episodes_sub > 0) {
-                  episodeText += `<wa-icon name="closed-captioning" family="utility-fill" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_sub}`;
-                }
-                if (episodes_dub > 0) {
-                  if (episodes_sub > 0) episodeText += ' | ';
-                  episodeText += `<wa-icon name="microphone" family="utility" variant="semibold" style="color: rgb(132, 175, 208);"></wa-icon> ${episodes_dub}`;
-                }
+                episodeHtml = `<span>${episodes}</span>`;
+                if (episodes_sub > 0) episodeHtml += ` <span style="color:var(--text-muted);font-size:0.8em;">|</span> <i class="fa-solid fa-closed-captioning" style="color:#7ec8f7;" title="Subtitled"></i> ${episodes_sub}`;
+                if (episodes_dub > 0) episodeHtml += ` <span style="color:var(--text-muted);font-size:0.8em;">|</span> <i class="fa-solid fa-microphone" style="color:#7ec8f7;" title="Dubbed"></i> ${episodes_dub}`;
               }
             }
-            details.push({ label: 'Episodes', value: episodeText, isHtml: isAnime });
+            details.push({ 
+              label: 'Episodes', 
+              value: `<span id="episodeDetailValue" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end;">${episodeHtml}</span>`, 
+              isHtml: true 
+            });
           }
         }
         
@@ -2408,19 +2592,17 @@ img { max-width: 100%; height: auto; display: block; }
         `).join('');
       }
 
-      function renderSeasons() {
+      async function renderSeasons() {
         const section = document.getElementById('seasonsSection');
         const data = currentState.data;
         const isAnime = currentState.source === 'jikan';
         
         let seasons = [];
         if (isAnime) {
-          // data.relations is an array: [{relation: "Prequel", entry: [{mal_id,type,name}]}, ...]
           const relationsArray = Array.isArray(data.relations) ? data.relations : [];
           const relatedAnime = [];
           for (const rel of relationsArray) {
             const relType = (rel.relation || '').toLowerCase();
-            // Include prequels, sequels, side stories, alternative versions
             if (['prequel','sequel','side story','alternative version','alternative setting','spin-off'].includes(relType)) {
               for (const entry of (rel.entry || [])) {
                 if (entry.type === 'anime') relatedAnime.push({ ...entry, relation: rel.relation });
@@ -2428,8 +2610,6 @@ img { max-width: 100%; height: auto; display: block; }
             }
           }
           seasons = relatedAnime;
-          
-          // Always include the current show itself
           if (!seasons.some(s => s.mal_id === currentState.id)) {
             seasons.unshift({ mal_id: currentState.id, name: currentState.title, type: 'anime', relation: 'Current' });
           }
@@ -2437,40 +2617,78 @@ img { max-width: 100%; height: auto; display: block; }
           seasons = data.seasons?.filter(s => s.season_number > 0) || [];
         }
         
-        if (!seasons.length) {
-          section.style.display = 'none';
-          return;
-        }
+        if (!seasons.length) { section.style.display = 'none'; return; }
         
         section.style.display = 'block';
         const grid = document.getElementById('seasonsGrid');
-        
-        grid.innerHTML = seasons.map(season => {
-          const isAnimeEntry = isAnime;
-          const seasonId = isAnimeEntry ? season.mal_id : season.id;
-          const seasonTitle = season.title || season.name || currentState.title;
-          const seasonNumber = season.season_number || 1;
-          const slug = slugify(seasonTitle);
-          
-          let seasonUrl, backdrop;
-          if (isAnimeEntry) {
-            seasonUrl = `/info/anime/jikan-${seasonId}/${slug}`;
-            backdrop = season.images?.jpg?.large_image_url || season.images?.jpg?.image_url || '';
-          } else {
-            seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
-            backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
-          }
 
-          const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
-          
-          return `<a href="${seasonUrl}" class="season-card">
-            <img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.style.display='none'">
-            <div class="season-info-overlay">
-              ${relationLabel}
-              <span class="season-number">${escapeHtml(isAnimeEntry ? seasonTitle : `Season ${seasonNumber}`)}</span>
-            </div>
-          </a>`;
-        }).join('');
+        // For anime: show placeholder cards immediately, then fill images async
+        if (isAnime) {
+          // Render cards with placeholder first
+          grid.innerHTML = seasons.map((season, idx) => {
+            const seasonTitle = season.name || currentState.title;
+            const slug = slugify(seasonTitle);
+            const seasonUrl = `/info/anime/jikan-${season.mal_id}/${slug}`;
+            const relationLabel = season.relation ? `<span class="season-relation-tag">${escapeHtml(season.relation)}</span>` : '';
+            const isCurrent = season.mal_id === currentState.id;
+            const currentImg = isCurrent
+              ? (data.images?.jpg?.large_image_url || data.images?.jpg?.image_url || '')
+              : '';
+            return `<a href="${seasonUrl}" class="season-card" data-season-idx="${idx}">
+              <img id="season-img-${idx}" src="${escapeHtml(currentImg)}" alt="${escapeHtml(seasonTitle)}" loading="lazy"
+                style="${currentImg ? '' : 'display:none;'}"
+                onerror="this.style.display='none'">
+              <div class="season-img-placeholder" id="season-placeholder-${idx}" style="${currentImg ? 'display:none;' : ''}">
+                <i class="fa-solid fa-film" style="font-size:2rem;opacity:0.3;"></i>
+              </div>
+              <div class="season-info-overlay">
+                ${relationLabel}
+                <span class="season-number">${escapeHtml(seasonTitle)}</span>
+              </div>
+            </a>`;
+          }).join('');
+
+          // Fetch images for non-current entries in background
+          seasons.forEach(async (season, idx) => {
+            if (season.mal_id === currentState.id) return; // already have it
+            try {
+              const cacheKey = `jikan_img_${season.mal_id}`;
+              let imgUrl = sessionStorage.getItem(cacheKey);
+              if (!imgUrl) {
+                await new Promise(r => setTimeout(r, idx * 350)); // stagger to avoid rate limit
+                const res = await fetch(`https://api.jikan.moe/v4/anime/${season.mal_id}`);
+                if (!res.ok) return;
+                const { data: animeData } = await res.json();
+                imgUrl = animeData.images?.jpg?.large_image_url || animeData.images?.jpg?.image_url || '';
+                if (imgUrl) sessionStorage.setItem(cacheKey, imgUrl);
+              }
+              if (imgUrl) {
+                const imgEl = document.getElementById(`season-img-${idx}`);
+                const phEl = document.getElementById(`season-placeholder-${idx}`);
+                if (imgEl) { imgEl.src = imgUrl; imgEl.style.display = ''; }
+                if (phEl) phEl.style.display = 'none';
+              }
+            } catch (e) { /* ignore individual failures */ }
+          });
+
+        } else {
+          // TMDB seasons already have poster_path
+          grid.innerHTML = seasons.map(season => {
+            const seasonTitle = season.name || currentState.title;
+            const seasonNumber = season.season_number || 1;
+            const slug = slugify(seasonTitle);
+            const seasonUrl = `/info/tv/tmdb-tv-${currentState.id}/${slug}-season-${seasonNumber}`;
+            const backdrop = season.poster_path ? `https://image.tmdb.org/t/p/w500${season.poster_path}` : '';
+            return `<a href="${seasonUrl}" class="season-card">
+              ${backdrop
+                ? `<img src="${backdrop}" alt="${escapeHtml(seasonTitle)}" loading="lazy" onerror="this.style.display='none'">`
+                : `<div class="season-img-placeholder"><i class="fa-solid fa-film" style="font-size:2rem;opacity:0.3;"></i></div>`}
+              <div class="season-info-overlay">
+                <span class="season-number">Season ${seasonNumber}</span>
+              </div>
+            </a>`;
+          }).join('');
+        }
       }
 
       function renderTabs() {
@@ -2575,54 +2793,90 @@ img { max-width: 100%; height: auto; display: block; }
         lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('show'); });
       }
 
-      // FIXED: Tab indicator sync logic
+      // Tab switching — handles both desktop radio/glider and mobile pill buttons
       function initTabSwitching() {
+        const contents = document.querySelectorAll('.tab-content');
+        const glider = document.querySelector('.tab-glider');
+
+        // ── Shared: switch visible tab content ──────────────────
+        function showTab(tabName) {
+          contents.forEach(c => c.classList.remove('active'));
+          const panel = document.getElementById(`${tabName}Tab`);
+          if (panel) panel.classList.add('active');
+        }
+
+        // ── Desktop: radio labels + glider ──────────────────────
+        const radioLabels = document.querySelectorAll('.tab-radio-label');
+
+        function positionGlider(label) {
+          if (!glider || !label) return;
+          const track = label.closest('.tabs-radio');
+          if (!track) return;
+          const trackRect = track.getBoundingClientRect();
+          const labelRect = label.getBoundingClientRect();
+          glider.style.width = `${labelRect.width}px`;
+          glider.style.transform = `translateX(${labelRect.left - trackRect.left}px)`;
+        }
+
+        radioLabels.forEach(label => {
+          label.addEventListener('click', () => {
+            showTab(label.dataset.tab);
+            // Glider position updates after the browser reflects checked state
+            requestAnimationFrame(() => positionGlider(label));
+          });
+        });
+
+        // Initial glider position (double-rAF so layout is settled)
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (glider) glider.style.transition = 'none';
+          const firstLabel = document.querySelector('.tab-radio-label');
+          positionGlider(firstLabel);
+          requestAnimationFrame(() => {
+            if (glider) glider.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
+          });
+        }));
+
+        // Reposition glider on resize
+        window.addEventListener('resize', () => {
+          const checkedRadio = document.querySelector('.tabs-radio input[type="radio"]:checked');
+          if (checkedRadio) {
+            const lbl = checkedRadio.nextElementSibling;
+            positionGlider(lbl);
+          }
+        });
+
+        // ── Mobile: pill button tabs + sliding indicator ─────────
         const tabs = document.querySelectorAll('.tab-btn');
         const indicator = document.getElementById('tabIndicator');
-        const contents = document.querySelectorAll('.tab-content');
 
         function positionIndicator(activeTab) {
-          // Only move indicator on desktop where it's visible
-          if (window.innerWidth > 768 && indicator && activeTab) {
-            const container = activeTab.parentElement;
-            const rect = activeTab.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            const left = rect.left - containerRect.left;
-            const width = rect.width;
-            indicator.style.width = `${width}px`;
-            indicator.style.transform = `translateX(${left}px)`;
-          }
+          if (!indicator || !activeTab) return;
+          const container = activeTab.closest('.tabs-mobile-only');
+          if (!container) return;
+          const containerRect = container.getBoundingClientRect();
+          const rect = activeTab.getBoundingClientRect();
+          indicator.style.width = `${rect.width}px`;
+          indicator.style.transform = `translateX(${rect.left - containerRect.left}px)`;
         }
 
-        function activateTab(tab) {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          positionIndicator(tab);
-          const tabName = tab.dataset.tab;
-          contents.forEach(c => c.classList.remove('active'));
-          document.getElementById(`${tabName}Tab`).classList.add('active');
-        }
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            positionIndicator(tab);
+            showTab(tab.dataset.tab);
+          });
+        });
 
-        tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
-
-        // Initial positioning — defer until after layout/fonts settle
+        // Initial mobile indicator position
         const activeTab = document.querySelector('.tab-btn.active');
-        if (activeTab) {
-          if (indicator) indicator.style.transition = 'none';
-          // Double rAF ensures fonts and layout are fully painted before measuring
+        if (activeTab && indicator) {
+          indicator.style.transition = 'none';
           requestAnimationFrame(() => requestAnimationFrame(() => {
             positionIndicator(activeTab);
-            if (indicator) {
-              indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
-            }
+            indicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
           }));
         }
-
-        // Reposition on resize
-        window.addEventListener('resize', () => {
-          const currentActive = document.querySelector('.tab-btn.active');
-          if (currentActive) positionIndicator(currentActive);
-        });
       }
 
       async function fetchUserBookmarks() {
@@ -3242,28 +3496,71 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         const container = document.getElementById('artworkGrid');
         const data = currentState.data;
         const isAnime = currentState.source === 'jikan';
-        let images = [];
         
+        container.innerHTML = '<p class="loading-text" style="grid-column:1/-1;padding:20px 0;">Loading artwork...</p>';
+
+        let images = []; // { type: 'poster'|'backdrop'|'logo', url, thumb }
+
         if (isAnime) {
-          images = [
-            ...(data.images?.jpg?.large_image_url ? [{ type: 'backdrop', url: data.images.jpg.large_image_url }] : []),
-            ...(data.images?.webp?.large_image_url ? [{ type: 'backdrop', url: data.images.webp.large_image_url }] : [])
-          ];
+          // Start with what we already have
+          const mainJpg = data.images?.jpg;
+          const mainWebp = data.images?.webp;
+          if (mainJpg?.large_image_url) images.push({ type: 'poster', url: mainJpg.large_image_url, thumb: mainJpg.small_image_url || mainJpg.image_url });
+          if (mainWebp?.large_image_url && mainWebp.large_image_url !== mainJpg?.large_image_url) {
+            images.push({ type: 'poster', url: mainWebp.large_image_url, thumb: mainWebp.small_image_url || mainWebp.image_url });
+          }
+
+          // Fetch /pictures endpoint for more images
+          try {
+            const res = await fetch(`https://api.jikan.moe/v4/anime/${currentState.id}/pictures`);
+            if (res.ok) {
+              const { data: pics } = await res.json();
+              (pics || []).forEach(pic => {
+                const url = pic.jpg?.large_image_url || pic.jpg?.image_url || pic.webp?.large_image_url;
+                const thumb = pic.jpg?.small_image_url || pic.webp?.small_image_url || url;
+                if (url && !images.some(i => i.url === url)) {
+                  images.push({ type: 'poster', url, thumb });
+                }
+              });
+            }
+          } catch(e) { /* use what we have */ }
+
         } else {
-          images = [
-            ...(data.images?.backdrops?.slice(0, 5).map(b => ({ type: 'backdrop', url: `https://image.tmdb.org/t/p/w780${b.file_path}` })) || []),
-            ...(data.images?.posters?.slice(0, 5).map(p => ({ type: 'poster', url: `https://image.tmdb.org/t/p/w500${p.file_path}` })) || [])
-          ];
+          // TMDB — posters + backdrops + logos
+          const tmdbImgs = data.images || {};
+          (tmdbImgs.posters || []).slice(0, 10).forEach(p => {
+            images.push({ 
+              type: 'poster', 
+              url: `https://image.tmdb.org/t/p/w780${p.file_path}`,
+              thumb: `https://image.tmdb.org/t/p/w300${p.file_path}`
+            });
+          });
+          (tmdbImgs.backdrops || []).slice(0, 10).forEach(b => {
+            images.push({ 
+              type: 'backdrop', 
+              url: `https://image.tmdb.org/t/p/w1280${b.file_path}`,
+              thumb: `https://image.tmdb.org/t/p/w780${b.file_path}`
+            });
+          });
+          (tmdbImgs.logos || []).slice(0, 5).forEach(l => {
+            images.push({ 
+              type: 'logo', 
+              url: `https://image.tmdb.org/t/p/w500${l.file_path}`,
+              thumb: `https://image.tmdb.org/t/p/w300${l.file_path}`
+            });
+          });
         }
         
         if (!images.length) {
-          container.innerHTML = '<p class="loading-text">No artwork available</p>';
+          container.innerHTML = '<p class="loading-text" style="grid-column:1/-1;">No artwork available</p>';
           return;
         }
-        
-        container.innerHTML = images.slice(0, 10).map(img => `
-          <div class="artwork-item">
-            <img src="${img.url}" alt="Artwork" loading="lazy">
+
+        const typeLabel = { poster: 'Poster', backdrop: 'Backdrop', logo: 'Logo' };
+        container.innerHTML = images.map(img => `
+          <div class="artwork-item artwork-item--${img.type}" onclick="document.getElementById('lightboxImg').src='${img.url}';document.getElementById('artworkLightbox').classList.add('show')">
+            <img src="${escapeHtml(img.thumb || img.url)}" data-full="${escapeHtml(img.url)}" alt="${typeLabel[img.type] || 'Artwork'}" loading="lazy">
+            <span class="artwork-type-badge">${typeLabel[img.type] || ''}</span>
           </div>
         `).join('');
       }
@@ -3294,126 +3591,86 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         }
       }
 
-async function loadThemesData() {
-  const container = document.getElementById('themesContainer');
-  if (currentState.source !== 'jikan') { 
-    container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
-    return; 
-  }
-  
-  const malId = currentState.data.mal_id;
-  if (!malId) {
-    container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
-    return;
-  }
-  
-  try {
-    container.innerHTML = '<p class="loading-text">Loading themes...</p>';
-    
-    // Try the GraphQL endpoint
-    const query = `
-      query {
-        findAnimesByExternalSite(site: MAL, id: ${malId}) {
-          animethemes {
-            id
-            type
-            sequence
-            song {
-              title
-              artist
-            }
-            animethemeentries {
-              videos {
-                link
-              }
-            }
+      async function loadThemesData() {
+        const container = document.getElementById('themesContainer');
+        if (currentState.source !== 'jikan') { 
+          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
+          return; 
+        }
+        
+        const malId = currentState.data?.mal_id || currentState.id;
+        if (!malId) {
+          container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
+          return;
+        }
+
+        container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
+        
+        try {
+          // Use animethemes.moe REST API (more reliable than GraphQL for MAL lookups)
+          const res = await fetch(
+            `https://api.animethemes.moe/anime?filter[external_id]=${malId}&filter[external_site]=myanimelist&include=animethemes.animethemeentries.videos,animethemes.song.artists&fields[anime]=slug,name&fields[animetheme]=type,sequence&fields[song]=title&fields[artist]=name&fields[animethemeentry]=version,episodes&fields[video]=link,resolution`
+          );
+
+          if (!res.ok) throw new Error(`AnimThemes REST error: ${res.status}`);
+          const json = await res.json();
+          const animeArr = json.anime || [];
+          const animeEntry = animeArr[0];
+
+          if (!animeEntry?.animethemes?.length) {
+            container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
+            return;
           }
+
+          const themes = animeEntry.animethemes;
+          const ops = themes.filter(t => t.type === 'OP').sort((a,b) => (a.sequence||1)-(b.sequence||1));
+          const eds = themes.filter(t => t.type === 'ED').sort((a,b) => (a.sequence||1)-(b.sequence||1));
+          
+          let html = '';
+          const posterImg = currentState.data.images?.jpg?.image_url || '';
+
+          function buildThemeSection(list, heading) {
+            let out = `<h4 style="margin:16px 0 12px;font-size:1rem;">${heading}</h4>`;
+            list.forEach(theme => {
+              const seqLabel = theme.sequence ? ` ${theme.sequence}` : '';
+              const song = theme.song;
+              const songTitle = song?.title || `${theme.type}${seqLabel}`;
+              const artists = song?.artists?.map(a => a.name).join(', ') || '';
+              const displayTitle = `${theme.type}${seqLabel}: ${songTitle}${artists ? ` — ${artists}` : ''}`;
+
+              // All entries (versions) for this theme
+              const entries = theme.animethemeentries || [];
+              entries.forEach(entry => {
+                const video = entry.videos?.[0];
+                if (!video?.link) return;
+                const versionLabel = entry.version ? ` (v${entry.version})` : '';
+                const epLabel = entry.episodes ? ` [eps ${entry.episodes}]` : '';
+                out += `
+                  <div class="theme-block">
+                    <div class="video-title">${escapeHtml(displayTitle)}${escapeHtml(versionLabel)}${escapeHtml(epLabel)}</div>
+                    <div class="video-wrapper">
+                      <video controls preload="metadata" ${posterImg ? `poster="${posterImg}"` : ''}>
+                        <source src="${escapeHtml(video.link)}" type="video/webm">
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </div>
+                `;
+              });
+            });
+            return out;
+          }
+
+          if (ops.length) html += buildThemeSection(ops, '🎵 Opening Themes');
+          if (eds.length) html += buildThemeSection(eds, '🎵 Ending Themes');
+          
+          container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
+          
+        } catch (e) { 
+          console.warn('AnimeThemes API error:', e); 
+          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
         }
       }
-    `;
-    
-    const response = await fetch('https://api.animethemes.moe/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    });
-    
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    
-    const { data: gqlData, errors } = await response.json();
-    
-    if (errors) {
-      console.warn('GraphQL errors:', errors);
-      container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
-      return;
-    }
-    
-    const animeList = gqlData?.findAnimesByExternalSite;
-    if (!animeList || animeList.length === 0) {
-      container.innerHTML = '<p class="loading-text">No theme songs found</p>';
-      return;
-    }
-    
-    const themes = animeList[0].animethemes || [];
-    if (!themes.length) {
-      container.innerHTML = '<p class="loading-text">No theme songs found</p>';
-      return;
-    }
-    
-    const ops = themes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-    const eds = themes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-    
-    let html = '';
-    
-    if (ops.length) {
-      html += '<h4 style="margin: 16px 0 12px; font-size: 1.1rem; color: var(--text-primary);">Opening Themes</h4>';
-      ops.forEach((op) => {
-        const entry = op.animethemeentries?.[0];
-        const video = entry?.videos?.[0];
-        if (video?.link) {
-          const songTitle = op.song?.title || `OP ${op.sequence || 1}`;
-          const artist = op.song?.artist || '';
-          html += `
-            <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
-            <div class="video-wrapper">
-              <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url || ''}">
-                <source src="${video.link}" type="video/webm">
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          `;
-        }
-      });
-    }
-    
-    if (eds.length) {
-      html += '<h4 style="margin: 24px 0 12px; font-size: 1.1rem; color: var(--text-primary);">Ending Themes</h4>';
-      eds.forEach((ed) => {
-        const entry = ed.animethemeentries?.[0];
-        const video = entry?.videos?.[0];
-        if (video?.link) {
-          const songTitle = ed.song?.title || `ED ${ed.sequence || 1}`;
-          const artist = ed.song?.artist || '';
-          html += `
-            <div class="video-title">${songTitle}${artist ? ` - ${artist}` : ''}</div>
-            <div class="video-wrapper">
-              <video controls preload="metadata" poster="${currentState.data.images?.jpg?.image_url || ''}">
-                <source src="${video.link}" type="video/webm">
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          `;
-        }
-      });
-    }
-    
-    container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-    
-  } catch (e) { 
-    console.warn('AnimeThemes API error:', e); 
-    container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
-  }
-}
 
       async function loadStatisticsData() {
         renderHistogram(); 
