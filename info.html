@@ -2297,7 +2297,7 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, currentUserProfile: null, userBookmarks: [],
+        data: null, currentUser: null, userBookmarks: [],
         selectedStatuses: [], dropdownTimer: null, allAnimeData: null
       };
 
@@ -2896,44 +2896,25 @@ img { max-width: 100%; height: auto; display: block; }
           item.addEventListener('click', async (e) => {
             e.stopPropagation();
             const status = item.dataset.status;
-
-            // Remove all bookmarks for this show
-            if (status === 'remove') {
-              clearTimeout(currentState.dropdownTimer);
-              await removeBookmark();
-              dropdown.classList.remove('show');
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
-              return;
+            if (status === 'remove') { 
+              await removeBookmark(); 
+              dropdown.classList.remove('show'); 
+              dropdownBtn.classList.remove('open'); 
+              return; 
             }
-
-            // Toggle the clicked status (max 2 at once)
             const index = currentState.selectedStatuses.indexOf(status);
-            if (index > -1) {
-              currentState.selectedStatuses.splice(index, 1);
-              item.classList.remove('selected');
-            } else if (currentState.selectedStatuses.length < 2) {
-              currentState.selectedStatuses.push(status);
-              item.classList.add('selected');
+            if (index > -1) { 
+              currentState.selectedStatuses.splice(index, 1); 
+              item.classList.remove('selected'); 
             }
-
-            updateDropdownButtonText();
+            else if (currentState.selectedStatuses.length < 2) { 
+              currentState.selectedStatuses.push(status); 
+              item.classList.add('selected'); 
+            }
+            updateDropdownButtonText(); 
             await saveBookmarks();
-
-            // After 1st pick: start 5-sec auto-close so user can optionally pick a 2nd
-            clearTimeout(currentState.dropdownTimer);
-            if (currentState.selectedStatuses.length === 1) {
-              currentState.dropdownTimer = setTimeout(() => {
-                dropdown.classList.remove('show');
-                dropdownBtn.classList.remove('open');
-                dropdownBtn.setAttribute('aria-expanded', 'false');
-              }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);
-            }
-
-            // After 2nd pick: close immediately
-            if (currentState.selectedStatuses.length >= 2) {
-              clearTimeout(currentState.dropdownTimer);
-              dropdown.classList.remove('show');
+            if (currentState.selectedStatuses.length >= 2) { 
+              dropdown.classList.remove('show'); 
               dropdownBtn.classList.remove('open');
               dropdownBtn.setAttribute('aria-expanded', 'false');
             }
@@ -3055,267 +3036,68 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ─────────────────────────────────────────────────────────────
-      //  BOOKMARK HELPERS — full user_bookmarks schema
-      // ─────────────────────────────────────────────────────────────
-
-      /** Collect every column required by the user_bookmarks table */
-      function buildBookmarkPayload(statusList) {
-        const d       = currentState.data;
-        const isAnime = currentState.source === 'jikan';
-
-        // ── IDs ────────────────────────────────────────────
-        const mal_id  = isAnime ? currentState.id : null;
-        const tmdb_id = !isAnime ? currentState.id : null;
-
-        // ── Titles ─────────────────────────────────────────
-        const eng_title      = isAnime ? (d.title_english  || null) : (d.title  || d.name || null);
-        const default_title  = isAnime ? (d.title          || null) : (d.title  || d.name || null);
-        const original_title = isAnime ? null : (d.original_title   || d.original_name || null);
-        const romanji_title  = isAnime ? (d.title !== d.title_english ? d.title : null) : null;
-        const japanese_title = isAnime ? (d.title_japanese || null) : null;
-        const synonyms       = (isAnime && d.title_synonyms?.length)
-                                 ? d.title_synonyms.join(', ') : null;
-
-        // ── Country full name ──────────────────────────────
-        const ISO_NAMES = {
-          US:'United States',GB:'United Kingdom',JP:'Japan',KR:'South Korea',
-          CN:'China',FR:'France',DE:'Germany',IN:'India',IT:'Italy',
-          ES:'Spain',CA:'Canada',AU:'Australia',BR:'Brazil',MX:'Mexico',
-          RU:'Russia',SE:'Sweden',NO:'Norway',DK:'Denmark',FI:'Finland',
-          NL:'Netherlands',BE:'Belgium',AT:'Austria',CH:'Switzerland',
-          PL:'Poland',TR:'Turkey',TH:'Thailand',TW:'Taiwan',HK:'Hong Kong',
-          SG:'Singapore',PH:'Philippines',ID:'Indonesia',MY:'Malaysia',VN:'Vietnam'
-        };
-        let country_name = 'Japan';
-        if (!isAnime) {
-          const iso = d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '';
-          country_name = ISO_NAMES[iso] || iso || null;
-        }
-
-        // ── Genres ─────────────────────────────────────────
-        const genreArr = isAnime
-          ? [...(d.genres||[]), ...(d.themes||[]), ...(d.demographics||[])].map(g => g.name)
-          : (d.genres||[]).map(g => g.name);
-        const genres = genreArr.length ? [...new Set(genreArr)].join(', ') : null;
-
-        // ── Dates / broadcast ──────────────────────────────
-        let aired_date = null;
-        if (isAnime && d.aired?.from) {
-          const fmt = dt => new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-          aired_date = `${fmt(d.aired.from)} to ${d.aired.to ? fmt(d.aired.to) : 'Ongoing'}`;
-        } else if (!isAnime) {
-          aired_date = d.release_date || d.first_air_date || null;
-        }
-        const broadcast_day_time = isAnime ? (d.broadcast?.string || null) : null;
-
-        // ── Source material (manga / light novel / etc.) ───
-        // NOTE: stored in the 'source' column — kept separate from currentState.source
-        const source_material = isAnime ? (d.source || null) : null;
-
-        // ── Rank / popularity ──────────────────────────────
-        const rank       = d.rank       ?? null;
-        const popularity = d.popularity ?? null;
-
-        // ── Studio / producers ─────────────────────────────
-        const studio_name = isAnime
-          ? (d.studios?.map(s => s.name).join(', ')            || null)
-          : (d.production_companies?.map(c => c.name).join(', ')
-             || d.networks?.map(n => n.name).join(', ')        || null);
-        const producers_name = isAnime
-          ? (d.producers?.map(p => p.name).join(', ') || null) : null;
-
-        // ── Episode counts ─────────────────────────────────
-        const total_epi_num = isAnime ? (d.episodes ?? null) : (d.number_of_episodes ?? null);
-        const sub_epi_num   = currentState.allAnimeData?.episodes_sub ?? null;
-        const dub_epi_num   = currentState.allAnimeData?.episodes_dub ?? null;
-
-        // ── Format ─────────────────────────────────────────
-        const format = isAnime
-          ? (d.type || null)
-          : (currentState.type === 'movie' ? 'Movie' : (d.type || 'Scripted'));
-
-        // ── Synopses ───────────────────────────────────────
-        const synopsis_context = isAnime ? (d.synopsis || null) : null;
-        const overview_context = !isAnime ? (d.overview || null) : null;
-
-        // ── Scores ─────────────────────────────────────────
-        const mal_score          = isAnime  ? (d.score        ?? null) : null;
-        const tmdb_average_score = !isAnime ? (d.vote_average ?? null) : null;
-
-        // ── Content rating ─────────────────────────────────
-        let content_rating = null;
-        if (isAnime) {
-          content_rating = d.rating ? d.rating.split(' - ')[0].trim() : null;
-        } else if (currentState.type === 'movie') {
-          content_rating = d.release_dates?.results
-            ?.find(r => r.iso_3166_1 === 'US')?.release_dates?.[0]?.certification || null;
-        } else {
-          content_rating = d.content_ratings?.results
-            ?.find(r => r.iso_3166_1 === 'US')?.rating || null;
-        }
-
-        // ── Duration / runtime ─────────────────────────────
-        const anime_duration_time   = isAnime ? (d.duration || null) : null;
-        const tmdb_movie_tv_runtime = !isAnime
-          ? (currentState.type === 'movie' ? (d.runtime ?? null) : (d.episode_run_time?.[0] ?? null))
-          : null;
-
-        // ── Image URLs ─────────────────────────────────────
-        const show_poster_link = isAnime
-          ? (d.images?.jpg?.image_url || null)
-          : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : null);
-        const show_backdrop_landscape_image_link = isAnime
-          ? (d.images?.jpg?.large_image_url || null)
-          : (d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null);
-
-        // ── External links ─────────────────────────────────
-        const external_link_mal  = (isAnime && d.mal_id)
-          ? `https://myanimelist.net/anime/${d.mal_id}` : null;
-        const external_link_tmdb = !isAnime
-          ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : null;
-
-        // ── Username ───────────────────────────────────────
-        const username = currentState.currentUserProfile?.username || null;
-
-        // ── Two statuses stored as comma-separated string ──
-        const bookmark_status = statusList.join(', ');
-
-        return {
-          // core identity
-          user_id:    currentState.currentUser.id,
-          username,
-          show_id:    currentState.id,          // legacy — keep for old queries
-          show_type:  currentState.type,        // 'anime' / 'tv' / 'movie'
-          title:      currentState.title,
-          mal_id,
-          tmdb_id,
-          // bookmark state
-          bookmark_status,                      // new: comma-joined e.g. "watching, completed"
-          status: statusList[0] || null,        // legacy: first status for old queries
-          // titles
-          eng_title, default_title, original_title, romanji_title, japanese_title, synonyms,
-          // metadata
-          country_name, genres, aired_date, broadcast_day_time,
-          source: source_material,              // ← manga / LN / original (NOT 'jikan'/'tmdb')
-          rank, popularity,
-          studio_name, producers_name,
-          total_epi_num, dub_epi_num, sub_epi_num,
-          format,
-          synopsis_context, overview_context,
-          mal_score, tmdb_average_score,
-          content_rating,
-          anime_duration_time, tmdb_movie_tv_runtime,
-          show_poster_link, show_backdrop_landscape_image_link,
-          external_link_mal, external_link_tmdb,
-          updated_at: new Date().toISOString()
-        };
-      }
-
-      // ── Fetch existing bookmarks for this show ─────────────────
       async function fetchUserBookmarks() {
         if (!currentState.currentUser) return;
         try {
-          // Lazy-load profile (username) once
-          if (!currentState.currentUserProfile) {
-            const { data: prof } = await window.supabaseClient
-              .from('profiles')
-              .select('username, avatar_url')
-              .eq('user_id', currentState.currentUser.id)
-              .maybeSingle();
-            currentState.currentUserProfile = prof || {};
-          }
-
-          // Match on show_id (works for both anime and TMDB)
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('id, bookmark_status, status, show_id, mal_id, tmdb_id')
+            .select('*')
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id);
-
+            .eq('show_id', currentState.id)
+            .eq('source', currentState.source);
           if (error) throw error;
-
-          currentState.userBookmarks = data || [];
-
-          // Parse comma-separated bookmark_status, fall back to legacy status column
-          const statusSet = new Set();
-          for (const row of (data || [])) {
-            if (row.bookmark_status) {
-              row.bookmark_status.split(',').map(s => s.trim()).filter(Boolean)
-                .forEach(s => statusSet.add(s));
-            } else if (row.status) {
-              statusSet.add(row.status);
-            }
-          }
-          currentState.selectedStatuses = [...statusSet];
+          currentState.userBookmarks = data || []; 
+          currentState.selectedStatuses = data?.map(d => d.status) || [];
           updateBookmarkUI();
-        } catch (e) {
-          console.error('[Bookmark] fetchUserBookmarks failed:', e);
-        }
+        } catch (e) { console.error('Failed to fetch bookmarks:', e); }
       }
 
-      // ── Save / update bookmark ─────────────────────────────────
       async function saveBookmarks() {
         if (!currentState.currentUser) return;
         try {
-          const payload = buildBookmarkPayload(currentState.selectedStatuses);
-          const existingRow = currentState.userBookmarks[0];
-
-          let error;
-          if (existingRow?.id) {
-            // Row exists → UPDATE in place
-            ({ error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .update(payload)
-              .eq('id', existingRow.id));
-          } else {
-            // No row yet → INSERT (plain insert, no upsert constraint needed)
-            ({ error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .insert(payload));
+          for (const status of currentState.selectedStatuses) {
+            await window.supabaseClient.from('user_bookmarks').upsert({
+              user_id: currentState.currentUser.id, 
+              show_id: currentState.id, 
+              source: currentState.source,
+              show_type: currentState.type, 
+              title: currentState.title,
+              poster_url: currentState.data.images?.jpg?.image_url || currentState.data.poster_path,
+              status: status,
+              metadata: { 
+                rating: currentState.data.score || currentState.data.vote_average, 
+                year: currentState.data.aired?.from?.slice(0,4) || currentState.data.release_date?.slice(0,4), 
+                genres: currentState.data.genres?.map(g => g.name) || [] 
+              },
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,show_id,source,status' });
           }
-
-          if (error) {
-            console.error('[Bookmark] Supabase error:', error);
-            showToast(`Save failed: ${error.message}`, 'error');
-            return;
+          const toRemove = currentState.userBookmarks
+            .filter(b => !currentState.selectedStatuses.includes(b.status))
+            .map(b => b.id);
+          if (toRemove.length) {
+            await window.supabaseClient.from('user_bookmarks').delete().in('id', toRemove);
           }
-
           await fetchUserBookmarks();
-          showToast('Watchlist updated!');
-        } catch (e) {
-          console.error('[Bookmark] saveBookmarks exception:', e);
-          showToast('Failed to update watchlist', 'error');
+        } catch (e) { 
+          console.error('Failed to save bookmarks:', e); 
+          showToast('Failed to update watchlist', 'error'); 
         }
       }
 
-      // ── Remove all bookmarks for this show ─────────────────────
       async function removeBookmark() {
         if (!currentState.currentUser) return;
         try {
-          const ids = currentState.userBookmarks.map(b => b.id).filter(Boolean);
-          if (ids.length) {
-            const { error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .delete()
-              .in('id', ids);
-            if (error) throw error;
-          } else {
-            // Fallback: delete by show_id + user_id
-            const { error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .delete()
-              .eq('user_id', currentState.currentUser.id)
-              .eq('show_id', currentState.id);
-            if (error) throw error;
-          }
-          currentState.userBookmarks    = [];
-          currentState.selectedStatuses = [];
-          updateBookmarkUI();
+          await window.supabaseClient
+            .from('user_bookmarks')
+            .delete()
+            .eq('user_id', currentState.currentUser.id)
+            .eq('show_id', currentState.id)
+            .eq('source', currentState.source);
+          currentState.selectedStatuses = []; 
+          updateBookmarkUI(); 
           showToast('Removed from watchlist');
-        } catch (e) {
-          console.error('[Bookmark] removeBookmark failed:', e);
-        }
+        } catch (e) { console.error('Failed to remove bookmark:', e); }
       }
 
       function updateBookmarkUI() {
