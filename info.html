@@ -824,6 +824,19 @@ img { max-width: 100%; height: auto; display: block; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* Cast tab — vertically scrollable so long cast lists don't push everything down */
+.cast-tab-scroll {
+  max-height: 640px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--btn-primary) rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+}
+.cast-tab-scroll::-webkit-scrollbar { width: 5px; }
+.cast-tab-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
+.cast-tab-scroll::-webkit-scrollbar-thumb { background: var(--btn-primary); border-radius: 3px; }
+
 /* ── Cast List Grid (image-3 style) ─────────────────── */
 .cast-list-grid {
   display: flex;
@@ -1135,124 +1148,7 @@ img { max-width: 100%; height: auto; display: block; }
   pointer-events: none;
 }
 
-/* Theme tab — vertically scrollable so long OP/ED lists are easy to browse */
-#themesTab {
-  max-height: 700px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--btn-primary) rgba(255,255,255,0.06);
-  padding-right: 4px;
-}
-#themesTab::-webkit-scrollbar { width: 5px; }
-#themesTab::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
-#themesTab::-webkit-scrollbar-thumb { background: var(--btn-primary); border-radius: 3px; }
-
-/* themes-container fills the scrollable area */
-.themes-container { padding: 4px 0; }
-
-/* Section heading (Opening / Ending) */
-.themes-section-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  padding: 8px 0 10px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
-}
-.themes-count {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: var(--bg-surface);
-  color: var(--text-muted);
-}
-
-/* Individual theme card */
-.theme-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-.theme-card:last-child { margin-bottom: 0; }
-
-.theme-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.theme-card-label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  color: #7ec8f7;
-  background: rgba(126, 200, 247, 0.12);
-  border: 1px solid rgba(126, 200, 247, 0.3);
-  padding: 3px 9px;
-  border-radius: 20px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.theme-card-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.theme-song-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.theme-artist {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Video entry inside a theme card */
-.theme-video-entry { padding: 12px 14px; border-top: 1px solid var(--border-subtle); }
-.theme-video-entry:first-of-type { border-top: none; }
-.theme-video-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  min-height: 18px;
-}
-.theme-ver-tag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 20px;
-  background: rgba(236, 201, 75, 0.15);
-  border: 1px solid rgba(236, 201, 75, 0.4);
-  color: var(--accent-gold);
-}
-.theme-ep-range {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-/* Theme block (legacy — keep for compat) */
+/* Theme blocks */
 .theme-block { margin-bottom: 20px; }
 .theme-block:last-child { margin-bottom: 0; }
 
@@ -2163,7 +2059,9 @@ img { max-width: 100%; height: auto; display: block; }
           
           <!-- Tab Contents -->
           <div class="tab-content active" id="castTab">
-            <div class="cast-list" id="castList"></div>
+            <div class="cast-tab-scroll">
+              <div class="cast-list" id="castList"></div>
+            </div>
           </div>
           
           <div class="tab-content" id="artworkTab">
@@ -2198,14 +2096,6 @@ img { max-width: 100%; height: auto; display: block; }
         <section class="recommendations-section" id="waterTempleSection" style="display:none;">
           <h3><i class="fa-sharp-duotone fa-solid fa-torii-gate" style="--fa-primary-color: rgb(132, 175, 208); --fa-secondary-color: rgb(132, 175, 208);"></i> Water Temple</h3>
           <div class="recs-grid" id="waterTempleGrid">
-            <div class="loading-text">Loading recommendations...</div>
-          </div>
-        </section>
-
-        <!-- Recommend for You (TMDB movie/tv only) -->
-        <section class="recommendations-section" id="recommendForYouSection" style="display:none;">
-          <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#a78bfa;"></i> Recommend for You</h3>
-          <div class="recs-grid" id="recommendForYouGrid">
             <div class="loading-text">Loading recommendations...</div>
           </div>
         </section>
@@ -2297,8 +2187,9 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, userBookmarks: [],
-        selectedStatuses: [], dropdownTimer: null, allAnimeData: null
+        data: null, currentUser: null, username: '',
+        userBookmarks: [], selectedStatuses: [],
+        dropdownTimer: null, allAnimeData: null
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
@@ -2358,14 +2249,42 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       async function initAuth() {
+        // Helper: load username from profiles table
+        async function loadUsername(user) {
+          if (!user) return '';
+          const { data: profile } = await window.supabaseClient
+            .from('profiles')
+            .select('username')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          return profile?.username
+            || user.user_metadata?.username
+            || user.email?.split('@')[0]
+            || 'User';
+        }
+
+        // React to sign-in / sign-out in real time
         window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
           currentState.currentUser = session?.user || null;
-          if (currentState.currentUser) await fetchUserBookmarks();
+          if (currentState.currentUser) {
+            currentState.username = await loadUsername(currentState.currentUser);
+            // Only fetch bookmarks after show data exists
+            if (currentState.data) await fetchUserBookmarks();
+          } else {
+            currentState.username = '';
+            currentState.selectedStatuses = [];
+            currentState.userBookmarks = [];
+          }
           updateBookmarkUI();
         });
+
+        // Initial session on page load
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         currentState.currentUser = session?.user || null;
-        if (currentState.currentUser) await fetchUserBookmarks();
+        if (currentState.currentUser) {
+          currentState.username = await loadUsername(currentState.currentUser);
+          // fetchUserBookmarks() will be called from fetchShowData after data is ready
+        }
       }
 
       async function fetchShowData() {
@@ -2378,8 +2297,11 @@ img { max-width: 100%; height: auto; display: block; }
           renderStats(); 
           renderSynopsis(); 
           renderDetails();
-          renderSeasons(); // async — runs independently, no await needed
+          renderSeasons();
           renderTabs();
+
+          // Now that show data is loaded, fetch this user's saved bookmarks for this show
+          if (currentState.currentUser) fetchUserBookmarks();
           
         } catch (error) {
           console.error('Failed to fetch show data:', error);
@@ -2867,56 +2789,76 @@ img { max-width: 100%; height: auto; display: block; }
         
         const dropdownBtn = document.getElementById('addToListBtn');
         const dropdown = document.getElementById('bookmarkDropdown');
+
+        function closeDropdown() {
+          dropdown.classList.remove('show');
+          dropdownBtn.classList.remove('open');
+          dropdownBtn.setAttribute('aria-expanded', 'false');
+          clearTimeout(currentState.dropdownTimer);
+          currentState.dropdownTimer = null;
+        }
+
         dropdownBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!currentState.currentUser) { showLoginAlert(); return; }
           const isOpen = dropdown.classList.toggle('show');
           dropdownBtn.classList.toggle('open', isOpen);
-          dropdownBtn.setAttribute('aria-expanded', isOpen);
-          
-          if (currentState.selectedStatuses.length === 1) {
+          dropdownBtn.setAttribute('aria-expanded', String(isOpen));
+          // If opening and already has exactly 1 status, start the 5s auto-close
+          if (isOpen && currentState.selectedStatuses.length === 1) {
             clearTimeout(currentState.dropdownTimer);
-            currentState.dropdownTimer = setTimeout(() => { 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
-            }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);
+            currentState.dropdownTimer = setTimeout(closeDropdown, 5000);
           }
         });
-        
-        document.addEventListener('click', (e) => { 
-          if (!e.target.closest('.dropdown-container')) { 
-            dropdown.classList.remove('show'); 
-            dropdownBtn.classList.remove('open');
-            dropdownBtn.setAttribute('aria-expanded', 'false');
-          } 
+
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.dropdown-container')) closeDropdown();
         });
-        
+
         document.querySelectorAll('.dropdown-item').forEach(item => {
           item.addEventListener('click', async (e) => {
             e.stopPropagation();
             const status = item.dataset.status;
-            if (status === 'remove') { 
-              await removeBookmark(); 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open'); 
-              return; 
+
+            if (status === 'remove') {
+              await removeBookmark();
+              closeDropdown();
+              return;
             }
-            const index = currentState.selectedStatuses.indexOf(status);
-            if (index > -1) { 
-              currentState.selectedStatuses.splice(index, 1); 
-              item.classList.remove('selected'); 
+
+            const idx = currentState.selectedStatuses.indexOf(status);
+            if (idx > -1) {
+              // Deselect
+              currentState.selectedStatuses.splice(idx, 1);
+              item.classList.remove('selected');
+              clearTimeout(currentState.dropdownTimer);
+              currentState.dropdownTimer = null;
+            } else if (currentState.selectedStatuses.length < 2) {
+              // Select
+              currentState.selectedStatuses.push(status);
+              item.classList.add('selected');
+
+              if (currentState.selectedStatuses.length === 1) {
+                // First selection: start 5s auto-close so user can optionally pick a second
+                clearTimeout(currentState.dropdownTimer);
+                currentState.dropdownTimer = setTimeout(async () => {
+                  closeDropdown();
+                  await saveBookmarks();
+                }, 5000);
+              } else if (currentState.selectedStatuses.length === 2) {
+                // Second selection: save immediately and close
+                clearTimeout(currentState.dropdownTimer);
+                currentState.dropdownTimer = null;
+                await saveBookmarks();
+                closeDropdown();
+                return;
+              }
             }
-            else if (currentState.selectedStatuses.length < 2) { 
-              currentState.selectedStatuses.push(status); 
-              item.classList.add('selected'); 
-            }
-            updateDropdownButtonText(); 
-            await saveBookmarks();
-            if (currentState.selectedStatuses.length >= 2) { 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
+
+            updateDropdownButtonText();
+            // Save on deselect or when only 1 is selected (timer will also save on timeout)
+            if (currentState.selectedStatuses.length !== 1 || idx > -1) {
+              await saveBookmarks();
             }
           });
         });
@@ -3036,52 +2978,213 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
+      // ── Bookmark helpers ─────────────────────────────────────────────────────
+
+      // Fetch this show's saved bookmarks for the current user from Supabase.
+      // Called on page load (after data ready), on auth change, and after every save.
       async function fetchUserBookmarks() {
-        if (!currentState.currentUser) return;
+        if (!currentState.currentUser || !currentState.id) return;
         try {
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('*')
+            .select('id, bookmark_status')
             .eq('user_id', currentState.currentUser.id)
             .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
+            .eq('media_type', buildMediaType());
           if (error) throw error;
-          currentState.userBookmarks = data || []; 
-          currentState.selectedStatuses = data?.map(d => d.status) || [];
+
+          // Each row may carry multiple statuses (stored as comma-separated) OR
+          // the table may have one row per status — handle both gracefully.
+          const statuses = [];
+          for (const row of (data || [])) {
+            const s = row.bookmark_status || '';
+            s.split(',').map(x => x.trim()).filter(Boolean).forEach(v => {
+              if (!statuses.includes(v)) statuses.push(v);
+            });
+          }
+          currentState.userBookmarks  = data || [];
+          currentState.selectedStatuses = statuses;
           updateBookmarkUI();
-        } catch (e) { console.error('Failed to fetch bookmarks:', e); }
+        } catch (e) { console.error('fetchUserBookmarks error:', e); }
       }
 
-      async function saveBookmarks() {
-        if (!currentState.currentUser) return;
+      // Derive the media_type string stored in Supabase: 'jikan-anime' | 'tmdb-tv' | 'tmdb-movie'
+      function buildMediaType() {
+        if (currentState.source === 'jikan') return 'jikan-anime';
+        if (currentState.type === 'tv')      return 'tmdb-tv';
+        return 'tmdb-movie';
+      }
+
+      // Convert ISO 3166-1 alpha-2 to full country name
+      function countryName(code) {
+        if (!code) return '';
         try {
-          for (const status of currentState.selectedStatuses) {
-            await window.supabaseClient.from('user_bookmarks').upsert({
-              user_id: currentState.currentUser.id, 
-              show_id: currentState.id, 
-              source: currentState.source,
-              show_type: currentState.type, 
-              title: currentState.title,
-              poster_url: currentState.data.images?.jpg?.image_url || currentState.data.poster_path,
-              status: status,
-              metadata: { 
-                rating: currentState.data.score || currentState.data.vote_average, 
-                year: currentState.data.aired?.from?.slice(0,4) || currentState.data.release_date?.slice(0,4), 
-                genres: currentState.data.genres?.map(g => g.name) || [] 
-              },
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,show_id,source,status' });
+          return new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase()) || code;
+        } catch { return code; }
+      }
+
+      // Build the full rich payload for Supabase from currentState.data
+      function buildBookmarkPayload(statuses) {
+        const d    = currentState.data || {};
+        const isAnime = currentState.source === 'jikan';
+        const allAnime = currentState.allAnimeData;
+
+        // ── Titles ──
+        const eng_title       = isAnime ? (d.title_english || '')        : (d.title || d.name || '');
+        const default_title   = isAnime ? (d.title || '')                : (d.title || d.name || '');
+        const original_title  = isAnime ? ''                             : (d.original_title || d.original_name || '');
+        const romanji_title   = isAnime ? (d.title !== d.title_english ? d.title : '') : '';
+        const japanese_title  = isAnime ? (d.title_japanese || '')       : '';
+        const synonyms        = isAnime ? (d.title_synonyms || []).join(', ') : '';
+
+        // ── Country ──
+        let country = '';
+        if (isAnime) {
+          country = 'Japan';
+        } else {
+          const rawCode = (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '');
+          country = countryName(rawCode);
+        }
+
+        // ── Genres ──
+        const genres = (d.genres || []).map(g => g.name).join(', ');
+
+        // ── Status ──
+        const show_status = isAnime
+          ? (d.status || '')
+          : (d.status || '');  // TMDB returns "Released", "Ended", "Returning Series", etc.
+
+        // ── Dates / broadcast ──
+        const aired_date = isAnime
+          ? (d.aired?.string || '')
+          : (d.release_date || d.first_air_date || '');
+        const broadcast_day_time = isAnime
+          ? (d.broadcast?.string || '')
+          : '';
+
+        // ── Source (anime only) ──
+        const source = isAnime ? (d.source || '') : '';
+
+        // ── Rank / popularity ──
+        const rank       = isAnime ? (d.rank       || null) : null;
+        const popularity = isAnime ? (d.popularity || null) : (d.popularity ? Math.round(d.popularity) : null);
+
+        // ── Studio / producers ──
+        const studio_name    = isAnime
+          ? (d.studios?.map(s => s.name).join(', ') || '')
+          : (d.production_companies?.[0]?.name || d.networks?.[0]?.name || '');
+        const producers_name = isAnime
+          ? (d.producers?.map(p => p.name).join(', ') || '')
+          : (d.production_companies?.slice(1).map(p => p.name).join(', ') || '');
+
+        // ── Episodes ──
+        const total_epi_num = isAnime
+          ? (d.episodes || null)
+          : (d.number_of_episodes || null);
+        const sub_epi_num = allAnime?.episodes_sub ?? null;
+        const dub_epi_num = allAnime?.episodes_dub ?? null;
+
+        // ── Format ──
+        const format = isAnime
+          ? (d.type || '')  // TV, OVA, ONA, Movie, Special, Music
+          : (d.type === 'movie' ? 'Movie' : (d.type || ''));
+
+        // ── Synopsis / overview ──
+        const synopsis_context  = isAnime ? (d.synopsis  || '') : '';
+        const overview_context  = isAnime ? '' : (d.overview || '');
+
+        // ── Scores ──
+        const mal_score          = isAnime ? (d.score          || null) : null;
+        const tmdb_average_score = !isAnime ? (d.vote_average  || null) : null;
+
+        // ── Content rating ──
+        let content_rating = '';
+        if (isAnime) {
+          content_rating = d.rating ? d.rating.split(' - ')[0] : '';
+        } else if (currentState.type === 'movie') {
+          const us = d.release_dates?.results?.find(r => r.iso_3166_1 === 'US');
+          content_rating = us?.release_dates?.[0]?.certification || '';
+        } else {
+          const us = d.content_ratings?.results?.find(r => r.iso_3166_1 === 'US');
+          content_rating = us?.rating || '';
+        }
+
+        // ── Duration / runtime ──
+        const anime_duration_time    = isAnime ? (d.duration || '') : '';
+        let tmdb_movie_tv_runtime = null;
+        if (!isAnime) {
+          if (currentState.type === 'movie') tmdb_movie_tv_runtime = d.runtime || null;
+          else tmdb_movie_tv_runtime = d.episode_run_time?.[0] || null;
+        }
+
+        // ── Images ──
+        const show_poster_link = isAnime
+          ? (d.images?.jpg?.large_image_url || d.images?.jpg?.image_url || '')
+          : (d.poster_path   ? `https://image.tmdb.org/t/p/w500${d.poster_path}`   : '');
+        const show_backdrop_landscape_image_link = isAnime
+          ? (d.images?.jpg?.large_image_url || '')
+          : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '');
+
+        // ── External links ──
+        const external_link_mal  = isAnime ? `https://myanimelist.net/anime/${d.mal_id}` : '';
+        const external_link_tmdb = !isAnime ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : '';
+
+        return {
+          user_id:     currentState.currentUser.id,
+          username:    currentState.username || '',
+          show_id:     currentState.id,
+          media_type:  buildMediaType(),
+          mal_id:      isAnime  ? currentState.id : null,
+          tmdb_id:     !isAnime ? currentState.id : null,
+          bookmark_status: statuses.join(','),  // store both statuses comma-separated in one row
+
+          eng_title, default_title, original_title, romanji_title, japanese_title, synonyms,
+          country_name: country, genres, show_status: show_status,
+          aired_date, broadcast_day_time, source,
+          rank, popularity, studio_name, producers_name,
+          total_epi_num, sub_epi_num, dub_epi_num, format,
+          synopsis_context, overview_context,
+          mal_score, tmdb_average_score, content_rating,
+          anime_duration_time, tmdb_movie_tv_runtime,
+          show_poster_link, show_backdrop_landscape_image_link,
+          external_link_mal, external_link_tmdb,
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      // Upsert the bookmark row. One row per (user_id, show_id, media_type) — status stored as
+      // comma-separated string so both selections live in a single row.
+      async function saveBookmarks() {
+        if (!currentState.currentUser || !currentState.data) return;
+        try {
+          const payload = buildBookmarkPayload(currentState.selectedStatuses);
+
+          if (currentState.selectedStatuses.length === 0) {
+            // No statuses left — delete the row entirely
+            await window.supabaseClient
+              .from('user_bookmarks')
+              .delete()
+              .eq('user_id',    currentState.currentUser.id)
+              .eq('show_id',    currentState.id)
+              .eq('media_type', buildMediaType());
+          } else {
+            // Upsert — creates or updates the single row for this user+show
+            const { error } = await window.supabaseClient
+              .from('user_bookmarks')
+              .upsert(payload, { onConflict: 'user_id,show_id,media_type' });
+            if (error) throw error;
           }
-          const toRemove = currentState.userBookmarks
-            .filter(b => !currentState.selectedStatuses.includes(b.status))
-            .map(b => b.id);
-          if (toRemove.length) {
-            await window.supabaseClient.from('user_bookmarks').delete().in('id', toRemove);
-          }
+
           await fetchUserBookmarks();
-        } catch (e) { 
-          console.error('Failed to save bookmarks:', e); 
-          showToast('Failed to update watchlist', 'error'); 
+          showToast(
+            currentState.selectedStatuses.length === 0
+              ? 'Removed from list'
+              : `Saved: ${currentState.selectedStatuses.map(s => s.replace('-',' ')).join(' + ')}`,
+            'success'
+          );
+        } catch (e) {
+          console.error('saveBookmarks error:', e);
+          showToast('Failed to save — please try again', 'error');
         }
       }
 
@@ -3091,30 +3194,35 @@ img { max-width: 100%; height: auto; display: block; }
           await window.supabaseClient
             .from('user_bookmarks')
             .delete()
-            .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
-          currentState.selectedStatuses = []; 
-          updateBookmarkUI(); 
-          showToast('Removed from watchlist');
-        } catch (e) { console.error('Failed to remove bookmark:', e); }
+            .eq('user_id',    currentState.currentUser.id)
+            .eq('show_id',    currentState.id)
+            .eq('media_type', buildMediaType());
+          currentState.selectedStatuses = [];
+          currentState.userBookmarks    = [];
+          updateBookmarkUI();
+          showToast('Removed from your list');
+        } catch (e) { console.error('removeBookmark error:', e); }
       }
 
       function updateBookmarkUI() {
-        const btn = document.getElementById('addToListBtn'); 
+        const btn  = document.getElementById('addToListBtn');
         const text = document.getElementById('dropdownText');
-        if (!currentState.currentUser) { 
-          text.textContent = 'Add to List'; 
-          btn.disabled = false; 
-          return; 
-        }
-        if (currentState.selectedStatuses.length === 0) text.textContent = 'Add to List';
-        else if (currentState.selectedStatuses.length === 1) text.textContent = currentState.selectedStatuses[0].replace('-', ' ');
-        else text.textContent = 'Edit List';
-        
-        document.querySelectorAll('.dropdown-item').forEach(item => 
+        if (!btn || !text) return;
+
+        // Reflect selected status in dropdown items
+        document.querySelectorAll('.dropdown-item').forEach(item =>
           item.classList.toggle('selected', currentState.selectedStatuses.includes(item.dataset.status))
         );
+
+        // Update button label
+        if (!currentState.currentUser) {
+          text.textContent = 'Add to List';
+          return;
+        }
+        const n = currentState.selectedStatuses.length;
+        if (n === 0)      text.textContent = 'Add to List';
+        else if (n === 1) text.textContent = currentState.selectedStatuses[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        else              text.textContent = 'Edit List';
       }
 
       function showLoginAlert() {
@@ -3291,211 +3399,88 @@ img { max-width: 100%; height: auto; display: block; }
 
       async function loadRecommendations() {
         if (currentState.source === 'jikan') {
-          // Anime: water temple + sunken in parallel
+          // Run water temple and sunken in parallel — each already has its own internal delay
           await Promise.all([
             loadWaterTemple(),
             loadSunkenTreasures(1)
           ]);
         } else {
-          // TMDB: recommend-for-you + sunken in parallel
-          await Promise.all([
-            loadRecommendForYou(),
-            loadSunkenTreasures(1)
-          ]);
+          await loadSunkenTreasures(1);
         }
       }
 
-      // Water Temple — genre-matched anime recommendations using the current show's actual genres
+      // Water Temple section - genre-matched recommendations for anime pages
       async function loadWaterTemple() {
         const section = document.getElementById('waterTempleSection');
         const gridContainer = document.getElementById('waterTempleGrid');
-
-        if (currentState.source !== 'jikan') { section.style.display = 'none'; return; }
-
+        
+        if (currentState.source !== 'jikan') {
+          section.style.display = 'none';
+          return;
+        }
+        
         section.style.display = 'block';
         gridContainer.innerHTML = '<div class="loading-text">Loading recommendations...</div>';
-
+        
         try {
           const data = currentState.data;
+          const themes = data.themes?.map(t => t.mal_id).filter(Boolean) || [];
+          const demographics = data.demographics?.map(d => d.mal_id).filter(Boolean) || [];
+          const selectedGenres = [...new Set([...themes, ...demographics])].slice(0, 3);
 
-          // Collect all genre/theme/demographic MAL IDs from the current show
-          // These come from show details: genres + themes + demographics
-          const genreIds  = (data.genres       || []).map(g => g.mal_id).filter(Boolean);
-          const themeIds  = (data.themes        || []).map(t => t.mal_id).filter(Boolean);
-          const demoIds   = (data.demographics  || []).map(d => d.mal_id).filter(Boolean);
-
-          // Use all genres for a broad, accurate match — up to 3 to stay within Jikan limits
-          // Priority: genres first (most accurate), then demographics, then themes
-          const combinedIds = [...new Set([...genreIds, ...demoIds, ...themeIds])];
-          const selectedGenres = combinedIds.slice(0, 3);
-
-          // Random page 1–4 for variety on each visit without hitting empty pages
-          const randomPage = Math.floor(Math.random() * 4) + 1;
+          // Use a random page (1-3) for variety on each visit
+          const randomPage = Math.floor(Math.random() * 3) + 1;
 
           const params = new URLSearchParams({
-            order_by:  'score',       // sort by score so results are genuinely good
-            sort:      'desc',
-            limit:     '24',
-            sfw:       'true',
-            type:      (data.type || 'tv').toLowerCase(),
-            min_score: '6.0',
-            max_score: '9.7',
-            page:      String(randomPage)
+            order_by: 'popularity',
+            sort: 'asc',
+            limit: '24',
+            sfw: 'true',
+            type: data.type?.toLowerCase() || 'tv',
+            min_score: '6.4',
+            max_score: '8.7',
+            page: String(randomPage)
           });
-
           if (selectedGenres.length > 0) params.append('genres', selectedGenres.join(','));
-
+          
           const apiUrl = `https://api.jikan.moe/v4/anime?${params.toString()}`;
-
-          // Cache key: genre ids + anime type + page — 10 min TTL for freshness+variety
-          const cacheKey = `wt2_${selectedGenres.join('_')}_${(data.type||'tv').toLowerCase()}_p${randomPage}`;
-          let results;
-
+          
+          // Cache per genre combo + page (5 min TTL so it refreshes for variety)
+          const cacheKey = `watertemple_${selectedGenres.join('_')}_${data.type}_p${randomPage}`;
           const cached = localStorage.getItem(cacheKey);
+          let results;
+          
           if (cached) {
-            try {
-              const { data: cd, timestamp } = JSON.parse(cached);
-              if (Date.now() - timestamp < 10 * 60 * 1000) results = cd;
-            } catch(e) {}
+            const { data: cachedData, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 5 * 60 * 1000) {
+              results = cachedData;
+            }
           }
-
+          
           if (!results) {
+            // Delay start to let the main fetchJikanData request clear the rate-limit window
+            await new Promise(r => setTimeout(r, 1200));
             const response = await fetchWithRetry(apiUrl);
-            const apiData  = await response.json();
+            const apiData = await response.json();
             results = apiData.data || [];
-            try { localStorage.setItem(cacheKey, JSON.stringify({ data: results, timestamp: Date.now() })); } catch(e) {}
+            localStorage.setItem(cacheKey, JSON.stringify({ data: results, timestamp: Date.now() }));
           }
-
-          // Filter out the current show itself
+          
           const filtered = results.filter(a => a.mal_id !== currentState.id).slice(0, 24);
-
+          
           if (filtered.length > 0) {
             gridContainer.innerHTML = filtered.map(anime => renderAnimeRecCard(anime)).join('');
           } else {
-            // Fallback: top-scored anime of same type, no genre filter
-            const fbParams = new URLSearchParams({ order_by: 'score', sort: 'desc', limit: '24', sfw: 'true', type: (data.type || 'tv').toLowerCase(), min_score: '7.5' });
-            const fbRes  = await fetchWithRetry(`https://api.jikan.moe/v4/anime?${fbParams.toString()}`);
-            const fbData = await fbRes.json();
-            const fbFiltered = (fbData.data || []).filter(a => a.mal_id !== currentState.id).slice(0, 24);
-            gridContainer.innerHTML = fbFiltered.length
-              ? fbFiltered.map(anime => renderAnimeRecCard(anime)).join('')
-              : '<div class="loading-text">No recommendations found</div>';
+            gridContainer.innerHTML = '<div class="loading-text">No recommendations found</div>';
           }
-
+          
         } catch (error) {
           console.error('❌ Water Temple error:', error);
           gridContainer.innerHTML = '<div class="loading-text">Failed to load recommendations</div>';
         }
       }
 
-      // Recommend for You — TMDB movie/TV genre+popularity+score based recommendations
-      async function loadRecommendForYou() {
-        const section = document.getElementById('recommendForYouSection');
-        const gridContainer = document.getElementById('recommendForYouGrid');
-
-        if (currentState.source !== 'tmdb') { section.style.display = 'none'; return; }
-
-        section.style.display = 'block';
-        gridContainer.innerHTML = '<div class="loading-text">Loading recommendations...</div>';
-
-        try {
-          const data = currentState.data;
-          const mediaType = currentState.type; // 'movie' or 'tv'
-
-          // Extract genre IDs from current show
-          const genreIds = (data.genres || []).map(g => g.id).filter(Boolean);
-
-          // TMDB discover — match genres, filter by vote quality, sort by popularity+vote combo
-          // We try two strategies and merge: TMDB /recommendations (official) + /discover (filtered)
-          const [recsRes, discoverRes] = await Promise.all([
-            // Strategy 1: TMDB's own recommendation engine for this show
-            fetch(`${CONFIG.TMDB_WORKER}/3/${mediaType}/${currentState.id}/recommendations?page=1`),
-            // Strategy 2: Discover with matching genres + quality filter
-            (() => {
-              const p = new URLSearchParams({
-                sort_by:              'vote_average.desc',
-                'vote_count.gte':     mediaType === 'movie' ? '200' : '100',
-                'vote_average.gte':   '6.5',
-                with_genres:          genreIds.slice(0, 3).join(','),
-                without_genres:       '',   // no exclusions — keep broad
-                page:                 '1'
-              });
-              return fetch(`${CONFIG.TMDB_WORKER}/3/discover/${mediaType}?${p.toString()}`);
-            })()
-          ]);
-
-          const recsData    = recsRes.ok    ? await recsRes.json()    : { results: [] };
-          const discoverData = discoverRes.ok ? await discoverRes.json() : { results: [] };
-
-          // Merge, de-duplicate by id, remove current show, sort by vote_average desc
-          const seen = new Set([currentState.id]);
-          const merged = [];
-
-          for (const item of [...(recsData.results || []), ...(discoverData.results || [])]) {
-            if (!item.id || seen.has(item.id)) continue;
-            seen.add(item.id);
-            merged.push(item);
-          }
-
-          // Sort: weighted score (vote_average × log10(vote_count+1)) for quality+popularity balance
-          merged.sort((a, b) => {
-            const scoreA = (a.vote_average || 0) * Math.log10((a.vote_count || 1) + 1);
-            const scoreB = (b.vote_average || 0) * Math.log10((b.vote_count || 1) + 1);
-            return scoreB - scoreA;
-          });
-
-          const final = merged.slice(0, 24);
-
-          if (final.length > 0) {
-            gridContainer.innerHTML = final.map(item => renderTMDBRecCard(item, mediaType)).join('');
-          } else {
-            // Fallback: popular content of same type
-            const fbRes  = await fetch(`${CONFIG.TMDB_WORKER}/3/${mediaType}/popular?page=1`);
-            const fbData = fbRes.ok ? await fbRes.json() : { results: [] };
-            const fbFinal = (fbData.results || []).filter(i => i.id !== currentState.id).slice(0, 24);
-            gridContainer.innerHTML = fbFinal.length
-              ? fbFinal.map(item => renderTMDBRecCard(item, mediaType)).join('')
-              : '<div class="loading-text">No recommendations found</div>';
-          }
-
-        } catch (error) {
-          console.error('❌ Recommend for You error:', error);
-          gridContainer.innerHTML = '<div class="loading-text">Failed to load recommendations</div>';
-        }
-      }
-
-      // TMDB rec card renderer — matches renderAnimeRecCard style
-      function renderTMDBRecCard(item, mediaType) {
-        const title = item.title || item.name || 'Unknown';
-        const poster = item.poster_path
-          ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-          : '';
-        const score = item.vote_average;
-        const year  = (item.release_date || item.first_air_date || '').slice(0, 4) || 'N/A';
-        const type  = mediaType === 'movie' ? 'Movie' : 'TV';
-        const slug  = slugify(title);
-        const src   = mediaType === 'movie' ? 'tmdb-movie' : 'tmdb-tv';
-        const detailsUrl = `/info/${mediaType}/${src}-${item.id}/${slug}`;
-
-        const posterStyle = poster
-          ? `background-image: url('${poster}')`
-          : `background: linear-gradient(135deg, var(--bg-surface), var(--bg-card))`;
-
-        return `<a href="${detailsUrl}" class="rec-card">
-          <div class="rec-poster" style="${posterStyle}">
-            ${poster ? `<img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
-            <span class="quality-badge">${type}</span>
-            <span class="score-badge"><i class="fa-solid fa-star"></i> ${score ? score.toFixed(1) : 'N/A'}</span>
-            <div class="play-overlay">
-              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="white"/></svg>
-            </div>
-          </div>
-          <div class="rec-info">
-            <div class="rec-meta">${year}</div>
-            <div class="rec-title">${escapeHtml(title)}</div>
-          </div>
-        </a>`;
-      }
+      // ✅ FIXED: loadSunkenTreasures with working pagination
       // Bug fix: jikanRecLoading element was inside gridContainer and got destroyed by
       // gridContainer.innerHTML on first render, causing null-ref crash on page 2+.
       // Now shows loading state by setting gridContainer HTML directly each time.
@@ -3928,94 +3913,82 @@ function renderSunkenPagination(currentPage, totalPages, container) {
 
       async function loadThemesData() {
         const container = document.getElementById('themesContainer');
-        if (currentState.source !== 'jikan') {
-          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>';
+        if (currentState.source !== 'jikan') { 
+          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
+          return; 
+        }
+        
+        const malId = currentState.data?.mal_id || currentState.id;
+        if (!malId) {
+          container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
           return;
         }
 
-        const malId = currentState.data?.mal_id || currentState.id;
-        if (!malId) { container.innerHTML = '<p class="loading-text">No MAL ID available</p>'; return; }
-
         container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
-
+        
         try {
-          // Correct REST endpoint — filter by MAL site + external_id, include song + entries + videos
-          const url = `https://api.animethemes.moe/anime?filter[has]=resources&filter[site]=MyAnimeList&filter[external_id]=${malId}&include=animethemes.song,animethemes.animethemeentries.videos`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`AnimThemes error: ${res.status}`);
+          // Use animethemes.moe REST API (more reliable than GraphQL for MAL lookups)
+          const res = await fetch(
+            `https://api.animethemes.moe/anime?filter[external_id]=${malId}&filter[external_site]=myanimelist&include=animethemes.animethemeentries.videos,animethemes.song.artists&fields[anime]=slug,name&fields[animetheme]=type,sequence&fields[song]=title&fields[artist]=name&fields[animethemeentry]=version,episodes&fields[video]=link,resolution`
+          );
+
+          if (!res.ok) throw new Error(`AnimThemes REST error: ${res.status}`);
           const json = await res.json();
-          const animeEntry = (json.anime || [])[0];
+          const animeArr = json.anime || [];
+          const animeEntry = animeArr[0];
 
           if (!animeEntry?.animethemes?.length) {
             container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
             return;
           }
 
-          const allThemes = animeEntry.animethemes;
-          const ops = allThemes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-          const eds = allThemes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+          const themes = animeEntry.animethemes;
+          const ops = themes.filter(t => t.type === 'OP').sort((a,b) => (a.sequence||1)-(b.sequence||1));
+          const eds = themes.filter(t => t.type === 'ED').sort((a,b) => (a.sequence||1)-(b.sequence||1));
+          
+          let html = '';
           const posterImg = currentState.data.images?.jpg?.image_url || '';
 
-          // Build a compact theme card: song title + artist row + collapsible video per version
-          function buildThemeCards(list, sectionType) {
-            return list.map(theme => {
-              const seq      = theme.sequence || '';
-              const label    = `${sectionType}${seq}`;
-              const songTitle = theme.song?.title || label;
-              // animethemes REST returns song.artists only when artists include is added;
-              // the endpoint above includes animethemes.song so artists may not be present —
-              // fall back gracefully
-              const artists  = (theme.song?.artists || []).map(a => a.name).join(', ');
+          function buildThemeSection(list, heading) {
+            let out = `<h4 style="margin:16px 0 12px;font-size:1rem;">${heading}</h4>`;
+            list.forEach(theme => {
+              const seqLabel = theme.sequence ? ` ${theme.sequence}` : '';
+              const song = theme.song;
+              const songTitle = song?.title || `${theme.type}${seqLabel}`;
+              const artists = song?.artists?.map(a => a.name).join(', ') || '';
+              const displayTitle = `${theme.type}${seqLabel}: ${songTitle}${artists ? ` — ${artists}` : ''}`;
 
-              // Collect all video entries across all versions
+              // All entries (versions) for this theme
               const entries = theme.animethemeentries || [];
-              const videoBlocks = entries.map(entry => {
+              entries.forEach(entry => {
                 const video = entry.videos?.[0];
-                if (!video?.link) return '';
-                const verTag  = entry.version && entry.version > 1 ? ` <span class="theme-ver-tag">v${entry.version}</span>` : '';
-                const epRange = entry.episodes ? `<span class="theme-ep-range">eps ${entry.episodes}</span>` : '';
-                return `
-                  <div class="theme-video-entry">
-                    <div class="theme-video-meta">${verTag}${epRange}</div>
+                if (!video?.link) return;
+                const versionLabel = entry.version ? ` (v${entry.version})` : '';
+                const epLabel = entry.episodes ? ` [eps ${entry.episodes}]` : '';
+                out += `
+                  <div class="theme-block">
+                    <div class="video-title">${escapeHtml(displayTitle)}${escapeHtml(versionLabel)}${escapeHtml(epLabel)}</div>
                     <div class="video-wrapper">
-                      <video controls preload="none" ${posterImg ? `poster="${escapeHtml(posterImg)}"` : ''}>
+                      <video controls preload="metadata" ${posterImg ? `poster="${posterImg}"` : ''}>
                         <source src="${escapeHtml(video.link)}" type="video/webm">
+                        Your browser does not support the video tag.
                       </video>
                     </div>
-                  </div>`;
-              }).join('');
-
-              if (!videoBlocks.trim()) return ''; // skip themes with no video
-
-              return `
-                <div class="theme-card">
-                  <div class="theme-card-header">
-                    <div class="theme-card-label">${escapeHtml(label)}</div>
-                    <div class="theme-card-titles">
-                      <span class="theme-song-title">${escapeHtml(songTitle)}</span>
-                      ${artists ? `<span class="theme-artist"><i class="fa-solid fa-music" style="font-size:0.65rem;opacity:0.7;"></i> ${escapeHtml(artists)}</span>` : ''}
-                    </div>
                   </div>
-                  ${videoBlocks}
-                </div>`;
-            }).join('');
+                `;
+              });
+            });
+            return out;
           }
 
-          let html = '';
-          if (ops.length) {
-            html += `<div class="themes-section-heading"><i class="fa-solid fa-arrow-right-to-bracket" style="transform:rotate(-90deg);color:#7ec8f7;"></i> Opening Themes <span class="themes-count">${ops.length}</span></div>`;
-            html += buildThemeCards(ops, 'OP');
-          }
-          if (eds.length) {
-            html += `<div class="themes-section-heading" style="margin-top:20px;"><i class="fa-solid fa-arrow-right-from-bracket" style="transform:rotate(-90deg);color:#f6ad55;"></i> Ending Themes <span class="themes-count">${eds.length}</span></div>`;
-            html += buildThemeCards(eds, 'ED');
-          }
-
+          if (ops.length) html += buildThemeSection(ops, '🎵 Opening Themes');
+          if (eds.length) html += buildThemeSection(eds, '🎵 Ending Themes');
+          
           container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-
-        } catch (e) {
-          console.warn('AnimeThemes error:', e);
-          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>';
+          
+        } catch (e) { 
+          console.warn('AnimeThemes API error:', e); 
+          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
         }
       }
 
