@@ -895,7 +895,9 @@
       console.error(`Anikoto API HTTP ${res.status}`);
       return { ok: false, data: [] };
     }
-    return await res.json();
+    const json = await res.json();
+    // Wrap the raw JSON with an ok flag, ensuring data is accessible
+    return { ok: true, data: json.data || json };
   } catch(e) {
     console.error('Anikoto fetch error:', e);
     return { ok: false, data: [] };
@@ -959,7 +961,7 @@ async function loadNewAniocean() {
         <a href="/info/anime/jikan-${mal_id}/${anime.slug}" 
            class="aniocean-card" 
            data-mal-id="${mal_id}"
-           onmouseenter="showAnioceanPopupById('${mal_id}')" 
+           onmouseenter="showAnikotoPopupById('${mal_id}')" 
            onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
           <div class="aniocean-poster">
             <img src="${anime.poster}" alt="${anime.title}" 
