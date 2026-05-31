@@ -886,15 +886,21 @@
       };
 
       async function fetchAnikoto(endpoint) {
-        try {
-          const res = await fetch(`${ANIKOTO_API}${endpoint}`);
-          if(!res.ok) return {data:[]};
-          return res.json();
-        } catch(e) {
-          console.error('Anikoto API error:', e);
-          return {data:[]};
-        }
-      }
+  try {
+    const res = await fetch(`${ANIKOTO_API}${endpoint}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) {
+      console.error(`Anikoto API HTTP ${res.status}`);
+      return { ok: false, data: [] };
+    }
+    return await res.json();
+  } catch(e) {
+    console.error('Anikoto fetch error:', e);
+    return { ok: false, data: [] };
+  }
+}
 
       async function fetchTMDB(endpoint, params='') {
         const url = `${TMDB_PROXY}/3${endpoint}?${params}`;
@@ -908,84 +914,121 @@
       }
 
       /* ── NEW ON ANIOCEAN ── */
-      async function loadNewAniocean() {
-        const response = await fetchAnikoto('/recent-anime?page=1&per_page=30');
-        const data = response.data || [];
-        
-        const grid = document.getElementById('newAnioceanGrid');
-        grid.innerHTML = data.map(anime => {
-          const studio = anime.terms_by_type?.studios?.[0] || '?';
-          const rating = anime.rating || 'N/A';
-          const type = anime.terms_by_type?.type?.[0] || 'TV';
-          
-          return `
-            <a href="/info/anime/jikan-${anime.mal_id}/${anime.slug}" class="aniocean-card" 
-               onmouseenter="showAnikotoPopup(event, ${JSON.stringify(anime).replace(/"/g, '&quot;')})" 
-               onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
-              <div class="aniocean-poster">
-                <img src="${anime.poster}" alt="${anime.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22300%22%3E%3Crect fill=%22%23132f4c%22 width=%22200%22 height=%22300%22/%3E%3C/svg%3E'">
-                <div class="aniocean-badge-score">
-                  <i class="fas fa-star"></i> ${anime.score || 'N/A'}
-                </div>
-                <div class="aniocean-badge-lang">
-                  ${anime.is_sub > 0 ? `
-                    <div class="aniocean-lang-badge">
-                      <i class="fas fa-closed-captioning"></i> ${anime.is_sub}
-                    </div>
-                  ` : ''}
-                  ${anime.is_dub > 0 ? `
-                    <div class="aniocean-lang-badge">
-                      <i class="fas fa-microphone"></i> ${anime.is_dub}
-                    </div>
-                  ` : ''}
-                </div>
-                <div class="aniocean-info">
-                  <div class="aniocean-meta">${type} · ${rating} · ${studio}</div>
-                  <div class="aniocean-title">${anime.title}</div>
-                </div>
-              </div>
-            </a>
-          `;
-        }).join('');
-      }
+     /* Store fetched data for popup lookup */
+window.anioceanData = {};
 
-      /* ── ANIKOTO STYLE POPUP ── */
-      window.showAnikotoPopup = function(e, anime) {
-        clearTimeout(window.popupTimer);
-        
-        const genres = (anime.terms_by_type?.genre || []).join(', ');
-        const studios = (anime.terms_by_type?.studios || []).join(', ');
-        const producers = (anime.terms_by_type?.producers || []).join(', ');
-        
-        document.getElementById('popupContent').innerHTML = `
-          <div class="anikoto-popup">
-            <div class="anikoto-popup-poster">
-              <img src="${anime.poster}" alt="${anime.title}">
+async function loadNewAniocean() {
+  try {
+    const response = await fetchAnikoto('/recent-anime?page=1&per_page=30');
+    
+    if (!response.ok || !response.data || response.data.length === 0) {
+      document.getElementById('newAnioceanGrid').innerHTML = 
+        '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">No recent anime available</div>';
+      return;
+    }
+    
+    const data = response.data;
+    const grid = document.getElementById('newAnioceanGrid');
+    
+    grid.innerHTML = data.map(anime => {
+      const studio = anime.terms_by_type?.studios?.[0] || '?';
+      const rating = anime.rating || 'N/A';
+      const type = anime.terms_by_type?.type?.[0] || 'TV';
+      const score = anime.score || 'N/A';
+      const mal_id = anime.mal_id || anime.id || '';
+      
+      // Store data for popup lookup
+      window.anioceanData[mal_id] = {
+        title: anime.title,
+        slug: anime.slug,
+        mal_id: mal_id,
+        poster: anime.poster,
+        score: score,
+        type: type,
+        rating: rating,
+        description: anime.description || 'No description available.',
+        year: anime.year || '?',
+        duration: anime.duration + 'm' || '?',
+        genres: anime.terms_by_type?.genre || [],
+        studios: anime.terms_by_type?.studios || [],
+        is_sub: anime.is_sub || 0,
+        is_dub: anime.is_dub || 0
+      };
+      
+      return `
+        <a href="/info/anime/jikan-${mal_id}/${anime.slug}" 
+           class="aniocean-card" 
+           data-mal-id="${mal_id}"
+           onmouseenter="showAnioceanPopupById('${mal_id}')" 
+           onmouseleave="window.popupTimer=setTimeout(hidePopup,200)">
+          <div class="aniocean-poster">
+            <img src="${anime.poster}" alt="${anime.title}" 
+                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22300%22%3E%3Crect fill=%22%23132f4c%22 width=%22200%22 height=%22300%22/%3E%3Ctext fill=%22%2394a3b8%22 font-family=%22sans-serif%22 font-size=%2214%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+            <div class="aniocean-badge-score">
+              <i class="fas fa-star"></i> ${score}
             </div>
-            <div class="anikoto-popup-content">
-              <div class="anikoto-popup-title">${anime.title}</div>
-              <div class="anikoto-popup-meta">
-                <div class="anikoto-meta-item"><i class="fas fa-star" style="color:var(--accent-gold)"></i> ${anime.score || 'N/A'}</div>
-                <div class="anikoto-meta-item"><i class="fas fa-film"></i> ${anime.terms_by_type?.type?.[0] || 'TV'}</div>
-                <div class="anikoto-meta-item"><i class="fas fa-calendar"></i> ${anime.year || '?'}</div>
-                <div class="anikoto-meta-item"><i class="fas fa-clock"></i> ${anime.duration || '?'}</div>
-              </div>
-              <div class="anikoto-popup-synopsis">${anime.description || 'No description available.'}</div>
-              <div class="anikoto-popup-actions">
-                <a href="/watch/jikan-${anime.mal_id}" class="anikoto-btn anikoto-btn-primary">
-                  <i class="fas fa-play"></i> Watch
-                </a>
-                <a href="/info/anime/jikan-${anime.mal_id}/${anime.slug}" class="anikoto-btn anikoto-btn-secondary">
-                  <i class="fas fa-plus"></i> Details
-                </a>
-              </div>
+            <div class="aniocean-badge-lang">
+              ${anime.is_sub > 0 ? `<div class="aniocean-lang-badge"><i class="fas fa-closed-captioning"></i> ${anime.is_sub}</div>` : ''}
+              ${anime.is_dub > 0 ? `<div class="aniocean-lang-badge"><i class="fas fa-microphone"></i> ${anime.is_dub}</div>` : ''}
+            </div>
+            <div class="aniocean-info">
+              <div class="aniocean-meta">${type} · ${rating} · ${studio}</div>
+              <div class="aniocean-title">${anime.title}</div>
             </div>
           </div>
-        `;
-        
-        document.getElementById('popupCard').classList.add('active');
-        document.getElementById('popupOverlay').style.pointerEvents='auto';
-      };
+        </a>
+      `;
+    }).join('');
+    
+    console.log(`✓ Loaded ${data.length} anime for "New on Aniocean"`);
+  } catch (error) {
+    console.error('✗ Error loading New on Aniocean:', error);
+    document.getElementById('newAnioceanGrid').innerHTML = 
+      '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Failed to load</div>';
+  }
+}
+
+      /* ── ANIKOTO STYLE POPUP ── */
+     /* Popup triggered by mal_id lookup */
+window.showAnikotoPopupById = function(mal_id) {
+  clearTimeout(window.popupTimer);
+  const anime = window.anioceanData[mal_id];
+  if (!anime) return;
+  
+  const starIcon = '<i class="fas fa-star" style="color:var(--accent-gold)"></i>';
+  const genresHtml = anime.genres.map(g => `<a href="/search?genre=${encodeURIComponent(g)}" class="genre-pill">${g}</a>`).join('');
+  
+  document.getElementById('popupContent').innerHTML = `
+    <div class="anikoto-popup">
+      <div class="anikoto-popup-poster">
+        <img src="${anime.poster}" alt="${anime.title}" onerror="this.style.display='none'">
+      </div>
+      <div class="anikoto-popup-content">
+        <div class="anikoto-popup-title">${anime.title}</div>
+        <div class="anikoto-popup-meta">
+          <div class="anikoto-meta-item">${starIcon} ${anime.score}</div>
+          <div class="anikoto-meta-item"><i class="fas fa-film"></i> ${anime.type}</div>
+          <div class="anikoto-meta-item"><i class="fas fa-calendar"></i> ${anime.year}</div>
+          <div class="anikoto-meta-item"><i class="fas fa-clock"></i> ${anime.duration}</div>
+          <div class="anikoto-meta-item"><i class="fas fa-building"></i> ${anime.studios[0] || '?'}</div>
+        </div>
+        <div class="genre-pills-row">${genresHtml}</div>
+        <div class="anikoto-popup-synopsis">${anime.description}</div>
+        <div class="anikoto-popup-actions">
+          <a href="/watch/jikan-${anime.mal_id}" class="anikoto-btn anikoto-btn-primary">
+            <i class="fas fa-play"></i> Watch
+          </a>
+          <a href="/info/anime/jikan-${anime.mal_id}/${anime.slug}" class="anikoto-btn anikoto-btn-secondary">
+            <i class="fas fa-plus"></i> Details
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('popupCard').classList.add('active');
+  document.getElementById('popupOverlay').style.pointerEvents = 'auto';
+};
 
       /* ── HERO ── */
       let heroData=[], currentSlide=0;
