@@ -1150,6 +1150,122 @@ img { max-width: 100%; height: auto; display: block; }
 .theme-block { margin-bottom: 20px; }
 .theme-block:last-child { margin-bottom: 0; }
 
+/* ── Theme Tab — scrollable, all theme card styles ─────────── */
+#themesTab {
+  max-height: 700px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 2px;
+}
+#themesTab::-webkit-scrollbar { display: none; }
+
+.themes-container { padding: 4px 0; }
+
+.themes-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+}
+.themes-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+.theme-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.theme-card:last-child { margin-bottom: 0; }
+
+.theme-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.theme-card-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: #7ec8f7;
+  background: rgba(126,200,247,0.12);
+  border: 1px solid rgba(126,200,247,0.3);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.theme-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.theme-song-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-artist {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-video-entry {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+.theme-video-entry:first-of-type { border-top: none; }
+.theme-video-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 18px;
+}
+.theme-ver-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(236,201,75,0.15);
+  border: 1px solid rgba(236,201,75,0.4);
+  color: var(--accent-gold);
+}
+.theme-ep-range {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+/* Legacy theme-block (kept for compat) */
+.theme-block { margin-bottom: 20px; }
+.theme-block:last-child { margin-bottom: 0; }
+
 /* Video Players */
 .video-container {
   display: flex;
@@ -2553,9 +2669,11 @@ img { max-width: 100%; height: auto; display: block; }
         
         if (isAnime) {
           if (data.title_english) details.push({ label: 'Title', value: data.title_english });
-          // Romanji = data.title (the romaji/default title from Jikan, distinct from english)
-          const romanji = data.title;
-          if (romanji && romanji !== data.title_english) details.push({ label: 'Romanji', value: romanji });
+          // Romaji = the default Jikan title (romanised Japanese) — shown when it differs from English
+          const romaji = data.title;
+          if (romaji && romaji !== data.title_english) {
+            details.push({ label: 'Romaji', value: romaji });
+          }
           if (data.title_japanese) details.push({ label: 'Japanese', value: data.title_japanese });
           if (data.title_synonyms?.length) details.push({ label: 'Synonyms', value: data.title_synonyms.join(', ') });
         } else {
@@ -3083,9 +3201,17 @@ img { max-width: 100%; height: auto; display: block; }
         }
 
         return {
-          // identity (ONLY columns that exist in schema)
-          user_id:      currentState.currentUser.id,
-          show_id:      currentState.id,
+          // ── Original table columns (existed before SQL upgrades) ──
+          user_id:    currentState.currentUser.id,
+          media_id:   String(currentState.id),          // text — original PK-style column
+          media_type: isAnime ? 'jikan-anime'           // text — jikan-anime | tmdb-tv | tmdb-movie
+            : currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv',
+          show_status: isAnime                          // text column added by SQL
+            ? (d.status || null)
+            : (d.status || null),
+
+          // ── New columns added by SQL ──
+          show_id:      currentState.id,               // int4
           username:     currentState.currentUserProfile?.username || null,
           mal_id:       isAnime  ? currentState.id : null,
           tmdb_id:      !isAnime ? currentState.id : null,
@@ -3142,15 +3268,17 @@ img { max-width: 100%; height: auto; display: block; }
       async function fetchUserBookmarks() {
         if (!currentState.currentUser || !currentState.id) return;
         try {
+          // Query by show_id (int) first — covers rows inserted by our code.
+          // Also try media_id (text) for any legacy rows.
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('id, bookmark_status')
+            .select('id, bookmark_status, show_id, media_id')
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id);
+            .or(`show_id.eq.${currentState.id},media_id.eq.${currentState.id}`);
           if (error) throw error;
 
           currentState.userBookmarks = data || [];
-          // Parse comma-separated bookmark_status from the single row
+          // Parse bookmark_status from the first matching row
           const row = data?.[0];
           currentState.selectedStatuses = row?.bookmark_status
             ? row.bookmark_status.split(',').map(s => s.trim()).filter(Boolean)
@@ -3199,8 +3327,10 @@ img { max-width: 100%; height: auto; display: block; }
           if (ids.length) {
             ({ error } = await window.supabaseClient.from('user_bookmarks').delete().in('id', ids));
           } else {
+            // Fallback: delete by both possible identity columns
             ({ error } = await window.supabaseClient.from('user_bookmarks').delete()
-              .eq('user_id', currentState.currentUser.id).eq('show_id', currentState.id));
+              .eq('user_id', currentState.currentUser.id)
+              .or(`show_id.eq.${currentState.id},media_id.eq.${currentState.id}`));
           }
           if (error) throw error;
           currentState.userBookmarks    = [];
@@ -3935,82 +4065,89 @@ function renderSunkenPagination(currentPage, totalPages, container) {
 
       async function loadThemesData() {
         const container = document.getElementById('themesContainer');
-        if (currentState.source !== 'jikan') { 
-          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>'; 
-          return; 
-        }
-        
-        const malId = currentState.data?.mal_id || currentState.id;
-        if (!malId) {
-          container.innerHTML = '<p class="loading-text">No MAL ID available</p>';
+        if (currentState.source !== 'jikan') {
+          container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>';
           return;
         }
 
-        container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
-        
-        try {
-          // Use animethemes.moe REST API (more reliable than GraphQL for MAL lookups)
-          const res = await fetch(
-            `https://api.animethemes.moe/anime?filter[external_id]=${malId}&filter[external_site]=myanimelist&include=animethemes.animethemeentries.videos,animethemes.song.artists&fields[anime]=slug,name&fields[animetheme]=type,sequence&fields[song]=title&fields[artist]=name&fields[animethemeentry]=version,episodes&fields[video]=link,resolution`
-          );
+        const malId = currentState.data?.mal_id || currentState.id;
+        if (!malId) { container.innerHTML = '<p class="loading-text">No MAL ID available</p>'; return; }
 
-          if (!res.ok) throw new Error(`AnimThemes REST error: ${res.status}`);
+        container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
+
+        try {
+          // ✅ CORRECT endpoint: filter[site]=MyAnimeList + filter[has]=resources
+          const url = `https://api.animethemes.moe/anime?filter[has]=resources&filter[site]=MyAnimeList&filter[external_id]=${malId}&include=animethemes.song,animethemes.animethemeentries.videos`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`AnimThemes ${res.status}`);
           const json = await res.json();
-          const animeArr = json.anime || [];
-          const animeEntry = animeArr[0];
+          const animeEntry = (json.anime || [])[0];
 
           if (!animeEntry?.animethemes?.length) {
             container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
             return;
           }
 
-          const themes = animeEntry.animethemes;
-          const ops = themes.filter(t => t.type === 'OP').sort((a,b) => (a.sequence||1)-(b.sequence||1));
-          const eds = themes.filter(t => t.type === 'ED').sort((a,b) => (a.sequence||1)-(b.sequence||1));
-          
-          let html = '';
+          const allThemes = animeEntry.animethemes;
+          const ops = allThemes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence||0) - (b.sequence||0));
+          const eds = allThemes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence||0) - (b.sequence||0));
           const posterImg = currentState.data.images?.jpg?.image_url || '';
 
-          function buildThemeSection(list, heading) {
-            let out = `<h4 style="margin:16px 0 12px;font-size:1rem;">${heading}</h4>`;
-            list.forEach(theme => {
-              const seqLabel = theme.sequence ? ` ${theme.sequence}` : '';
-              const song = theme.song;
-              const songTitle = song?.title || `${theme.type}${seqLabel}`;
-              const artists = song?.artists?.map(a => a.name).join(', ') || '';
-              const displayTitle = `${theme.type}${seqLabel}: ${songTitle}${artists ? ` — ${artists}` : ''}`;
+          function buildThemeCards(list, sectionType) {
+            return list.map(theme => {
+              const seq       = theme.sequence || '';
+              const label     = `${sectionType}${seq}`;
+              const songTitle = theme.song?.title || label;
+              const artists   = (theme.song?.artists || []).map(a => a.name).join(', ');
+              const entries   = theme.animethemeentries || [];
 
-              // All entries (versions) for this theme
-              const entries = theme.animethemeentries || [];
-              entries.forEach(entry => {
+              const videoBlocks = entries.map(entry => {
                 const video = entry.videos?.[0];
-                if (!video?.link) return;
-                const versionLabel = entry.version ? ` (v${entry.version})` : '';
-                const epLabel = entry.episodes ? ` [eps ${entry.episodes}]` : '';
-                out += `
-                  <div class="theme-block">
-                    <div class="video-title">${escapeHtml(displayTitle)}${escapeHtml(versionLabel)}${escapeHtml(epLabel)}</div>
+                if (!video?.link) return '';
+                const verTag  = entry.version && entry.version > 1 ? `<span class="theme-ver-tag">v${entry.version}</span>` : '';
+                const epRange = entry.episodes ? `<span class="theme-ep-range">eps ${entry.episodes}</span>` : '';
+                return `
+                  <div class="theme-video-entry">
+                    <div class="theme-video-meta">${verTag}${epRange}</div>
                     <div class="video-wrapper">
-                      <video controls preload="metadata" ${posterImg ? `poster="${posterImg}"` : ''}>
+                      <video controls preload="none" ${posterImg ? `poster="${escapeHtml(posterImg)}"` : ''}>
                         <source src="${escapeHtml(video.link)}" type="video/webm">
-                        Your browser does not support the video tag.
                       </video>
                     </div>
+                  </div>`;
+              }).join('');
+
+              if (!videoBlocks.trim()) return '';
+
+              return `
+                <div class="theme-card">
+                  <div class="theme-card-header">
+                    <div class="theme-card-label">${escapeHtml(label)}</div>
+                    <div class="theme-card-titles">
+                      <span class="theme-song-title">${escapeHtml(songTitle)}</span>
+                      ${artists ? `<span class="theme-artist"><i class="fa-solid fa-music" style="font-size:0.65rem;opacity:0.7;"></i> ${escapeHtml(artists)}</span>` : ''}
+                    </div>
                   </div>
-                `;
-              });
-            });
-            return out;
+                  ${videoBlocks}
+                </div>`;
+            }).join('');
           }
 
-          if (ops.length) html += buildThemeSection(ops, '🎵 Opening Themes');
-          if (eds.length) html += buildThemeSection(eds, '🎵 Ending Themes');
-          
+          let html = '';
+          if (ops.length) {
+            html += `<div class="themes-section-heading"><i class="fa-solid fa-arrow-right-to-bracket" style="transform:rotate(-90deg);color:#7ec8f7;"></i> Opening Themes <span class="themes-count">${ops.length}</span></div>`;
+            html += buildThemeCards(ops, 'OP');
+          }
+          if (eds.length) {
+            html += `<div class="themes-section-heading" style="margin-top:20px;"><i class="fa-solid fa-arrow-right-from-bracket" style="transform:rotate(-90deg);color:#f6ad55;"></i> Ending Themes <span class="themes-count">${eds.length}</span></div>`;
+            html += buildThemeCards(eds, 'ED');
+          }
+
           container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-          
-        } catch (e) { 
-          console.warn('AnimeThemes API error:', e); 
-          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>'; 
+
+        } catch (e) {
+          console.warn('AnimeThemes error:', e);
+          container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>';
         }
       }
 
