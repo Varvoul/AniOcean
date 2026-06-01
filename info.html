@@ -2347,27 +2347,27 @@ img { max-width: 100%; height: auto; display: block; }
         if (window.location.hash) {
           history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-        // Force scroll to top immediately and after a tiny delay (handles browser restore-scroll)
         window.scrollTo({ top: 0, behavior: 'instant' });
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
 
-        if (typeof window.supabaseClient !== 'undefined') await initAuth();
+        // ── Parse URL first so currentState.id is set before any auth/bookmark calls ──
         parseUrl();
         initTabSwitching();
-        
+
+        // ── Auth (needs currentState.id already set) ──
+        if (typeof window.supabaseClient !== 'undefined') await initAuth();
+
         if (currentState.id && currentState.source) {
           await fetchShowData();
-          initUI();
+          initUI();                          // wire up dropdown DOM first
+          await fetchUserBookmarks();        // now fetch & render bookmark state
           if (currentState.source === 'jikan') {
-            // Anime: launch sidebar sequentially (internally staggered), recommendations in parallel
-            // fetchAllAnimeData uses AllAnime API (not Jikan), so it's safe to run in parallel
             await Promise.all([
-              loadSidebarContent(),       // internally staggered with 500ms gaps
-              loadRecommendations(),      // waterTemple has 1.2s internal delay
+              loadSidebarContent(),
+              loadRecommendations(),
               fetchAllAnimeData(currentState.data?.title)
             ]);
           } else {
-            // TMDB: all parallel, no Jikan rate limit concern
             await Promise.all([
               loadSidebarContent(),
               loadRecommendations()
@@ -2407,14 +2407,25 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       async function initAuth() {
+        // Listen for login/logout events that happen while the page is open
         window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          const prevUser = currentState.currentUser;
           currentState.currentUser = session?.user || null;
-          if (currentState.currentUser) await fetchUserBookmarks();
-          updateBookmarkUI();
+          // Only re-fetch bookmarks if the user changed (login/logout mid-session)
+          // and currentState.id is already set (parseUrl has run)
+          if (currentState.id && currentState.currentUser?.id !== prevUser?.id) {
+            await fetchUserBookmarks();
+          } else if (!currentState.currentUser) {
+            // Logged out — reset bookmark UI
+            currentState.selectedStatuses = [];
+            currentState.bookmarkRowId = null;
+            updateBookmarkUI();
+          }
         });
+        // Get the current session synchronously on page load
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         currentState.currentUser = session?.user || null;
-        if (currentState.currentUser) await fetchUserBookmarks();
+        // Do NOT call fetchUserBookmarks here — initUI hasn't run yet (DOM not ready)
       }
 
       async function fetchShowData() {
@@ -3306,35 +3317,43 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       function updateBookmarkUI() {
-        const btn  = document.getElementById('addToListBtn');
-        const text = document.getElementById('dropdownText');
+        const btn    = document.getElementById('addToListBtn');
+        const text   = document.getElementById('dropdownText');
         if (!btn || !text) return;
 
         const hasBookmark = currentState.selectedStatuses.length > 0;
 
-        if (!hasBookmark) {
-          text.textContent = 'Add to List';
-        } else {
+        // ── Button text + icon ──────────────────────────────
+        if (hasBookmark) {
           text.textContent = 'Edit List';
+          const bkIcon = btn.querySelector('i.fa-bookmark, i.fa-pen-to-square, i.fa-regular, i.fa-solid:not(.dropdown-arrow):not(.bk-check-icon)');
+          if (bkIcon && !bkIcon.classList.contains('fa-chevron-down')) {
+            bkIcon.className = 'fa-solid fa-pen-to-square';
+          }
+        } else {
+          text.textContent = 'Add to List';
+          const bkIcon = btn.querySelector('i.fa-bookmark, i.fa-pen-to-square');
+          if (bkIcon) {
+            bkIcon.className = 'fa-regular fa-bookmark';
+          }
         }
 
-        // Mark selected items with checkmark icon
+        // ── Dropdown items: selected highlight + FA check ──
         document.querySelectorAll('.dropdown-item[data-status]').forEach(item => {
           const s = item.dataset.status;
           if (s === 'remove') return;
+
           const isSelected = currentState.selectedStatuses.includes(s);
           item.classList.toggle('selected', isSelected);
-          // Add/remove Font Awesome check icon
-          let ckIcon = item.querySelector('.bk-check-icon');
+
+          // Remove all existing check icons first (clean slate each call)
+          item.querySelectorAll('.bk-check-icon').forEach(el => el.remove());
+
           if (isSelected) {
-            if (!ckIcon) {
-              ckIcon = document.createElement('i');
-              ckIcon.className = 'fa-solid fa-check bk-check-icon';
-              ckIcon.style.cssText = 'margin-left:auto;color:#48bb78;font-size:0.85rem;';
-              item.appendChild(ckIcon);
-            }
-          } else {
-            if (ckIcon) ckIcon.remove();
+            const ck = document.createElement('i');
+            ck.className     = 'fa-solid fa-check bk-check-icon';
+            ck.style.cssText = 'margin-left:auto;color:#48bb78;font-size:0.85rem;flex-shrink:0;';
+            item.appendChild(ck);
           }
         });
       }
