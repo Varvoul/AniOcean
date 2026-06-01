@@ -2774,11 +2774,31 @@ img { max-width: 100%; height: auto; display: block; }
             const m = mins % 60;
             duration = h > 0 ? `${h}h ${m}min` : `${m}min`;
           }
-        } else if (currentState.type === 'tv') {
-          const runTimes = data.episode_run_time;
-          if (runTimes?.length) duration = `${runTimes[0]} min`;
-        }
-        document.getElementById('durationValue').textContent = duration || '—';
+
+          } else if (currentState.type === 'tv') {
+  let duration = null;
+  // Try episode_run_time first
+  let runTimes = data.episode_run_time;
+  if (runTimes?.length) {
+    duration = `${runTimes[0]} min`;
+  }
+  // Fallback: some shows have a top-level runtime
+  else if (data.runtime) {
+    duration = `${data.runtime} min`;
+  }
+  // Last resort: use last episode's runtime (if available)
+  else if (data.last_episode_to_air?.runtime) {
+    duration = `${data.last_episode_to_air.runtime} min`;
+  }
+  // Optionally compute total duration if episode count is known
+  // else if (data.number_of_episodes && runTimes?.[0]) {
+  //   let totalMins = data.number_of_episodes * runTimes[0];
+  //   let hours = Math.floor(totalMins / 60);
+  //   let mins = totalMins % 60;
+  //   duration = `${hours}h ${mins}min (total)`;
+  // }
+  document.getElementById('durationValue').textContent = duration || '—';
+
         
         // Content rating
         let contentRating = '—';
