@@ -3130,146 +3130,80 @@ img { max-width: 100%; height: auto; display: block; }
         'favourite':  'My Favourite'
       };
 
-      // Build the full row payload from currentState for upsert
-      function buildBookmarkPayload(statuses) {
-        const d = currentState.data;
-        const isAnime = currentState.source === 'jikan';
-
-        // Titles
-        const eng_title      = isAnime ? (d.title_english || d.title || '') : (d.title || d.name || '');
-        const default_title  = d.title || d.name || '';
-        const original_title = isAnime ? '' : (d.original_title || d.original_name || '');
-        const romanji_title  = isAnime ? (d.title || '') : '';
-        const japanese_title = isAnime ? (d.title_japanese || '') : '';
-        const synonyms       = isAnime ? (d.title_synonyms || []).join(', ') : '';
-
-        // IDs  (mal_id / tmdb_id are int4 in DB — must be integer or null)
-        const mal_id  = isAnime  ? (parseInt(d.mal_id  || currentState.id) || null) : null;
-        const tmdb_id = !isAnime ? (parseInt(currentState.id)              || null) : null;
-
-        // Meta
-        const country_name = isAnime
-          ? 'Japan'
-          : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '');
-        const genres       = (d.genres || []).map(g => g.name).join(', ');
-        const aired_date   = isAnime
-          ? (d.aired?.string || '')
-          : (d.release_date || d.first_air_date || '');
-        const broadcast_day_time = isAnime ? (d.broadcast?.string || '') : '';
-
-        // "source" column = anime source material (manga/LN/original etc.)
-        const source_material = isAnime ? (d.source || '') : '';
-
-        const rank       = isAnime ? (parseInt(d.rank)       || null) : null;
-        const popularity = isAnime
-          ? (parseInt(d.popularity) || null)
-          : (Math.round(d.popularity) || null);
-
-        const studio_name    = isAnime
-          ? (d.studios    || []).map(s => s.name).join(', ')
-          : (d.production_companies || []).map(s => s.name).join(', ');
-        const producers_name = isAnime
-          ? (d.producers  || []).map(p => p.name).join(', ')
-          : '';
-        const total_epi_num  = isAnime
-          ? (parseInt(d.episodes)            || null)
-          : (parseInt(d.number_of_episodes)  || null);
-
-        const format            = isAnime ? (d.type || '') : (currentState.type || '');
-        const synopsis_context  = isAnime ? (d.synopsis || '') : '';
-        const overview_context  = !isAnime ? (d.overview || '') : '';
-
-        // numeric(4,2) columns — must be number or null
-        const mal_score          = isAnime  ? (parseFloat(d.score)        || null) : null;
-        const tmdb_average_score = !isAnime ? (parseFloat(d.vote_average) || null) : null;
-
-        const content_rating = isAnime
-          ? (d.rating ? d.rating.split(' - ')[0] : '')
-          : '';
-        const anime_duration_time   = isAnime ? (d.duration || '') : '';
-        const tmdb_movie_tv_runtime = !isAnime
-          ? (parseInt(d.runtime || d.episode_run_time?.[0]) || null)
-          : null;
-
-        const show_poster_link = isAnime
-          ? (d.images?.jpg?.image_url || '')
-          : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : '');
-        const show_backdrop_landscape_image_link = isAnime
-          ? (d.images?.jpg?.large_image_url || '')
-          : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '');
-
-        const external_link_mal  = isAnime  ? `https://myanimelist.net/anime/${mal_id}` : '';
-        const external_link_tmdb = !isAnime
-          ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}`
-          : '';
-
-        // show_id is int4 in DB
+      // Columns confirmed present from schema upgrade SQL.
+      // If a column doesn't exist yet, Supabase returns PGRST204 "column not found".
+      // We try the full payload first; if it fails we fall back to core-only columns.
+      function buildBookmarkPayloadCore(statuses) {
         const show_id_int = parseInt(currentState.id) || null;
+        const isAnime     = currentState.source === 'jikan';
+        const d           = currentState.data;
+        const mal_id      = isAnime  ? (parseInt(d.mal_id  || currentState.id) || null) : null;
+        const tmdb_id     = !isAnime ? (parseInt(currentState.id)              || null) : null;
+        const media_id    = `${currentState.source}-${currentState.id}`;
+        const media_type  = currentState.type;
 
-        // media_id = "jikan-37520" or "tmdb-278573" etc.
-        const media_id   = `${currentState.source}-${currentState.id}`;
-        const media_type = currentState.type;   // 'anime' | 'tv' | 'movie'
-
-        // show_status (col 40, int4) — not a text field, skip it to avoid type error
-        // We do NOT send show_status since it's an int4 and we don't have that data
+        // Get username from shared.js user profile if available
+        const username = currentState.currentUser?.user_metadata?.username
+          || currentState.currentUser?.email?.split('@')[0]
+          || null;
 
         return {
-          // Identity / FK
-          user_id:    currentState.currentUser.id,   // uuid
-          show_id:    show_id_int,                   // int4
+          user_id:          currentState.currentUser.id,
+          show_id:          show_id_int,
+          media_id,
+          media_type,
+          bookmark_status:  statuses.join(','),
+          mal_id,
+          tmdb_id,
+          username,
+          updated_at:       new Date().toISOString()
+        };
+      }
 
-          // Reference columns
-          media_id,          // text
-          media_type,        // text
+      function buildBookmarkPayloadFull(statuses) {
+        const core    = buildBookmarkPayloadCore(statuses);
+        const d       = currentState.data;
+        const isAnime = currentState.source === 'jikan';
 
-          // The one column that matters for the feature
-          Bookmark_status: statuses.join(','),        // text (exact column name from schema)
+        const mal_id  = core.mal_id;
+        const tmdb_id = core.tmdb_id;
 
-          // Integer IDs
-          mal_id,            // int4
-          tmdb_id,           // int4
+        return {
+          ...core,
 
           // Titles
-          eng_title,         // text
-          default_title,     // text
-          original_title,    // text
-          romanji_title,     // text
-          japanese_title,    // text
-          synonyms,          // text
+          eng_title:      isAnime ? (d.title_english || d.title || '') : (d.title || d.name || ''),
+          default_title:  d.title || d.name || '',
+          original_title: isAnime ? '' : (d.original_title || d.original_name || ''),
+          romanji_title:  isAnime ? (d.title || '') : '',
+          japanese_title: isAnime ? (d.title_japanese || '') : '',
+          synonyms:       isAnime ? (d.title_synonyms || []).join(', ') : '',
 
           // Details
-          country_name,      // text
-          genres,            // text
-          aired_date,        // text
-          broadcast_day_time,// text
-          source: source_material, // text (anime source material)
-          rank,              // int4
-          popularity,        // int4
-          studio_name,       // text
-          producers_name,    // text
-          total_epi_num,     // int4
-          dub_epi_num:  parseInt(currentState.allAnimeData?.episodes_dub) || null,  // int4
-          sub_epi_num:  parseInt(currentState.allAnimeData?.episodes_sub) || null,  // int4
-          format,            // text
-
-          // Long text
-          synopsis_context,  // text
-          overview_context,  // text
-
-          // Scores
-          mal_score,         // numeric(4,2)
-          tmdb_average_score,// numeric(4,2)
-
-          // More details
-          content_rating,    // text
-          anime_duration_time,      // text
-          tmdb_movie_tv_runtime,    // int4
-          show_poster_link,         // text
-          show_backdrop_landscape_image_link, // text
-          external_link_mal,        // text
-          external_link_tmdb,       // text
-
-          updated_at: new Date().toISOString()  // timestamptz
+          country_name:        isAnime ? 'Japan' : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || ''),
+          genres:              (d.genres || []).map(g => g.name).join(', '),
+          aired_date:          isAnime ? (d.aired?.string || '') : (d.release_date || d.first_air_date || ''),
+          broadcast_day_time:  isAnime ? (d.broadcast?.string || '') : '',
+          source:              isAnime ? (d.source || '') : '',
+          rank:                isAnime ? (parseInt(d.rank)       || null) : null,
+          popularity:          isAnime ? (parseInt(d.popularity) || null) : (Math.round(d.popularity) || null),
+          studio_name:         isAnime ? (d.studios    || []).map(s => s.name).join(', ') : (d.production_companies || []).map(s => s.name).join(', '),
+          producers_name:      isAnime ? (d.producers  || []).map(p => p.name).join(', ') : '',
+          total_epi_num:       isAnime ? (parseInt(d.episodes) || null) : (parseInt(d.number_of_episodes) || null),
+          dub_epi_num:         parseInt(currentState.allAnimeData?.episodes_dub) || null,
+          sub_epi_num:         parseInt(currentState.allAnimeData?.episodes_sub) || null,
+          format:              isAnime ? (d.type || '') : (currentState.type || ''),
+          synopsis_context:    isAnime ? (d.synopsis || '') : '',
+          overview_context:    !isAnime ? (d.overview || '') : '',
+          mal_score:           isAnime  ? (parseFloat(d.score)        || null) : null,
+          tmdb_average_score:  !isAnime ? (parseFloat(d.vote_average) || null) : null,
+          content_rating:      isAnime  ? (d.rating ? d.rating.split(' - ')[0] : '') : '',
+          anime_duration_time: isAnime  ? (d.duration || '') : '',
+          tmdb_movie_tv_runtime: !isAnime ? (parseInt(d.runtime || d.episode_run_time?.[0]) || null) : null,
+          show_poster_link:    isAnime  ? (d.images?.jpg?.image_url || '') : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : ''),
+          show_backdrop_landscape_image_link: isAnime ? (d.images?.jpg?.large_image_url || '') : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : ''),
+          external_link_mal:   isAnime  ? `https://myanimelist.net/anime/${mal_id}` : '',
+          external_link_tmdb:  !isAnime ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}` : ''
         };
       }
 
@@ -3278,15 +3212,14 @@ img { max-width: 100%; height: auto; display: block; }
         try {
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('Bookmark_status, id')
+            .select('bookmark_status, id')
             .eq('user_id', currentState.currentUser.id)
             .eq('show_id', parseInt(currentState.id))
             .maybeSingle();
 
           if (error) { console.error('fetchUserBookmarks error:', error); return; }
 
-          // Column is "Bookmark_status" (capital B) per schema
-          const rawStatus = data?.Bookmark_status || data?.bookmark_status || '';
+          const rawStatus = data?.bookmark_status || '';
           if (data && rawStatus) {
             currentState.selectedStatuses = rawStatus
               .split(',')
@@ -3301,12 +3234,20 @@ img { max-width: 100%; height: auto; display: block; }
         } catch (e) { console.error('fetchUserBookmarks exception:', e); }
       }
 
+      async function upsertPayload(supa, payload) {
+        const { data, error } = await supa
+          .from('user_bookmarks')
+          .upsert(payload, { onConflict: 'user_id,show_id' })
+          .select('id')
+          .maybeSingle();
+        return { data, error };
+      }
+
       async function saveBookmarks() {
         if (!currentState.currentUser) return;
         const supa = window.supabaseClient;
         try {
           if (currentState.selectedStatuses.length === 0) {
-            // Delete if no statuses remain
             if (currentState.bookmarkRowId) {
               const { error } = await supa
                 .from('user_bookmarks')
@@ -3316,22 +3257,34 @@ img { max-width: 100%; height: auto; display: block; }
               if (error) throw error;
               currentState.bookmarkRowId = null;
             }
-          } else {
-            const payload = buildBookmarkPayload(currentState.selectedStatuses);
-            console.log('[Bookmark] Upserting payload:', payload);
-            const { data, error } = await supa
-              .from('user_bookmarks')
-              .upsert(payload, { onConflict: 'user_id,show_id' })
-              .select('id')
-              .maybeSingle();
+            return;
+          }
+
+          // Try full payload first (all columns from migration SQL)
+          const fullPayload = buildBookmarkPayloadFull(currentState.selectedStatuses);
+          let { data, error } = await upsertPayload(supa, fullPayload);
+
+          if (error) {
+            // If full payload fails due to missing columns, fall back to core columns only
+            const isColumnMissing = error.code === 'PGRST204' || 
+              (error.message && error.message.includes('column'));
+            if (isColumnMissing) {
+              console.warn('[Bookmark] Full payload failed (missing columns), trying core-only:', error.message);
+              const corePayload = buildBookmarkPayloadCore(currentState.selectedStatuses);
+              const fallback = await upsertPayload(supa, corePayload);
+              data  = fallback.data;
+              error = fallback.error;
+            }
             if (error) {
-              console.error('[Bookmark] Upsert error details:', JSON.stringify(error, null, 2));
+              console.error('[Bookmark] Upsert failed:', JSON.stringify(error, null, 2));
               throw error;
             }
-            if (data?.id) currentState.bookmarkRowId = data.id;
           }
+
+          if (data?.id) currentState.bookmarkRowId = data.id;
+
         } catch (e) {
-          console.error('[Bookmark] saveBookmarks failed:', e);
+          console.error('[Bookmark] saveBookmarks exception:', e);
           showToast('Failed to update list', 'error');
         }
       }
