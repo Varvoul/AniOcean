@@ -2013,6 +2013,137 @@ img { max-width: 100%; height: auto; display: block; }
   outline: none;
   box-shadow: none;
 }
+
+    /* Watch More Seasons - Scrollable container with hidden scrollbar */
+.seasons-section {
+  margin-bottom: 32px;
+}
+
+.seasons-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+}
+
+/* Scrollable wrapper - same max-height as cast/crew, no visible scrollbar */
+.seasons-scroll-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 12px;
+  /* Hide scrollbar completely (cross-browser) */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+
+.seasons-scroll-container::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari, Opera */
+}
+
+/* Inner grid (2‑column layout) */
+.seasons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 2px; /* tiny breathing room */
+}
+
+/* Season card styling (original) */
+.season-card {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.season-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.season-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%);
+  z-index: 1;
+}
+
+.season-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85);
+}
+
+.season-number {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  text-align: center;
+  padding: 6px 20px;
+  background: rgba(43, 108, 176, 0.95);
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.season-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+
+.season-relation-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(236, 201, 75, 0.2);
+  border: 1px solid rgba(236, 201, 75, 0.5);
+  color: var(--accent-gold, #ecc94b);
+  text-transform: uppercase;
+}
+
+.season-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface, #1a3a5c);
+  z-index: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .seasons-scroll-container {
+    max-height: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .seasons-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
   </style>
 </head>
 <body>
@@ -2165,12 +2296,14 @@ img { max-width: 100%; height: auto; display: block; }
         </section>
 
         <!-- Watch More Seasons -->
-        <section class="seasons-section" id="seasonsSection" style="display:none;">
+         <section class="seasons-section" id="seasonsSection" style="display:none;">
           <h3>Watch More Seasons</h3>
-          <div class="seasons-grid" id="seasonsGrid">
-            <!-- Dynamically populated -->
+          <div class="seasons-scroll-container">
+            <div class="seasons-grid" id="seasonsGrid">
+              <!-- dynamic seasons injected here -->
+            </div>
           </div>
-        </section>
+        </section
 
         <!-- Tab Navigation — desktop: radio/glider sliding tabs; mobile: scroll buttons -->
         <section class="tabs-section">
