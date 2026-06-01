@@ -71,6 +71,20 @@
 /* Prevent browser smooth-scroll from causing perceived auto-scroll on load */
 html { scroll-behavior: auto; }
 
+/* Prevent tab radio inputs from pulling the page when they receive focus/checked state */
+.tabs-radio input[type="radio"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  scroll-margin: 0 !important;
+  scroll-margin-top: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
 /* Reset & Base */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
@@ -2013,7 +2027,142 @@ img { max-width: 100%; height: auto; display: block; }
   outline: none;
   box-shadow: none;
 }
+
+    /* Watch More Seasons - Scrollable container with hidden scrollbar */
+.seasons-section {
+  margin-bottom: 32px;
+}
+
+.seasons-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+}
+
+/* Scrollable wrapper - same max-height as cast/crew, no visible scrollbar */
+.seasons-scroll-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 12px;
+  /* Hide scrollbar completely (cross-browser) */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+
+.seasons-scroll-container::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari, Opera */
+}
+
+/* Inner grid (2‑column layout) */
+.seasons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 2px; /* tiny breathing room */
+}
+
+/* Season card styling (original) */
+.season-card {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.season-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.season-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%);
+  z-index: 1;
+}
+
+.season-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85);
+}
+
+.season-number {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  text-align: center;
+  padding: 6px 20px;
+  background: rgba(43, 108, 176, 0.95);
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.season-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+
+.season-relation-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(236, 201, 75, 0.2);
+  border: 1px solid rgba(236, 201, 75, 0.5);
+  color: var(--accent-gold, #ecc94b);
+  text-transform: uppercase;
+}
+
+.season-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface, #1a3a5c);
+  z-index: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .seasons-scroll-container {
+    max-height: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .seasons-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
   </style>
+  <script>
+    // Runs before any HTML renders — disables browser scroll-restoration
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  </script>
 </head>
 <body>
   <!-- Header/Footer injected by shared.js -->
@@ -2165,19 +2314,21 @@ img { max-width: 100%; height: auto; display: block; }
         </section>
 
         <!-- Watch More Seasons -->
-        <section class="seasons-section" id="seasonsSection" style="display:none;">
+         <section class="seasons-section" id="seasonsSection" style="display:none;">
           <h3>Watch More Seasons</h3>
-          <div class="seasons-grid" id="seasonsGrid">
-            <!-- Dynamically populated -->
+          <div class="seasons-scroll-container">
+            <div class="seasons-grid" id="seasonsGrid">
+              <!-- dynamic seasons injected here -->
+            </div>
           </div>
-        </section>
+        </section
 
         <!-- Tab Navigation — desktop: radio/glider sliding tabs; mobile: scroll buttons -->
         <section class="tabs-section">
           <!-- Desktop sliding tabs (radio+glider) -->
           <div class="tabs-radio-wrap" id="tabsRadioWrap">
             <div class="tabs-radio">
-              <input type="radio" id="tab-r-cast" name="info-tabs" checked>
+              <input type="radio" id="tab-r-cast" name="info-tabs">
               <label class="tab-radio-label" for="tab-r-cast" data-tab="cast">Cast/Crew</label>
               <input type="radio" id="tab-r-artwork" name="info-tabs">
               <label class="tab-radio-label" for="tab-r-artwork" data-tab="artwork">Artwork</label>
@@ -2343,24 +2494,25 @@ img { max-width: 100%; height: auto; display: block; }
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
-        // Prevent any auto-scrolling caused by hash/anchor or tab radio state on load
+        // Remove hash so browser doesn't anchor-scroll to any element
         if (window.location.hash) {
           history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
+        // Single scroll-to-top pin — no overflow lock, no setTimeout
+        window.scrollTo(0, 0);
 
-        // ── Parse URL first so currentState.id is set before any auth/bookmark calls ──
+        // Parse URL first — currentState.id must exist before auth/bookmark calls
         parseUrl();
         initTabSwitching();
 
-        // ── Auth (needs currentState.id already set) ──
+        // Auth
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
 
         if (currentState.id && currentState.source) {
           await fetchShowData();
-          initUI();                          // wire up dropdown DOM first
-          await fetchUserBookmarks();        // now fetch & render bookmark state
+          initUI();
+          await fetchUserBookmarks();
+
           if (currentState.source === 'jikan') {
             await Promise.all([
               loadSidebarContent(),
@@ -2376,6 +2528,7 @@ img { max-width: 100%; height: auto; display: block; }
         } else {
           showError('Invalid show URL format');
         }
+        // Page fully loaded — user can now scroll freely
       });
 
       function parseUrl() {
@@ -3074,7 +3227,12 @@ img { max-width: 100%; height: auto; display: block; }
           });
         });
 
-        // Initial glider position (double-rAF so layout is settled)
+        // Activate Cast tab via JS — never put "checked" in HTML (browser scrolls to it)
+        const firstRadio = document.querySelector('.tabs-radio input[type="radio"]');
+        if (firstRadio) firstRadio.checked = true;
+        showTab('cast');
+
+        // Position glider — double rAF waits for layout to settle
         requestAnimationFrame(() => requestAnimationFrame(() => {
           if (glider) glider.style.transition = 'none';
           const firstLabel = document.querySelector('.tab-radio-label');
@@ -3875,7 +4033,7 @@ async function loadSunkenTreasures(page = 1) {
       renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
       
       // Smooth scroll to section top
-      gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // scrollIntoView removed — user controls their own scroll position
     } else {
       gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
       renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
