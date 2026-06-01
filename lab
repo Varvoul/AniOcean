@@ -68,6 +68,9 @@
   --transition-fast: 0.18s ease;
 }
 
+/* Prevent browser smooth-scroll from causing perceived auto-scroll on load */
+html { scroll-behavior: auto; }
+
 /* Reset & Base */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
@@ -478,13 +481,12 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .dropdown-item.selected {
   background: rgba(43, 108, 176, 0.2);
-  color: var(--accent-cyan);
+  color: #68d391;
 }
-.dropdown-item.selected::after {
-  content: '✓';
+.dropdown-item.selected .bk-check-icon {
   margin-left: auto;
-  color: var(--accent-green);
-  font-weight: bold;
+  color: #48bb78;
+  font-size: 0.85rem;
 }
 .status-icon { flex-shrink: 0; }
 
@@ -832,6 +834,44 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--border-subtle);
+}
+
+    /* Vertically scrolling warp container for Cast/Crew tab */
+    /* Vertically scrolling warp container for Cast/Crew tab – no borders */
+.cast-warp-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: var(--radius-md, 12px);
+  border: none;                    /* removes outer border */
+  scrollbar-width: thin;
+  scrollbar-color: var(--btn-primary, #2b6cb0) rgba(255,255,255,0.05);
+}
+
+.cast-warp-container::-webkit-scrollbar {
+  width: 5px;
+}
+.cast-warp-container::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+}
+.cast-warp-container::-webkit-scrollbar-thumb {
+  background: var(--btn-primary, #2b6cb0);
+  border-radius: 3px;
+}
+
+/* Remove all inner borders (row separators and vertical divider) */
+.cast-warp-container .cast-list-grid {
+  border: none;
+}
+
+.cast-warp-container .cast-row {
+  border-bottom: none;
+}
+
+.cast-warp-container .cast-va-side,
+.cast-warp-container .cast-va-empty {
+  border-left: none;
 }
 
 .cast-row {
@@ -2297,28 +2337,37 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, currentUserProfile: null, userBookmarks: [],
-        selectedStatuses: [], dropdownTimer: null, allAnimeData: null
+        data: null, currentUser: null,
+        selectedStatuses: [], dropdownTimer: null,
+        bookmarkRowId: null, allAnimeData: null
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
-        if (typeof window.supabaseClient !== 'undefined') await initAuth();
+        // Prevent any auto-scrolling caused by hash/anchor or tab radio state on load
+        if (window.location.hash) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
+
+        // ── Parse URL first so currentState.id is set before any auth/bookmark calls ──
         parseUrl();
         initTabSwitching();
-        
+
+        // ── Auth (needs currentState.id already set) ──
+        if (typeof window.supabaseClient !== 'undefined') await initAuth();
+
         if (currentState.id && currentState.source) {
           await fetchShowData();
-          initUI();
+          initUI();                          // wire up dropdown DOM first
+          await fetchUserBookmarks();        // now fetch & render bookmark state
           if (currentState.source === 'jikan') {
-            // Anime: launch sidebar sequentially (internally staggered), recommendations in parallel
-            // fetchAllAnimeData uses AllAnime API (not Jikan), so it's safe to run in parallel
             await Promise.all([
-              loadSidebarContent(),       // internally staggered with 500ms gaps
-              loadRecommendations(),      // waterTemple has 1.2s internal delay
+              loadSidebarContent(),
+              loadRecommendations(),
               fetchAllAnimeData(currentState.data?.title)
             ]);
           } else {
-            // TMDB: all parallel, no Jikan rate limit concern
             await Promise.all([
               loadSidebarContent(),
               loadRecommendations()
@@ -2358,14 +2407,25 @@ img { max-width: 100%; height: auto; display: block; }
       }
 
       async function initAuth() {
+        // Listen for login/logout events that happen while the page is open
         window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          const prevUser = currentState.currentUser;
           currentState.currentUser = session?.user || null;
-          if (currentState.currentUser) await fetchUserBookmarks();
-          updateBookmarkUI();
+          // Only re-fetch bookmarks if the user changed (login/logout mid-session)
+          // and currentState.id is already set (parseUrl has run)
+          if (currentState.id && currentState.currentUser?.id !== prevUser?.id) {
+            await fetchUserBookmarks();
+          } else if (!currentState.currentUser) {
+            // Logged out — reset bookmark UI
+            currentState.selectedStatuses = [];
+            currentState.bookmarkRowId = null;
+            updateBookmarkUI();
+          }
         });
+        // Get the current session synchronously on page load
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         currentState.currentUser = session?.user || null;
-        if (currentState.currentUser) await fetchUserBookmarks();
+        // Do NOT call fetchUserBookmarks here — initUI hasn't run yet (DOM not ready)
       }
 
       async function fetchShowData() {
@@ -2867,37 +2927,53 @@ img { max-width: 100%; height: auto; display: block; }
         
         const dropdownBtn = document.getElementById('addToListBtn');
         const dropdown = document.getElementById('bookmarkDropdown');
+
+        function closeDropdown(showNotification) {
+          clearTimeout(currentState.dropdownTimer);
+          currentState.dropdownTimer = null;
+          dropdown.classList.remove('show');
+          dropdownBtn.classList.remove('open');
+          dropdownBtn.setAttribute('aria-expanded', 'false');
+          if (showNotification) {
+            showBookmarkToast(currentState.selectedStatuses);
+          }
+        }
+
+        function startAutoCloseTimer() {
+          clearTimeout(currentState.dropdownTimer);
+          // After selecting the 1st status, give 3s to pick a 2nd before auto-closing
+          currentState.dropdownTimer = setTimeout(() => {
+            closeDropdown(true);
+          }, 3000);
+        }
+
         dropdownBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!currentState.currentUser) { showLoginAlert(); return; }
-          const isOpen = dropdown.classList.toggle('show');
-          dropdownBtn.classList.toggle('open', isOpen);
-          dropdownBtn.setAttribute('aria-expanded', isOpen);
-          
-          if (currentState.selectedStatuses.length === 1) {
-            clearTimeout(currentState.dropdownTimer);
-            currentState.dropdownTimer = setTimeout(() => { 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
-            }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);
+          const isOpen = !dropdown.classList.contains('show');
+          if (isOpen) {
+            dropdown.classList.add('show');
+            dropdownBtn.classList.add('open');
+            dropdownBtn.setAttribute('aria-expanded', 'true');
+            // If already has 1 status selected, start the timer right away
+            if (currentState.selectedStatuses.length === 1) startAutoCloseTimer();
+          } else {
+            closeDropdown(currentState.selectedStatuses.length > 0);
           }
         });
-        
-        document.addEventListener('click', (e) => { 
-          if (!e.target.closest('.dropdown-container')) { 
-            dropdown.classList.remove('show'); 
-            dropdownBtn.classList.remove('open');
-            dropdownBtn.setAttribute('aria-expanded', 'false');
-          } 
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (dropdown.classList.contains('show') && !e.target.closest('.dropdown-container')) {
+            closeDropdown(currentState.selectedStatuses.length > 0);
+          }
         });
-        
+
         document.querySelectorAll('.dropdown-item').forEach(item => {
           item.addEventListener('click', async (e) => {
             e.stopPropagation();
             const status = item.dataset.status;
 
-            // Remove all bookmarks for this show
             if (status === 'remove') {
               clearTimeout(currentState.dropdownTimer);
               await removeBookmark();
@@ -2907,35 +2983,31 @@ img { max-width: 100%; height: auto; display: block; }
               return;
             }
 
-            // Toggle the clicked status (max 2 at once)
-            const index = currentState.selectedStatuses.indexOf(status);
-            if (index > -1) {
-              currentState.selectedStatuses.splice(index, 1);
-              item.classList.remove('selected');
+            const idx = currentState.selectedStatuses.indexOf(status);
+            if (idx > -1) {
+              // Deselect
+              currentState.selectedStatuses.splice(idx, 1);
             } else if (currentState.selectedStatuses.length < 2) {
+              // Select
               currentState.selectedStatuses.push(status);
-              item.classList.add('selected');
+            } else {
+              // Already at max (2) — ignore
+              return;
             }
 
-            updateDropdownButtonText();
+            updateBookmarkUI();
             await saveBookmarks();
 
-            // After 1st pick: start 5-sec auto-close so user can optionally pick a 2nd
-            clearTimeout(currentState.dropdownTimer);
-            if (currentState.selectedStatuses.length === 1) {
-              currentState.dropdownTimer = setTimeout(() => {
-                dropdown.classList.remove('show');
-                dropdownBtn.classList.remove('open');
-                dropdownBtn.setAttribute('aria-expanded', 'false');
-              }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);
-            }
-
-            // After 2nd pick: close immediately
             if (currentState.selectedStatuses.length >= 2) {
+              // Got both picks — close immediately with toast
+              closeDropdown(true);
+            } else if (currentState.selectedStatuses.length === 1) {
+              // 1 selected — start 3-second timer
+              startAutoCloseTimer();
+            } else {
+              // Deselected all — restart timer or keep open
               clearTimeout(currentState.dropdownTimer);
-              dropdown.classList.remove('show');
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
+              currentState.dropdownTimer = null;
             }
           });
         });
@@ -3055,302 +3127,301 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ─────────────────────────────────────────────────────────────
-      //  BOOKMARK HELPERS — full user_bookmarks schema
-      // ─────────────────────────────────────────────────────────────
+      // ═══════════════════════════════════════════
+      // BOOKMARK SYSTEM — Supabase user_bookmarks
+      // ═══════════════════════════════════════════
 
-      /** Collect every column required by the user_bookmarks table */
-      function buildBookmarkPayload(statusList) {
+      // Status label map (for display)
+      const STATUS_LABELS = {
+        'planning':   'Planning to Watch',
+        'watching':   'Watching',
+        'completed':  'Completed',
+        'rewatching': 'Re-watching',
+        'dropped':    'Dropped',
+        'favourite':  'My Favourite'
+      };
+
+      // Columns confirmed present from schema upgrade SQL.
+      // If a column doesn't exist yet, Supabase returns PGRST204 "column not found".
+      // We try the full payload first; if it fails we fall back to core-only columns.
+      function buildBookmarkPayloadCore(statuses) {
+        const show_id_int = parseInt(currentState.id) || null;
+        const isAnime     = currentState.source === 'jikan';
+        const d           = currentState.data;
+        const mal_id      = isAnime  ? (parseInt(d.mal_id  || currentState.id) || null) : null;
+        const tmdb_id     = !isAnime ? (parseInt(currentState.id)              || null) : null;
+        const media_id    = `${currentState.source}-${currentState.id}`;
+        const media_type  = currentState.type;
+
+        // Get username from shared.js user profile if available
+        const username = currentState.currentUser?.user_metadata?.username
+          || currentState.currentUser?.email?.split('@')[0]
+          || null;
+
+        return {
+          user_id:          currentState.currentUser.id,
+          show_id:          show_id_int,
+          media_id,
+          media_type,
+          bookmark_status:  statuses.join(','),
+          mal_id,
+          tmdb_id,
+          username,
+          updated_at:       new Date().toISOString()
+        };
+      }
+
+      function buildBookmarkPayloadFull(statuses) {
+        const core    = buildBookmarkPayloadCore(statuses);
         const d       = currentState.data;
         const isAnime = currentState.source === 'jikan';
 
-        // ── IDs ────────────────────────────────────────────
-        const mal_id  = isAnime ? currentState.id : null;
-        const tmdb_id = !isAnime ? currentState.id : null;
-
-        // ── Titles ─────────────────────────────────────────
-        const eng_title      = isAnime ? (d.title_english  || null) : (d.title  || d.name || null);
-        const default_title  = isAnime ? (d.title          || null) : (d.title  || d.name || null);
-        const original_title = isAnime ? null : (d.original_title   || d.original_name || null);
-        const romanji_title  = isAnime ? (d.title !== d.title_english ? d.title : null) : null;
-        const japanese_title = isAnime ? (d.title_japanese || null) : null;
-        const synonyms       = (isAnime && d.title_synonyms?.length)
-                                 ? d.title_synonyms.join(', ') : null;
-
-        // ── Country full name ──────────────────────────────
-        const ISO_NAMES = {
-          US:'United States',GB:'United Kingdom',JP:'Japan',KR:'South Korea',
-          CN:'China',FR:'France',DE:'Germany',IN:'India',IT:'Italy',
-          ES:'Spain',CA:'Canada',AU:'Australia',BR:'Brazil',MX:'Mexico',
-          RU:'Russia',SE:'Sweden',NO:'Norway',DK:'Denmark',FI:'Finland',
-          NL:'Netherlands',BE:'Belgium',AT:'Austria',CH:'Switzerland',
-          PL:'Poland',TR:'Turkey',TH:'Thailand',TW:'Taiwan',HK:'Hong Kong',
-          SG:'Singapore',PH:'Philippines',ID:'Indonesia',MY:'Malaysia',VN:'Vietnam'
-        };
-        let country_name = 'Japan';
-        if (!isAnime) {
-          const iso = d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '';
-          country_name = ISO_NAMES[iso] || iso || null;
-        }
-
-        // ── Genres ─────────────────────────────────────────
-        const genreArr = isAnime
-          ? [...(d.genres||[]), ...(d.themes||[]), ...(d.demographics||[])].map(g => g.name)
-          : (d.genres||[]).map(g => g.name);
-        const genres = genreArr.length ? [...new Set(genreArr)].join(', ') : null;
-
-        // ── Dates / broadcast ──────────────────────────────
-        let aired_date = null;
-        if (isAnime && d.aired?.from) {
-          const fmt = dt => new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-          aired_date = `${fmt(d.aired.from)} to ${d.aired.to ? fmt(d.aired.to) : 'Ongoing'}`;
-        } else if (!isAnime) {
-          aired_date = d.release_date || d.first_air_date || null;
-        }
-        const broadcast_day_time = isAnime ? (d.broadcast?.string || null) : null;
-
-        // ── Source material (manga / light novel / etc.) ───
-        // NOTE: stored in the 'source' column — kept separate from currentState.source
-        const source_material = isAnime ? (d.source || null) : null;
-
-        // ── Rank / popularity ──────────────────────────────
-        const rank       = d.rank       ?? null;
-        const popularity = d.popularity ?? null;
-
-        // ── Studio / producers ─────────────────────────────
-        const studio_name = isAnime
-          ? (d.studios?.map(s => s.name).join(', ')            || null)
-          : (d.production_companies?.map(c => c.name).join(', ')
-             || d.networks?.map(n => n.name).join(', ')        || null);
-        const producers_name = isAnime
-          ? (d.producers?.map(p => p.name).join(', ') || null) : null;
-
-        // ── Episode counts ─────────────────────────────────
-        const total_epi_num = isAnime ? (d.episodes ?? null) : (d.number_of_episodes ?? null);
-        const sub_epi_num   = currentState.allAnimeData?.episodes_sub ?? null;
-        const dub_epi_num   = currentState.allAnimeData?.episodes_dub ?? null;
-
-        // ── Format ─────────────────────────────────────────
-        const format = isAnime
-          ? (d.type || null)
-          : (currentState.type === 'movie' ? 'Movie' : (d.type || 'Scripted'));
-
-        // ── Synopses ───────────────────────────────────────
-        const synopsis_context = isAnime ? (d.synopsis || null) : null;
-        const overview_context = !isAnime ? (d.overview || null) : null;
-
-        // ── Scores ─────────────────────────────────────────
-        const mal_score          = isAnime  ? (d.score        ?? null) : null;
-        const tmdb_average_score = !isAnime ? (d.vote_average ?? null) : null;
-
-        // ── Content rating ─────────────────────────────────
-        let content_rating = null;
-        if (isAnime) {
-          content_rating = d.rating ? d.rating.split(' - ')[0].trim() : null;
-        } else if (currentState.type === 'movie') {
-          content_rating = d.release_dates?.results
-            ?.find(r => r.iso_3166_1 === 'US')?.release_dates?.[0]?.certification || null;
-        } else {
-          content_rating = d.content_ratings?.results
-            ?.find(r => r.iso_3166_1 === 'US')?.rating || null;
-        }
-
-        // ── Duration / runtime ─────────────────────────────
-        const anime_duration_time   = isAnime ? (d.duration || null) : null;
-        const tmdb_movie_tv_runtime = !isAnime
-          ? (currentState.type === 'movie' ? (d.runtime ?? null) : (d.episode_run_time?.[0] ?? null))
-          : null;
-
-        // ── Image URLs ─────────────────────────────────────
-        const show_poster_link = isAnime
-          ? (d.images?.jpg?.image_url || null)
-          : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : null);
-        const show_backdrop_landscape_image_link = isAnime
-          ? (d.images?.jpg?.large_image_url || null)
-          : (d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null);
-
-        // ── External links ─────────────────────────────────
-        const external_link_mal  = (isAnime && d.mal_id)
-          ? `https://myanimelist.net/anime/${d.mal_id}` : null;
-        const external_link_tmdb = !isAnime
-          ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : null;
-
-        // ── Username ───────────────────────────────────────
-        const username = currentState.currentUserProfile?.username || null;
-
-        // ── Two statuses stored as comma-separated string ──
-        const bookmark_status = statusList.join(', ');
+        const mal_id  = core.mal_id;
+        const tmdb_id = core.tmdb_id;
 
         return {
-          // core identity
-          user_id:    currentState.currentUser.id,
-          username,
-          show_id:    currentState.id,          // legacy — keep for old queries
-          show_type:  currentState.type,        // 'anime' / 'tv' / 'movie'
-          title:      currentState.title,
-          mal_id,
-          tmdb_id,
-          // bookmark state
-          bookmark_status,                      // new: comma-joined e.g. "watching, completed"
-          status: statusList[0] || null,        // legacy: first status for old queries
-          // titles
-          eng_title, default_title, original_title, romanji_title, japanese_title, synonyms,
-          // metadata
-          country_name, genres, aired_date, broadcast_day_time,
-          source: source_material,              // ← manga / LN / original (NOT 'jikan'/'tmdb')
-          rank, popularity,
-          studio_name, producers_name,
-          total_epi_num, dub_epi_num, sub_epi_num,
-          format,
-          synopsis_context, overview_context,
-          mal_score, tmdb_average_score,
-          content_rating,
-          anime_duration_time, tmdb_movie_tv_runtime,
-          show_poster_link, show_backdrop_landscape_image_link,
-          external_link_mal, external_link_tmdb,
-          updated_at: new Date().toISOString()
+          ...core,
+
+          // Titles
+          eng_title:      isAnime ? (d.title_english || d.title || '') : (d.title || d.name || ''),
+          default_title:  d.title || d.name || '',
+          original_title: isAnime ? '' : (d.original_title || d.original_name || ''),
+          romanji_title:  isAnime ? (d.title || '') : '',
+          japanese_title: isAnime ? (d.title_japanese || '') : '',
+          synonyms:       isAnime ? (d.title_synonyms || []).join(', ') : '',
+
+          // Details
+          country_name:        isAnime ? 'Japan' : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || ''),
+          genres:              (d.genres || []).map(g => g.name).join(', '),
+          aired_date:          isAnime ? (d.aired?.string || '') : (d.release_date || d.first_air_date || ''),
+          broadcast_day_time:  isAnime ? (d.broadcast?.string || '') : '',
+          source:              isAnime ? (d.source || '') : '',
+          rank:                isAnime ? (parseInt(d.rank)       || null) : null,
+          popularity:          isAnime ? (parseInt(d.popularity) || null) : (Math.round(d.popularity) || null),
+          studio_name:         isAnime ? (d.studios    || []).map(s => s.name).join(', ') : (d.production_companies || []).map(s => s.name).join(', '),
+          producers_name:      isAnime ? (d.producers  || []).map(p => p.name).join(', ') : '',
+          total_epi_num:       isAnime ? (parseInt(d.episodes) || null) : (parseInt(d.number_of_episodes) || null),
+          dub_epi_num:         parseInt(currentState.allAnimeData?.episodes_dub) || null,
+          sub_epi_num:         parseInt(currentState.allAnimeData?.episodes_sub) || null,
+          format:              isAnime ? (d.type || '') : (currentState.type || ''),
+          synopsis_context:    isAnime ? (d.synopsis || '') : '',
+          overview_context:    !isAnime ? (d.overview || '') : '',
+          mal_score:           isAnime  ? (parseFloat(d.score)        || null) : null,
+          tmdb_average_score:  !isAnime ? (parseFloat(d.vote_average) || null) : null,
+          content_rating:      isAnime  ? (d.rating ? d.rating.split(' - ')[0] : '') : '',
+          anime_duration_time: isAnime  ? (d.duration || '') : '',
+          tmdb_movie_tv_runtime: !isAnime ? (parseInt(d.runtime || d.episode_run_time?.[0]) || null) : null,
+          show_poster_link:    isAnime  ? (d.images?.jpg?.image_url || '') : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : ''),
+          show_backdrop_landscape_image_link: isAnime ? (d.images?.jpg?.large_image_url || '') : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : ''),
+          external_link_mal:   isAnime  ? `https://myanimelist.net/anime/${mal_id}` : '',
+          external_link_tmdb:  !isAnime ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}` : ''
         };
       }
 
-      // ── Fetch existing bookmarks for this show ─────────────────
       async function fetchUserBookmarks() {
-        if (!currentState.currentUser) return;
+        if (!currentState.currentUser || !currentState.id) return;
         try {
-          // Lazy-load profile (username) once
-          if (!currentState.currentUserProfile) {
-            const { data: prof } = await window.supabaseClient
-              .from('profiles')
-              .select('username, avatar_url')
-              .eq('user_id', currentState.currentUser.id)
-              .maybeSingle();
-            currentState.currentUserProfile = prof || {};
-          }
-
-          // Match on show_id (works for both anime and TMDB)
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('id, bookmark_status, status, show_id, mal_id, tmdb_id')
+            .select('bookmark_status, id')
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id);
+            .eq('show_id', parseInt(currentState.id))
+            .maybeSingle();
 
-          if (error) throw error;
+          if (error) { console.error('fetchUserBookmarks error:', error); return; }
 
-          currentState.userBookmarks = data || [];
-
-          // Parse comma-separated bookmark_status, fall back to legacy status column
-          const statusSet = new Set();
-          for (const row of (data || [])) {
-            if (row.bookmark_status) {
-              row.bookmark_status.split(',').map(s => s.trim()).filter(Boolean)
-                .forEach(s => statusSet.add(s));
-            } else if (row.status) {
-              statusSet.add(row.status);
-            }
+          const rawStatus = data?.bookmark_status || '';
+          if (data && rawStatus) {
+            currentState.selectedStatuses = rawStatus
+              .split(',')
+              .map(s => s.trim())
+              .filter(s => s.length > 0 && s !== 'remove');
+            currentState.bookmarkRowId = data.id;
+          } else {
+            currentState.selectedStatuses = [];
+            currentState.bookmarkRowId = null;
           }
-          currentState.selectedStatuses = [...statusSet];
           updateBookmarkUI();
-        } catch (e) {
-          console.error('[Bookmark] fetchUserBookmarks failed:', e);
-        }
+        } catch (e) { console.error('fetchUserBookmarks exception:', e); }
       }
 
-      // ── Save / update bookmark ─────────────────────────────────
+      async function upsertPayload(supa, payload) {
+        const { data, error } = await supa
+          .from('user_bookmarks')
+          .upsert(payload, { onConflict: 'user_id,show_id' })
+          .select('id')
+          .maybeSingle();
+        return { data, error };
+      }
+
       async function saveBookmarks() {
         if (!currentState.currentUser) return;
+        const supa = window.supabaseClient;
         try {
-          const payload = buildBookmarkPayload(currentState.selectedStatuses);
-          const existingRow = currentState.userBookmarks[0];
-
-          let error;
-          if (existingRow?.id) {
-            // Row exists → UPDATE in place
-            ({ error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .update(payload)
-              .eq('id', existingRow.id));
-          } else {
-            // No row yet → INSERT (plain insert, no upsert constraint needed)
-            ({ error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .insert(payload));
-          }
-
-          if (error) {
-            console.error('[Bookmark] Supabase error:', error);
-            showToast(`Save failed: ${error.message}`, 'error');
+          if (currentState.selectedStatuses.length === 0) {
+            if (currentState.bookmarkRowId) {
+              const { error } = await supa
+                .from('user_bookmarks')
+                .delete()
+                .eq('id', currentState.bookmarkRowId)
+                .eq('user_id', currentState.currentUser.id);
+              if (error) throw error;
+              currentState.bookmarkRowId = null;
+            }
             return;
           }
 
-          await fetchUserBookmarks();
-          showToast('Watchlist updated!');
+          // Try full payload first (all columns from migration SQL)
+          const fullPayload = buildBookmarkPayloadFull(currentState.selectedStatuses);
+          let { data, error } = await upsertPayload(supa, fullPayload);
+
+          if (error) {
+            // If full payload fails due to missing columns, fall back to core columns only
+            const isColumnMissing = error.code === 'PGRST204' || 
+              (error.message && error.message.includes('column'));
+            if (isColumnMissing) {
+              console.warn('[Bookmark] Full payload failed (missing columns), trying core-only:', error.message);
+              const corePayload = buildBookmarkPayloadCore(currentState.selectedStatuses);
+              const fallback = await upsertPayload(supa, corePayload);
+              data  = fallback.data;
+              error = fallback.error;
+            }
+            if (error) {
+              console.error('[Bookmark] Upsert failed:', JSON.stringify(error, null, 2));
+              throw error;
+            }
+          }
+
+          if (data?.id) currentState.bookmarkRowId = data.id;
+
         } catch (e) {
           console.error('[Bookmark] saveBookmarks exception:', e);
-          showToast('Failed to update watchlist', 'error');
+          showToast('Failed to update list', 'error');
         }
       }
 
-      // ── Remove all bookmarks for this show ─────────────────────
       async function removeBookmark() {
         if (!currentState.currentUser) return;
         try {
-          const ids = currentState.userBookmarks.map(b => b.id).filter(Boolean);
-          if (ids.length) {
-            const { error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .delete()
-              .in('id', ids);
-            if (error) throw error;
-          } else {
-            // Fallback: delete by show_id + user_id
-            const { error } = await window.supabaseClient
-              .from('user_bookmarks')
-              .delete()
-              .eq('user_id', currentState.currentUser.id)
-              .eq('show_id', currentState.id);
-            if (error) throw error;
-          }
-          currentState.userBookmarks    = [];
+          const { error } = await window.supabaseClient
+            .from('user_bookmarks')
+            .delete()
+            .eq('user_id', currentState.currentUser.id)
+            .eq('show_id', currentState.id);
+          if (error) throw error;
           currentState.selectedStatuses = [];
+          currentState.bookmarkRowId = null;
           updateBookmarkUI();
-          showToast('Removed from watchlist');
-        } catch (e) {
-          console.error('[Bookmark] removeBookmark failed:', e);
-        }
+          showBookmarkToast([]);
+        } catch (e) { console.error('removeBookmark error:', e); }
       }
 
       function updateBookmarkUI() {
-        const btn = document.getElementById('addToListBtn'); 
-        const text = document.getElementById('dropdownText');
-        if (!currentState.currentUser) { 
-          text.textContent = 'Add to List'; 
-          btn.disabled = false; 
-          return; 
+        const btn    = document.getElementById('addToListBtn');
+        const text   = document.getElementById('dropdownText');
+        if (!btn || !text) return;
+
+        const hasBookmark = currentState.selectedStatuses.length > 0;
+
+        // ── Button text + icon ──────────────────────────────
+        if (hasBookmark) {
+          text.textContent = 'Edit List';
+          const bkIcon = btn.querySelector('i.fa-bookmark, i.fa-pen-to-square, i.fa-regular, i.fa-solid:not(.dropdown-arrow):not(.bk-check-icon)');
+          if (bkIcon && !bkIcon.classList.contains('fa-chevron-down')) {
+            bkIcon.className = 'fa-solid fa-pen-to-square';
+          }
+        } else {
+          text.textContent = 'Add to List';
+          const bkIcon = btn.querySelector('i.fa-bookmark, i.fa-pen-to-square');
+          if (bkIcon) {
+            bkIcon.className = 'fa-regular fa-bookmark';
+          }
         }
-        if (currentState.selectedStatuses.length === 0) text.textContent = 'Add to List';
-        else if (currentState.selectedStatuses.length === 1) text.textContent = currentState.selectedStatuses[0].replace('-', ' ');
-        else text.textContent = 'Edit List';
-        
-        document.querySelectorAll('.dropdown-item').forEach(item => 
-          item.classList.toggle('selected', currentState.selectedStatuses.includes(item.dataset.status))
-        );
+
+        // ── Dropdown items: selected highlight + FA check ──
+        document.querySelectorAll('.dropdown-item[data-status]').forEach(item => {
+          const s = item.dataset.status;
+          if (s === 'remove') return;
+
+          const isSelected = currentState.selectedStatuses.includes(s);
+          item.classList.toggle('selected', isSelected);
+
+          // Remove all existing check icons first (clean slate each call)
+          item.querySelectorAll('.bk-check-icon').forEach(el => el.remove());
+
+          if (isSelected) {
+            const ck = document.createElement('i');
+            ck.className     = 'fa-solid fa-check bk-check-icon';
+            ck.style.cssText = 'margin-left:auto;color:#48bb78;font-size:0.85rem;flex-shrink:0;';
+            item.appendChild(ck);
+          }
+        });
       }
 
       function showLoginAlert() {
-        const alert = document.getElementById('loginAlert'); 
+        const alert = document.getElementById('loginAlert');
+        if (!alert) return;
         alert.classList.add('show');
         setTimeout(() => alert.classList.remove('show'), CONFIG.ALERT_AUTO_CLOSE_MS);
-        document.getElementById('alertClose').onclick = () => alert.classList.remove('show');
+        const closeBtn = document.getElementById('alertClose');
+        if (closeBtn) closeBtn.onclick = () => alert.classList.remove('show');
       }
 
+      // Toast notification — bottom-right corner, 3s auto-remove
       function showToast(message, type = 'info') {
+        const existing = document.getElementById('bk-toast-container');
+        const container = existing || (() => {
+          const c = document.createElement('div');
+          c.id = 'bk-toast-container';
+          c.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
+          document.body.appendChild(c);
+          return c;
+        })();
+
+        const bg = type === 'error'   ? '#e53e3e'
+                 : type === 'success' ? '#276749'
+                 : '#1a3a5c';
+
         const toast = document.createElement('div');
-        toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'error' ? 'var(--accent-red)' : 'var(--btn-primary)'};color:white;padding:12px 24px;border-radius:50px;font-size:0.9rem;font-weight:500;z-index:2000;animation:slideUp 0.3s ease;`;
-        toast.textContent = message; 
-        document.body.appendChild(toast);
-        setTimeout(() => { 
-          toast.style.animation = 'slideDown 0.3s ease'; 
-          setTimeout(() => toast.remove(), 300); 
-        }, 2500);
+        toast.style.cssText = `
+          background:${bg};
+          color:#fff;
+          padding:12px 18px;
+          border-radius:10px;
+          font-size:0.875rem;
+          font-weight:500;
+          box-shadow:0 8px 24px rgba(0,0,0,0.4);
+          border:1px solid rgba(255,255,255,0.12);
+          opacity:0;
+          transform:translateY(10px);
+          transition:opacity 0.25s ease,transform 0.25s ease;
+          pointer-events:auto;
+          max-width:280px;
+          line-height:1.4;
+        `;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+        });
+
+        setTimeout(() => {
+          toast.style.opacity  = '0';
+          toast.style.transform = 'translateY(10px)';
+          setTimeout(() => { toast.remove(); if (!container.children.length) container.remove(); }, 300);
+        }, 3000);
+      }
+
+      // Show toast with selected status names after dropdown closes
+      function showBookmarkToast(statuses) {
+        if (statuses.length === 0) {
+          showToast('Removed from your list', 'success');
+          return;
+        }
+        const labels = statuses.map(s => STATUS_LABELS[s] || s).join(' & ');
+        showToast(`Saved: ${labels}`, 'success');
       }
 
       async function loadSidebarContent() {
@@ -3959,7 +4030,7 @@ function renderSunkenPagination(currentPage, totalPages, container) {
               `;
             }).join('');
             
-            container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
+            container.innerHTML = `<div class="cast-warp-container"><div class="cast-list-grid">${castRows}</div>`;
             
           } catch (e) {
             console.error('Cast fetch error:', e);
@@ -3998,7 +4069,7 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             `;
           }).join('');
           
-          container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
+          container.innerHTML = `<div class="cast-warp-container"><div class="cast-list-grid">${castRows}</div>`;
         }
       }
 
@@ -4299,13 +4370,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         main.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: var(--text-muted);"><i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; margin-bottom: 16px; color: var(--accent-red);"></i><p style="font-size: 1.1rem;">${message}</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">Return Home</a></div>`; 
       }
       
-      function updateDropdownButtonText() { 
-        const text = document.getElementById('dropdownText'); 
-        if (currentState.selectedStatuses.length === 0) text.textContent = 'Add to List'; 
-        else if (currentState.selectedStatuses.length === 1) text.textContent = currentState.selectedStatuses[0].replace('-', ' '); 
-        else text.textContent = 'Edit List'; 
-      }
-
     })();
   </script>
 </body>
