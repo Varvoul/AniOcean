@@ -834,6 +834,44 @@ img { max-width: 100%; height: auto; display: block; }
   border: 1px solid var(--border-subtle);
 }
 
+    /* Vertically scrolling warp container for Cast/Crew tab */
+    /* Vertically scrolling warp container for Cast/Crew tab – no borders */
+.cast-warp-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: var(--radius-md, 12px);
+  border: none;                    /* removes outer border */
+  scrollbar-width: thin;
+  scrollbar-color: var(--btn-primary, #2b6cb0) rgba(255,255,255,0.05);
+}
+
+.cast-warp-container::-webkit-scrollbar {
+  width: 5px;
+}
+.cast-warp-container::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+}
+.cast-warp-container::-webkit-scrollbar-thumb {
+  background: var(--btn-primary, #2b6cb0);
+  border-radius: 3px;
+}
+
+/* Remove all inner borders (row separators and vertical divider) */
+.cast-warp-container .cast-list-grid {
+  border: none;
+}
+
+.cast-warp-container .cast-row {
+  border-bottom: none;
+}
+
+.cast-warp-container .cast-va-side,
+.cast-warp-container .cast-va-empty {
+  border-left: none;
+}
+
 .cast-row {
   display: flex;
   align-items: stretch;
@@ -3741,7 +3779,7 @@ function renderSunkenPagination(currentPage, totalPages, container) {
               `;
             }).join('');
             
-            container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
+            container.innerHTML = `<div class="cast-warp-container"><div class="cast-list-grid">${castRows}</div>`;
             
           } catch (e) {
             console.error('Cast fetch error:', e);
@@ -3780,7 +3818,7 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             `;
           }).join('');
           
-          container.innerHTML = `<div class="cast-list-grid">${castRows}</div>`;
+          container.innerHTML = `<div class="cast-warp-container"><div class="cast-list-grid">${castRows}</div>`;
         }
       }
 
