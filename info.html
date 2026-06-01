@@ -3143,91 +3143,133 @@ img { max-width: 100%; height: auto; display: block; }
         const japanese_title = isAnime ? (d.title_japanese || '') : '';
         const synonyms       = isAnime ? (d.title_synonyms || []).join(', ') : '';
 
-        // IDs
-        const mal_id  = isAnime ? (d.mal_id || currentState.id) : null;
-        const tmdb_id = !isAnime ? currentState.id : null;
+        // IDs  (mal_id / tmdb_id are int4 in DB — must be integer or null)
+        const mal_id  = isAnime  ? (parseInt(d.mal_id  || currentState.id) || null) : null;
+        const tmdb_id = !isAnime ? (parseInt(currentState.id)              || null) : null;
 
         // Meta
-        const country_name = isAnime ? 'Japan' : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '');
+        const country_name = isAnime
+          ? 'Japan'
+          : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '');
         const genres       = (d.genres || []).map(g => g.name).join(', ');
         const aired_date   = isAnime
           ? (d.aired?.string || '')
           : (d.release_date || d.first_air_date || '');
         const broadcast_day_time = isAnime ? (d.broadcast?.string || '') : '';
-        const source_val   = isAnime ? (d.source || '') : '';
-        const rank         = isAnime ? (d.rank || null) : null;
-        const popularity   = isAnime ? (d.popularity || null) : Math.round(d.popularity || 0) || null;
-        const studio_name  = isAnime
-          ? (d.studios || []).map(s => s.name).join(', ')
+
+        // "source" column = anime source material (manga/LN/original etc.)
+        const source_material = isAnime ? (d.source || '') : '';
+
+        const rank       = isAnime ? (parseInt(d.rank)       || null) : null;
+        const popularity = isAnime
+          ? (parseInt(d.popularity) || null)
+          : (Math.round(d.popularity) || null);
+
+        const studio_name    = isAnime
+          ? (d.studios    || []).map(s => s.name).join(', ')
           : (d.production_companies || []).map(s => s.name).join(', ');
-        const producers_name = isAnime ? (d.producers || []).map(p => p.name).join(', ') : '';
-        const total_epi_num  = isAnime ? (d.episodes || null) : (d.number_of_episodes || null);
-        const format         = isAnime ? (d.type || '') : (currentState.type || '');
+        const producers_name = isAnime
+          ? (d.producers  || []).map(p => p.name).join(', ')
+          : '';
+        const total_epi_num  = isAnime
+          ? (parseInt(d.episodes)            || null)
+          : (parseInt(d.number_of_episodes)  || null);
+
+        const format            = isAnime ? (d.type || '') : (currentState.type || '');
         const synopsis_context  = isAnime ? (d.synopsis || '') : '';
         const overview_context  = !isAnime ? (d.overview || '') : '';
-        const mal_score         = isAnime ? (d.score || null) : null;
-        const tmdb_average_score= !isAnime ? (d.vote_average || null) : null;
-        const content_rating    = isAnime
+
+        // numeric(4,2) columns — must be number or null
+        const mal_score          = isAnime  ? (parseFloat(d.score)        || null) : null;
+        const tmdb_average_score = !isAnime ? (parseFloat(d.vote_average) || null) : null;
+
+        const content_rating = isAnime
           ? (d.rating ? d.rating.split(' - ')[0] : '')
           : '';
         const anime_duration_time   = isAnime ? (d.duration || '') : '';
         const tmdb_movie_tv_runtime = !isAnime
-          ? (d.runtime || d.episode_run_time?.[0] || null)
+          ? (parseInt(d.runtime || d.episode_run_time?.[0]) || null)
           : null;
+
         const show_poster_link = isAnime
           ? (d.images?.jpg?.image_url || '')
           : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : '');
         const show_backdrop_landscape_image_link = isAnime
           ? (d.images?.jpg?.large_image_url || '')
           : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '');
-        const external_link_mal  = isAnime ? `https://myanimelist.net/anime/${mal_id}` : '';
-        const external_link_tmdb = !isAnime ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}` : '';
-        const show_status = isAnime ? (d.status || '') : (d.status || '');
 
-        // media_id and media_type for reference
+        const external_link_mal  = isAnime  ? `https://myanimelist.net/anime/${mal_id}` : '';
+        const external_link_tmdb = !isAnime
+          ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}`
+          : '';
+
+        // show_id is int4 in DB
+        const show_id_int = parseInt(currentState.id) || null;
+
+        // media_id = "jikan-37520" or "tmdb-278573" etc.
         const media_id   = `${currentState.source}-${currentState.id}`;
-        const media_type = currentState.type;
+        const media_type = currentState.type;   // 'anime' | 'tv' | 'movie'
+
+        // show_status (col 40, int4) — not a text field, skip it to avoid type error
+        // We do NOT send show_status since it's an int4 and we don't have that data
 
         return {
-          user_id:    currentState.currentUser.id,
-          show_id:    currentState.id,
-          media_id,
-          media_type,
-          bookmark_status: statuses.join(','),
-          mal_id,
-          tmdb_id,
-          eng_title,
-          default_title,
-          original_title,
-          romanji_title,
-          japanese_title,
-          synonyms,
-          country_name,
-          genres,
-          aired_date,
-          broadcast_day_time,
-          source:      source_val,
-          rank,
-          popularity,
-          studio_name,
-          producers_name,
-          total_epi_num,
-          dub_epi_num:  currentState.allAnimeData?.episodes_dub || null,
-          sub_epi_num:  currentState.allAnimeData?.episodes_sub || null,
-          format,
-          synopsis_context,
-          overview_context,
-          mal_score,
-          tmdb_average_score,
-          content_rating,
-          anime_duration_time,
-          tmdb_movie_tv_runtime,
-          show_poster_link,
-          show_backdrop_landscape_image_link,
-          external_link_mal,
-          external_link_tmdb,
-          show_status,
-          updated_at: new Date().toISOString()
+          // Identity / FK
+          user_id:    currentState.currentUser.id,   // uuid
+          show_id:    show_id_int,                   // int4
+
+          // Reference columns
+          media_id,          // text
+          media_type,        // text
+
+          // The one column that matters for the feature
+          Bookmark_status: statuses.join(','),        // text (exact column name from schema)
+
+          // Integer IDs
+          mal_id,            // int4
+          tmdb_id,           // int4
+
+          // Titles
+          eng_title,         // text
+          default_title,     // text
+          original_title,    // text
+          romanji_title,     // text
+          japanese_title,    // text
+          synonyms,          // text
+
+          // Details
+          country_name,      // text
+          genres,            // text
+          aired_date,        // text
+          broadcast_day_time,// text
+          source: source_material, // text (anime source material)
+          rank,              // int4
+          popularity,        // int4
+          studio_name,       // text
+          producers_name,    // text
+          total_epi_num,     // int4
+          dub_epi_num:  parseInt(currentState.allAnimeData?.episodes_dub) || null,  // int4
+          sub_epi_num:  parseInt(currentState.allAnimeData?.episodes_sub) || null,  // int4
+          format,            // text
+
+          // Long text
+          synopsis_context,  // text
+          overview_context,  // text
+
+          // Scores
+          mal_score,         // numeric(4,2)
+          tmdb_average_score,// numeric(4,2)
+
+          // More details
+          content_rating,    // text
+          anime_duration_time,      // text
+          tmdb_movie_tv_runtime,    // int4
+          show_poster_link,         // text
+          show_backdrop_landscape_image_link, // text
+          external_link_mal,        // text
+          external_link_tmdb,       // text
+
+          updated_at: new Date().toISOString()  // timestamptz
         };
       }
 
@@ -3236,16 +3278,17 @@ img { max-width: 100%; height: auto; display: block; }
         try {
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('bookmark_status, id')
+            .select('Bookmark_status, id')
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id)
+            .eq('show_id', parseInt(currentState.id))
             .maybeSingle();
 
           if (error) { console.error('fetchUserBookmarks error:', error); return; }
 
-          if (data && data.bookmark_status) {
-            // bookmark_status is a comma-separated list e.g. "watching,favourite"
-            currentState.selectedStatuses = data.bookmark_status
+          // Column is "Bookmark_status" (capital B) per schema
+          const rawStatus = data?.Bookmark_status || data?.bookmark_status || '';
+          if (data && rawStatus) {
+            currentState.selectedStatuses = rawStatus
               .split(',')
               .map(s => s.trim())
               .filter(s => s.length > 0 && s !== 'remove');
@@ -3275,16 +3318,20 @@ img { max-width: 100%; height: auto; display: block; }
             }
           } else {
             const payload = buildBookmarkPayload(currentState.selectedStatuses);
+            console.log('[Bookmark] Upserting payload:', payload);
             const { data, error } = await supa
               .from('user_bookmarks')
               .upsert(payload, { onConflict: 'user_id,show_id' })
               .select('id')
               .maybeSingle();
-            if (error) throw error;
+            if (error) {
+              console.error('[Bookmark] Upsert error details:', JSON.stringify(error, null, 2));
+              throw error;
+            }
             if (data?.id) currentState.bookmarkRowId = data.id;
           }
         } catch (e) {
-          console.error('saveBookmarks error:', e);
+          console.error('[Bookmark] saveBookmarks failed:', e);
           showToast('Failed to update list', 'error');
         }
       }
