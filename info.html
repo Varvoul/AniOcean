@@ -68,6 +68,9 @@
   --transition-fast: 0.18s ease;
 }
 
+/* Prevent browser smooth-scroll from causing perceived auto-scroll on load */
+html { scroll-behavior: auto; }
+
 /* Reset & Base */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
@@ -478,13 +481,12 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .dropdown-item.selected {
   background: rgba(43, 108, 176, 0.2);
-  color: var(--accent-cyan);
+  color: #68d391;
 }
-.dropdown-item.selected::after {
-  content: '✓';
+.dropdown-item.selected .bk-check-icon {
   margin-left: auto;
-  color: var(--accent-green);
-  font-weight: bold;
+  color: #48bb78;
+  font-size: 0.85rem;
 }
 .status-icon { flex-shrink: 0; }
 
@@ -2335,11 +2337,20 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, userBookmarks: [],
-        selectedStatuses: [], dropdownTimer: null, allAnimeData: null
+        data: null, currentUser: null,
+        selectedStatuses: [], dropdownTimer: null,
+        bookmarkRowId: null, allAnimeData: null
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
+        // Prevent any auto-scrolling caused by hash/anchor or tab radio state on load
+        if (window.location.hash) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+        // Force scroll to top immediately and after a tiny delay (handles browser restore-scroll)
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
+
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
         parseUrl();
         initTabSwitching();
@@ -2905,56 +2916,87 @@ img { max-width: 100%; height: auto; display: block; }
         
         const dropdownBtn = document.getElementById('addToListBtn');
         const dropdown = document.getElementById('bookmarkDropdown');
+
+        function closeDropdown(showNotification) {
+          clearTimeout(currentState.dropdownTimer);
+          currentState.dropdownTimer = null;
+          dropdown.classList.remove('show');
+          dropdownBtn.classList.remove('open');
+          dropdownBtn.setAttribute('aria-expanded', 'false');
+          if (showNotification) {
+            showBookmarkToast(currentState.selectedStatuses);
+          }
+        }
+
+        function startAutoCloseTimer() {
+          clearTimeout(currentState.dropdownTimer);
+          // After selecting the 1st status, give 3s to pick a 2nd before auto-closing
+          currentState.dropdownTimer = setTimeout(() => {
+            closeDropdown(true);
+          }, 3000);
+        }
+
         dropdownBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!currentState.currentUser) { showLoginAlert(); return; }
-          const isOpen = dropdown.classList.toggle('show');
-          dropdownBtn.classList.toggle('open', isOpen);
-          dropdownBtn.setAttribute('aria-expanded', isOpen);
-          
-          if (currentState.selectedStatuses.length === 1) {
-            clearTimeout(currentState.dropdownTimer);
-            currentState.dropdownTimer = setTimeout(() => { 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open');
-              dropdownBtn.setAttribute('aria-expanded', 'false');
-            }, CONFIG.BOOKMARK_AUTO_CLOSE_MS);
+          const isOpen = !dropdown.classList.contains('show');
+          if (isOpen) {
+            dropdown.classList.add('show');
+            dropdownBtn.classList.add('open');
+            dropdownBtn.setAttribute('aria-expanded', 'true');
+            // If already has 1 status selected, start the timer right away
+            if (currentState.selectedStatuses.length === 1) startAutoCloseTimer();
+          } else {
+            closeDropdown(currentState.selectedStatuses.length > 0);
           }
         });
-        
-        document.addEventListener('click', (e) => { 
-          if (!e.target.closest('.dropdown-container')) { 
-            dropdown.classList.remove('show'); 
-            dropdownBtn.classList.remove('open');
-            dropdownBtn.setAttribute('aria-expanded', 'false');
-          } 
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (dropdown.classList.contains('show') && !e.target.closest('.dropdown-container')) {
+            closeDropdown(currentState.selectedStatuses.length > 0);
+          }
         });
-        
+
         document.querySelectorAll('.dropdown-item').forEach(item => {
           item.addEventListener('click', async (e) => {
             e.stopPropagation();
             const status = item.dataset.status;
-            if (status === 'remove') { 
-              await removeBookmark(); 
-              dropdown.classList.remove('show'); 
-              dropdownBtn.classList.remove('open'); 
-              return; 
-            }
-            const index = currentState.selectedStatuses.indexOf(status);
-            if (index > -1) { 
-              currentState.selectedStatuses.splice(index, 1); 
-              item.classList.remove('selected'); 
-            }
-            else if (currentState.selectedStatuses.length < 2) { 
-              currentState.selectedStatuses.push(status); 
-              item.classList.add('selected'); 
-            }
-            updateDropdownButtonText(); 
-            await saveBookmarks();
-            if (currentState.selectedStatuses.length >= 2) { 
-              dropdown.classList.remove('show'); 
+
+            if (status === 'remove') {
+              clearTimeout(currentState.dropdownTimer);
+              await removeBookmark();
+              dropdown.classList.remove('show');
               dropdownBtn.classList.remove('open');
               dropdownBtn.setAttribute('aria-expanded', 'false');
+              return;
+            }
+
+            const idx = currentState.selectedStatuses.indexOf(status);
+            if (idx > -1) {
+              // Deselect
+              currentState.selectedStatuses.splice(idx, 1);
+            } else if (currentState.selectedStatuses.length < 2) {
+              // Select
+              currentState.selectedStatuses.push(status);
+            } else {
+              // Already at max (2) — ignore
+              return;
+            }
+
+            updateBookmarkUI();
+            await saveBookmarks();
+
+            if (currentState.selectedStatuses.length >= 2) {
+              // Got both picks — close immediately with toast
+              closeDropdown(true);
+            } else if (currentState.selectedStatuses.length === 1) {
+              // 1 selected — start 3-second timer
+              startAutoCloseTimer();
+            } else {
+              // Deselected all — restart timer or keep open
+              clearTimeout(currentState.dropdownTimer);
+              currentState.dropdownTimer = null;
             }
           });
         });
@@ -3074,103 +3116,293 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
+      // ═══════════════════════════════════════════
+      // BOOKMARK SYSTEM — Supabase user_bookmarks
+      // ═══════════════════════════════════════════
+
+      // Status label map (for display)
+      const STATUS_LABELS = {
+        'planning':   'Planning to Watch',
+        'watching':   'Watching',
+        'completed':  'Completed',
+        'rewatching': 'Re-watching',
+        'dropped':    'Dropped',
+        'favourite':  'My Favourite'
+      };
+
+      // Build the full row payload from currentState for upsert
+      function buildBookmarkPayload(statuses) {
+        const d = currentState.data;
+        const isAnime = currentState.source === 'jikan';
+
+        // Titles
+        const eng_title      = isAnime ? (d.title_english || d.title || '') : (d.title || d.name || '');
+        const default_title  = d.title || d.name || '';
+        const original_title = isAnime ? '' : (d.original_title || d.original_name || '');
+        const romanji_title  = isAnime ? (d.title || '') : '';
+        const japanese_title = isAnime ? (d.title_japanese || '') : '';
+        const synonyms       = isAnime ? (d.title_synonyms || []).join(', ') : '';
+
+        // IDs
+        const mal_id  = isAnime ? (d.mal_id || currentState.id) : null;
+        const tmdb_id = !isAnime ? currentState.id : null;
+
+        // Meta
+        const country_name = isAnime ? 'Japan' : (d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '');
+        const genres       = (d.genres || []).map(g => g.name).join(', ');
+        const aired_date   = isAnime
+          ? (d.aired?.string || '')
+          : (d.release_date || d.first_air_date || '');
+        const broadcast_day_time = isAnime ? (d.broadcast?.string || '') : '';
+        const source_val   = isAnime ? (d.source || '') : '';
+        const rank         = isAnime ? (d.rank || null) : null;
+        const popularity   = isAnime ? (d.popularity || null) : Math.round(d.popularity || 0) || null;
+        const studio_name  = isAnime
+          ? (d.studios || []).map(s => s.name).join(', ')
+          : (d.production_companies || []).map(s => s.name).join(', ');
+        const producers_name = isAnime ? (d.producers || []).map(p => p.name).join(', ') : '';
+        const total_epi_num  = isAnime ? (d.episodes || null) : (d.number_of_episodes || null);
+        const format         = isAnime ? (d.type || '') : (currentState.type || '');
+        const synopsis_context  = isAnime ? (d.synopsis || '') : '';
+        const overview_context  = !isAnime ? (d.overview || '') : '';
+        const mal_score         = isAnime ? (d.score || null) : null;
+        const tmdb_average_score= !isAnime ? (d.vote_average || null) : null;
+        const content_rating    = isAnime
+          ? (d.rating ? d.rating.split(' - ')[0] : '')
+          : '';
+        const anime_duration_time   = isAnime ? (d.duration || '') : '';
+        const tmdb_movie_tv_runtime = !isAnime
+          ? (d.runtime || d.episode_run_time?.[0] || null)
+          : null;
+        const show_poster_link = isAnime
+          ? (d.images?.jpg?.image_url || '')
+          : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : '');
+        const show_backdrop_landscape_image_link = isAnime
+          ? (d.images?.jpg?.large_image_url || '')
+          : (d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '');
+        const external_link_mal  = isAnime ? `https://myanimelist.net/anime/${mal_id}` : '';
+        const external_link_tmdb = !isAnime ? `https://www.themoviedb.org/${currentState.type}/${tmdb_id}` : '';
+        const show_status = isAnime ? (d.status || '') : (d.status || '');
+
+        // media_id and media_type for reference
+        const media_id   = `${currentState.source}-${currentState.id}`;
+        const media_type = currentState.type;
+
+        return {
+          user_id:    currentState.currentUser.id,
+          show_id:    currentState.id,
+          media_id,
+          media_type,
+          bookmark_status: statuses.join(','),
+          mal_id,
+          tmdb_id,
+          eng_title,
+          default_title,
+          original_title,
+          romanji_title,
+          japanese_title,
+          synonyms,
+          country_name,
+          genres,
+          aired_date,
+          broadcast_day_time,
+          source:      source_val,
+          rank,
+          popularity,
+          studio_name,
+          producers_name,
+          total_epi_num,
+          dub_epi_num:  currentState.allAnimeData?.episodes_dub || null,
+          sub_epi_num:  currentState.allAnimeData?.episodes_sub || null,
+          format,
+          synopsis_context,
+          overview_context,
+          mal_score,
+          tmdb_average_score,
+          content_rating,
+          anime_duration_time,
+          tmdb_movie_tv_runtime,
+          show_poster_link,
+          show_backdrop_landscape_image_link,
+          external_link_mal,
+          external_link_tmdb,
+          show_status,
+          updated_at: new Date().toISOString()
+        };
+      }
+
       async function fetchUserBookmarks() {
-        if (!currentState.currentUser) return;
+        if (!currentState.currentUser || !currentState.id) return;
         try {
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
-            .select('*')
+            .select('bookmark_status, id')
             .eq('user_id', currentState.currentUser.id)
             .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
-          if (error) throw error;
-          currentState.userBookmarks = data || []; 
-          currentState.selectedStatuses = data?.map(d => d.status) || [];
+            .maybeSingle();
+
+          if (error) { console.error('fetchUserBookmarks error:', error); return; }
+
+          if (data && data.bookmark_status) {
+            // bookmark_status is a comma-separated list e.g. "watching,favourite"
+            currentState.selectedStatuses = data.bookmark_status
+              .split(',')
+              .map(s => s.trim())
+              .filter(s => s.length > 0 && s !== 'remove');
+            currentState.bookmarkRowId = data.id;
+          } else {
+            currentState.selectedStatuses = [];
+            currentState.bookmarkRowId = null;
+          }
           updateBookmarkUI();
-        } catch (e) { console.error('Failed to fetch bookmarks:', e); }
+        } catch (e) { console.error('fetchUserBookmarks exception:', e); }
       }
 
       async function saveBookmarks() {
         if (!currentState.currentUser) return;
+        const supa = window.supabaseClient;
         try {
-          for (const status of currentState.selectedStatuses) {
-            await window.supabaseClient.from('user_bookmarks').upsert({
-              user_id: currentState.currentUser.id, 
-              show_id: currentState.id, 
-              source: currentState.source,
-              show_type: currentState.type, 
-              title: currentState.title,
-              poster_url: currentState.data.images?.jpg?.image_url || currentState.data.poster_path,
-              status: status,
-              metadata: { 
-                rating: currentState.data.score || currentState.data.vote_average, 
-                year: currentState.data.aired?.from?.slice(0,4) || currentState.data.release_date?.slice(0,4), 
-                genres: currentState.data.genres?.map(g => g.name) || [] 
-              },
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,show_id,source,status' });
+          if (currentState.selectedStatuses.length === 0) {
+            // Delete if no statuses remain
+            if (currentState.bookmarkRowId) {
+              const { error } = await supa
+                .from('user_bookmarks')
+                .delete()
+                .eq('id', currentState.bookmarkRowId)
+                .eq('user_id', currentState.currentUser.id);
+              if (error) throw error;
+              currentState.bookmarkRowId = null;
+            }
+          } else {
+            const payload = buildBookmarkPayload(currentState.selectedStatuses);
+            const { data, error } = await supa
+              .from('user_bookmarks')
+              .upsert(payload, { onConflict: 'user_id,show_id' })
+              .select('id')
+              .maybeSingle();
+            if (error) throw error;
+            if (data?.id) currentState.bookmarkRowId = data.id;
           }
-          const toRemove = currentState.userBookmarks
-            .filter(b => !currentState.selectedStatuses.includes(b.status))
-            .map(b => b.id);
-          if (toRemove.length) {
-            await window.supabaseClient.from('user_bookmarks').delete().in('id', toRemove);
-          }
-          await fetchUserBookmarks();
-        } catch (e) { 
-          console.error('Failed to save bookmarks:', e); 
-          showToast('Failed to update watchlist', 'error'); 
+        } catch (e) {
+          console.error('saveBookmarks error:', e);
+          showToast('Failed to update list', 'error');
         }
       }
 
       async function removeBookmark() {
         if (!currentState.currentUser) return;
         try {
-          await window.supabaseClient
+          const { error } = await window.supabaseClient
             .from('user_bookmarks')
             .delete()
             .eq('user_id', currentState.currentUser.id)
-            .eq('show_id', currentState.id)
-            .eq('source', currentState.source);
-          currentState.selectedStatuses = []; 
-          updateBookmarkUI(); 
-          showToast('Removed from watchlist');
-        } catch (e) { console.error('Failed to remove bookmark:', e); }
+            .eq('show_id', currentState.id);
+          if (error) throw error;
+          currentState.selectedStatuses = [];
+          currentState.bookmarkRowId = null;
+          updateBookmarkUI();
+          showBookmarkToast([]);
+        } catch (e) { console.error('removeBookmark error:', e); }
       }
 
       function updateBookmarkUI() {
-        const btn = document.getElementById('addToListBtn'); 
+        const btn  = document.getElementById('addToListBtn');
         const text = document.getElementById('dropdownText');
-        if (!currentState.currentUser) { 
-          text.textContent = 'Add to List'; 
-          btn.disabled = false; 
-          return; 
+        if (!btn || !text) return;
+
+        const hasBookmark = currentState.selectedStatuses.length > 0;
+
+        if (!hasBookmark) {
+          text.textContent = 'Add to List';
+        } else {
+          text.textContent = 'Edit List';
         }
-        if (currentState.selectedStatuses.length === 0) text.textContent = 'Add to List';
-        else if (currentState.selectedStatuses.length === 1) text.textContent = currentState.selectedStatuses[0].replace('-', ' ');
-        else text.textContent = 'Edit List';
-        
-        document.querySelectorAll('.dropdown-item').forEach(item => 
-          item.classList.toggle('selected', currentState.selectedStatuses.includes(item.dataset.status))
-        );
+
+        // Mark selected items with checkmark icon
+        document.querySelectorAll('.dropdown-item[data-status]').forEach(item => {
+          const s = item.dataset.status;
+          if (s === 'remove') return;
+          const isSelected = currentState.selectedStatuses.includes(s);
+          item.classList.toggle('selected', isSelected);
+          // Add/remove Font Awesome check icon
+          let ckIcon = item.querySelector('.bk-check-icon');
+          if (isSelected) {
+            if (!ckIcon) {
+              ckIcon = document.createElement('i');
+              ckIcon.className = 'fa-solid fa-check bk-check-icon';
+              ckIcon.style.cssText = 'margin-left:auto;color:#48bb78;font-size:0.85rem;';
+              item.appendChild(ckIcon);
+            }
+          } else {
+            if (ckIcon) ckIcon.remove();
+          }
+        });
       }
 
       function showLoginAlert() {
-        const alert = document.getElementById('loginAlert'); 
+        const alert = document.getElementById('loginAlert');
+        if (!alert) return;
         alert.classList.add('show');
         setTimeout(() => alert.classList.remove('show'), CONFIG.ALERT_AUTO_CLOSE_MS);
-        document.getElementById('alertClose').onclick = () => alert.classList.remove('show');
+        const closeBtn = document.getElementById('alertClose');
+        if (closeBtn) closeBtn.onclick = () => alert.classList.remove('show');
       }
 
+      // Toast notification — bottom-right corner, 3s auto-remove
       function showToast(message, type = 'info') {
+        const existing = document.getElementById('bk-toast-container');
+        const container = existing || (() => {
+          const c = document.createElement('div');
+          c.id = 'bk-toast-container';
+          c.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
+          document.body.appendChild(c);
+          return c;
+        })();
+
+        const bg = type === 'error'   ? '#e53e3e'
+                 : type === 'success' ? '#276749'
+                 : '#1a3a5c';
+
         const toast = document.createElement('div');
-        toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'error' ? 'var(--accent-red)' : 'var(--btn-primary)'};color:white;padding:12px 24px;border-radius:50px;font-size:0.9rem;font-weight:500;z-index:2000;animation:slideUp 0.3s ease;`;
-        toast.textContent = message; 
-        document.body.appendChild(toast);
-        setTimeout(() => { 
-          toast.style.animation = 'slideDown 0.3s ease'; 
-          setTimeout(() => toast.remove(), 300); 
-        }, 2500);
+        toast.style.cssText = `
+          background:${bg};
+          color:#fff;
+          padding:12px 18px;
+          border-radius:10px;
+          font-size:0.875rem;
+          font-weight:500;
+          box-shadow:0 8px 24px rgba(0,0,0,0.4);
+          border:1px solid rgba(255,255,255,0.12);
+          opacity:0;
+          transform:translateY(10px);
+          transition:opacity 0.25s ease,transform 0.25s ease;
+          pointer-events:auto;
+          max-width:280px;
+          line-height:1.4;
+        `;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+        });
+
+        setTimeout(() => {
+          toast.style.opacity  = '0';
+          toast.style.transform = 'translateY(10px)';
+          setTimeout(() => { toast.remove(); if (!container.children.length) container.remove(); }, 300);
+        }, 3000);
+      }
+
+      // Show toast with selected status names after dropdown closes
+      function showBookmarkToast(statuses) {
+        if (statuses.length === 0) {
+          showToast('Removed from your list', 'success');
+          return;
+        }
+        const labels = statuses.map(s => STATUS_LABELS[s] || s).join(' & ');
+        showToast(`Saved: ${labels}`, 'success');
       }
 
       async function loadSidebarContent() {
@@ -4119,13 +4351,6 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         main.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: var(--text-muted);"><i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; margin-bottom: 16px; color: var(--accent-red);"></i><p style="font-size: 1.1rem;">${message}</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">Return Home</a></div>`; 
       }
       
-      function updateDropdownButtonText() { 
-        const text = document.getElementById('dropdownText'); 
-        if (currentState.selectedStatuses.length === 0) text.textContent = 'Add to List'; 
-        else if (currentState.selectedStatuses.length === 1) text.textContent = currentState.selectedStatuses[0].replace('-', ' '); 
-        else text.textContent = 'Edit List'; 
-      }
-
     })();
   </script>
 </body>
