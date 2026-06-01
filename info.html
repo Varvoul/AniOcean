@@ -78,9 +78,11 @@ html { scroll-behavior: auto; }
   pointer-events: none !important;
   scroll-margin: 0 !important;
   scroll-margin-top: 0 !important;
-  /* Force browser to not scroll to this element under any circumstance */
   top: 0 !important;
   left: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Reset & Base */
@@ -2158,19 +2160,8 @@ img { max-width: 100%; height: auto; display: block; }
 }
   </style>
   <script>
-    // ANTI-SCROLL GUARD — runs before any HTML renders
-    // Prevents browser scroll restoration and radio-focus scroll on every load/reload
+    // Runs before any HTML renders — disables browser scroll-restoration
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    window.addEventListener('scroll', function lockScroll() {
-      // Only lock during initial page load (before DOMContentLoaded fires)
-      window.scrollTo(0, 0);
-    }, { passive: true });
-    document.addEventListener('DOMContentLoaded', function() {
-      // Remove the aggressive scroll lock once DOM is ready
-      // The main script will take over from here with body overflow:hidden
-      window.removeEventListener('scroll', lockScroll);
-      window.scrollTo(0, 0);
-    }, { once: true });
   </script>
 </head>
 <body>
@@ -2503,21 +2494,18 @@ img { max-width: 100%; height: auto; display: block; }
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
-        // ── Step 0: Kill ALL scroll immediately and lock body ──────────────────────
-        // Remove any URL hash that would cause anchor-scroll
+        // Remove hash so browser doesn't anchor-scroll to any element
         if (window.location.hash) {
           history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-        // Lock the page at top — prevents any layout-shift or radio-focus scroll
-        document.documentElement.style.scrollBehavior = 'auto';
-        document.body.style.overflow = 'hidden';
+        // Single scroll-to-top pin — no overflow lock, no setTimeout
         window.scrollTo(0, 0);
 
-        // ── Step 1: Parse URL first — currentState.id must exist before auth ──────
+        // Parse URL first — currentState.id must exist before auth/bookmark calls
         parseUrl();
         initTabSwitching();
 
-        // ── Step 2: Auth ───────────────────────────────────────────────────────────
+        // Auth
         if (typeof window.supabaseClient !== 'undefined') await initAuth();
 
         if (currentState.id && currentState.source) {
@@ -2540,15 +2528,7 @@ img { max-width: 100%; height: auto; display: block; }
         } else {
           showError('Invalid show URL format');
         }
-
-        // ── Step 3: All data loaded — now unlock scroll and pin to top ────────────
-        // Use requestAnimationFrame to wait for any final paint caused by data injection
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            window.scrollTo(0, 0);
-            document.body.style.overflow = '';   // restore normal scrolling
-          });
-        });
+        // Page fully loaded — user can now scroll freely
       });
 
       function parseUrl() {
@@ -3247,22 +3227,18 @@ img { max-width: 100%; height: auto; display: block; }
           });
         });
 
-        // ── Activate first tab (Cast/Crew) without touching the radio checked state ──
-        // Doing this via JS instead of HTML "checked" prevents browser scroll-into-view
+        // Activate Cast tab via JS — never put "checked" in HTML (browser scrolls to it)
         const firstRadio = document.querySelector('.tabs-radio input[type="radio"]');
         if (firstRadio) firstRadio.checked = true;
         showTab('cast');
 
-        // Initial glider position (double-rAF so layout is settled)
-        // We save and restore scroll to prevent getBoundingClientRect from causing a jump
+        // Position glider — double rAF waits for layout to settle
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          const savedScroll = window.scrollY;
           if (glider) glider.style.transition = 'none';
           const firstLabel = document.querySelector('.tab-radio-label');
           positionGlider(firstLabel);
           requestAnimationFrame(() => {
             if (glider) glider.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s';
-            window.scrollTo(0, savedScroll);
           });
         }));
 
@@ -4057,7 +4033,7 @@ async function loadSunkenTreasures(page = 1) {
       renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
       
       // Smooth scroll to section top
-      // Removed scrollIntoView — user controls their own scroll position
+      // scrollIntoView removed — user controls their own scroll position
     } else {
       gridContainer.innerHTML = '<div class="loading-text" style="grid-column:1/-1;text-align:center;padding:40px 0;">No anime found for this combination</div>';
       renderSunkenPagination(page, SUNKEN_GENRE_COMBOS.length, paginationContainer);
