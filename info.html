@@ -835,12 +835,13 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
     /* Vertically scrolling warp container for Cast/Crew tab */
+    /* Vertically scrolling warp container for Cast/Crew tab – no borders */
 .cast-warp-container {
-  max-height: 400px;           /* adjust as needed */
+  max-height: 500px;
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: var(--radius-md, 12px);
-  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  border: none;                    /* removes outer border */
   scrollbar-width: thin;
   scrollbar-color: var(--btn-primary, #2b6cb0) rgba(255,255,255,0.05);
 }
@@ -855,6 +856,20 @@ img { max-width: 100%; height: auto; display: block; }
 .cast-warp-container::-webkit-scrollbar-thumb {
   background: var(--btn-primary, #2b6cb0);
   border-radius: 3px;
+}
+
+/* Remove all inner borders (row separators and vertical divider) */
+.cast-warp-container .cast-list-grid {
+  border: none;
+}
+
+.cast-warp-container .cast-row {
+  border-bottom: none;
+}
+
+.cast-warp-container .cast-va-side,
+.cast-warp-container .cast-va-empty {
+  border-left: none;
 }
 
 .cast-row {
