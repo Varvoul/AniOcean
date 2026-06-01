@@ -824,17 +824,6 @@ img { max-width: 100%; height: auto; display: block; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* Cast tab — vertically scrollable, no scrollbar visible */
-.cast-tab-scroll {
-  max-height: 640px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE/Edge */
-  border-radius: var(--radius-md);
-}
-.cast-tab-scroll::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-
 /* ── Cast List Grid (image-3 style) ─────────────────── */
 .cast-list-grid {
   display: flex;
@@ -1147,122 +1136,6 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 /* Theme blocks */
-.theme-block { margin-bottom: 20px; }
-.theme-block:last-child { margin-bottom: 0; }
-
-/* ── Theme Tab — scrollable, all theme card styles ─────────── */
-#themesTab {
-  max-height: 700px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-right: 2px;
-}
-#themesTab::-webkit-scrollbar { display: none; }
-
-.themes-container { padding: 4px 0; }
-
-.themes-section-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  padding: 8px 0 10px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
-}
-.themes-count {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: var(--bg-surface);
-  color: var(--text-muted);
-}
-
-.theme-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-.theme-card:last-child { margin-bottom: 0; }
-
-.theme-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.theme-card-label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  color: #7ec8f7;
-  background: rgba(126,200,247,0.12);
-  border: 1px solid rgba(126,200,247,0.3);
-  padding: 3px 9px;
-  border-radius: 20px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.theme-card-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.theme-song-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.theme-artist {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.theme-video-entry {
-  padding: 12px 14px;
-  border-top: 1px solid var(--border-subtle);
-}
-.theme-video-entry:first-of-type { border-top: none; }
-.theme-video-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  min-height: 18px;
-}
-.theme-ver-tag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 20px;
-  background: rgba(236,201,75,0.15);
-  border: 1px solid rgba(236,201,75,0.4);
-  color: var(--accent-gold);
-}
-.theme-ep-range {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-/* Legacy theme-block (kept for compat) */
 .theme-block { margin-bottom: 20px; }
 .theme-block:last-child { margin-bottom: 0; }
 
@@ -1633,57 +1506,6 @@ img { max-width: 100%; height: auto; display: block; }
   transition: opacity 0.2s ease;
 }
 
-/* ── Bookmark Toast — bottom-left corner ── */
-.bookmark-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px 12px 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-medium);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
-  min-width: 220px;
-  max-width: 320px;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  pointer-events: auto;
-}
-.bookmark-toast--in {
-  animation: toastSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-.bookmark-toast--out {
-  animation: toastSlideOut 0.35s ease forwards;
-}
-@keyframes toastSlideIn {
-  from { opacity: 0; transform: translateX(-40px) scale(0.95); }
-  to   { opacity: 1; transform: translateX(0)    scale(1); }
-}
-@keyframes toastSlideOut {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0; transform: translateX(-30px); }
-}
-.bookmark-toast-icon { font-size: 1rem; flex-shrink: 0; }
-.bookmark-toast-msg  { flex: 1; line-height: 1.35; }
-.bookmark-toast-close {
-  flex-shrink: 0;
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0 2px;
-  background: none; border: none;
-  transition: color 0.15s;
-}
-.bookmark-toast-close:hover { color: var(--text-primary); }
-@media (max-width: 480px) {
-  .bookmark-toast { left: 12px; bottom: 16px; right: 12px; max-width: none; }
-}
-
 /* Alert Popup */
 .alert-popup {
   position: fixed;
@@ -2034,6 +1856,184 @@ img { max-width: 100%; height: auto; display: block; }
   outline: none;
   box-shadow: none;
 }
+/* Cast tab — scrollable, no visible scrollbar */
+.cast-tab-scroll {
+  max-height: 640px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-radius: var(--radius-md);
+}
+.cast-tab-scroll::-webkit-scrollbar { display: none; }
+
+/* Theme tab — scrollable, no scrollbar */
+#themesTab {
+  max-height: 700px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+#themesTab::-webkit-scrollbar { display: none; }
+.themes-container { padding: 4px 0; }
+
+.themes-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+}
+.themes-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+.theme-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.theme-card:last-child { margin-bottom: 0; }
+.theme-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.theme-card-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: #7ec8f7;
+  background: rgba(126,200,247,0.12);
+  border: 1px solid rgba(126,200,247,0.3);
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.theme-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.theme-song-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-artist {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.theme-video-entry {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+.theme-video-entry:first-of-type { border-top: none; }
+.theme-video-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 18px;
+}
+.theme-ver-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(236,201,75,0.15);
+  border: 1px solid rgba(236,201,75,0.4);
+  color: var(--accent-gold);
+}
+.theme-ep-range { font-size: 0.7rem; color: var(--text-muted); }
+
+/* Season overlays */
+.season-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  z-index: 0;
+}
+.season-info-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+.season-relation-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(236,201,75,0.2);
+  border: 1px solid rgba(236,201,75,0.5);
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+
+/* ── Bookmark Toast — bottom-left ── */
+.bookmark-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  min-width: 220px;
+  max-width: 320px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.bookmark-toast--in  { animation: toastIn  0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.bookmark-toast--out { animation: toastOut 0.35s ease forwards; }
+@keyframes toastIn  { from { opacity:0; transform:translateX(-40px) scale(0.95); } to { opacity:1; transform:translateX(0) scale(1); } }
+@keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(-30px); } }
+.bookmark-toast-icon { font-size:1rem; flex-shrink:0; }
+.bookmark-toast-msg  { flex:1; line-height:1.35; }
+.bookmark-toast-close { flex-shrink:0; font-size:1.1rem; color:var(--text-muted); cursor:pointer; padding:0 2px; background:none; border:none; transition:color 0.15s; }
+.bookmark-toast-close:hover { color:var(--text-primary); }
+@media (max-width:480px) { .bookmark-toast { left:12px; bottom:16px; right:12px; max-width:none; } }
   </style>
 </head>
 <body>
@@ -2352,8 +2352,8 @@ img { max-width: 100%; height: auto; display: block; }
 
       let currentState = {
         source: null, id: null, type: null, title: '',
-        data: null, currentUser: null, currentUserProfile: null,
-        userBookmarks: [], selectedStatuses: [], dropdownTimer: null, allAnimeData: null
+        data: null, currentUser: null, currentUserProfile: null, userBookmarks: [],
+        selectedStatuses: [], dropdownTimer: null, allAnimeData: null
       };
 
       document.addEventListener('DOMContentLoaded', async () => {
@@ -2414,7 +2414,7 @@ img { max-width: 100%; height: auto; display: block; }
 
       async function initAuth() {
         async function resolveProfile(user) {
-          if (!user) return null;
+          if (!user) return {};
           const { data } = await window.supabaseClient
             .from('profiles').select('username').eq('user_id', user.id).maybeSingle();
           return data || {};
@@ -2450,7 +2450,7 @@ img { max-width: 100%; height: auto; display: block; }
           renderDetails();
           renderSeasons();
           renderTabs();
-          // Now that show_id is known, fetch saved bookmarks for this page
+          // Fetch saved bookmarks now that show_id is known
           if (currentState.currentUser) fetchUserBookmarks();
           
         } catch (error) {
@@ -2669,11 +2669,9 @@ img { max-width: 100%; height: auto; display: block; }
         
         if (isAnime) {
           if (data.title_english) details.push({ label: 'Title', value: data.title_english });
-          // Romaji = the default Jikan title (romanised Japanese) — shown when it differs from English
+          // Romanji = data.title (the romaji/default title from Jikan, distinct from english)
           const romaji = data.title;
-          if (romaji && romaji !== data.title_english) {
-            details.push({ label: 'Romaji', value: romaji });
-          }
+          if (romaji && romaji !== data.title_english) details.push({ label: 'Romaji', value: romaji });
           if (data.title_japanese) details.push({ label: 'Japanese', value: data.title_japanese });
           if (data.title_synonyms?.length) details.push({ label: 'Synonyms', value: data.title_synonyms.join(', ') });
         } else {
@@ -2940,7 +2938,7 @@ img { max-width: 100%; height: auto; display: block; }
         });
         
         const dropdownBtn = document.getElementById('addToListBtn');
-        const dropdown    = document.getElementById('bookmarkDropdown');
+        const dropdown = document.getElementById('bookmarkDropdown');
 
         function closeDropdown() {
           dropdown.classList.remove('show');
@@ -2948,12 +2946,10 @@ img { max-width: 100%; height: auto; display: block; }
           dropdownBtn.setAttribute('aria-expanded', 'false');
         }
 
-        // Fire toast with selected statuses after dropdown closes
         function fireBookmarkToast() {
-          const n = currentState.selectedStatuses.length;
-          if (n === 0) return;
+          if (!currentState.selectedStatuses.length) return;
           const label = currentState.selectedStatuses
-            .map(s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+            .map(s => s.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()))
             .join(' + ');
           showToast(`Saved: ${label}`, 'success');
         }
@@ -2964,7 +2960,6 @@ img { max-width: 100%; height: auto; display: block; }
           const isOpen = dropdown.classList.toggle('show');
           dropdownBtn.classList.toggle('open', isOpen);
           dropdownBtn.setAttribute('aria-expanded', String(isOpen));
-          // If opening with 1 status already selected, restart the 5s window
           if (isOpen && currentState.selectedStatuses.length === 1) {
             clearTimeout(currentState.dropdownTimer);
             currentState.dropdownTimer = setTimeout(async () => {
@@ -2980,7 +2975,6 @@ img { max-width: 100%; height: auto; display: block; }
             closeDropdown();
             clearTimeout(currentState.dropdownTimer);
             currentState.dropdownTimer = null;
-            // User closed dropdown manually — save and show toast now
             if (currentState.selectedStatuses.length > 0) {
               saveBookmarks().then(() => fireBookmarkToast());
             }
@@ -3000,7 +2994,6 @@ img { max-width: 100%; height: auto; display: block; }
               return;
             }
 
-            // Toggle selection (max 2)
             const idx = currentState.selectedStatuses.indexOf(status);
             if (idx > -1) {
               currentState.selectedStatuses.splice(idx, 1);
@@ -3012,7 +3005,6 @@ img { max-width: 100%; height: auto; display: block; }
             updateDropdownButtonText();
 
             if (currentState.selectedStatuses.length === 1) {
-              // First pick — start 5s window to allow a second pick
               clearTimeout(currentState.dropdownTimer);
               currentState.dropdownTimer = setTimeout(async () => {
                 closeDropdown();
@@ -3020,14 +3012,12 @@ img { max-width: 100%; height: auto; display: block; }
                 fireBookmarkToast();
               }, 5000);
             } else if (currentState.selectedStatuses.length === 2) {
-              // Second pick — save immediately and close
               clearTimeout(currentState.dropdownTimer);
               currentState.dropdownTimer = null;
               closeDropdown();
               await saveBookmarks();
               fireBookmarkToast();
             } else {
-              // Deselected back to 0 — save and close
               clearTimeout(currentState.dropdownTimer);
               currentState.dropdownTimer = null;
               closeDropdown();
@@ -3151,33 +3141,32 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      // ── BOOKMARK FUNCTIONS ─────────────────────────────────────────────────
-      // Schema columns confirmed from SQL:
-      // user_id, show_id, username, bookmark_status, mal_id, tmdb_id,
-      // eng_title, default_title, original_title, romanji_title, japanese_title,
-      // synonyms, country_name, genres, aired_date, broadcast_day_time, source,
-      // rank, popularity, studio_name, producers_name, total_epi_num, dub_epi_num,
-      // sub_epi_num, format, synopsis_context, overview_context, mal_score,
-      // tmdb_average_score, content_rating, anime_duration_time,
-      // tmdb_movie_tv_runtime, show_poster_link,
-      // show_backdrop_landscape_image_link, external_link_mal, external_link_tmdb
+      // ── BOOKMARK FUNCTIONS ──────────────────────────────────────────────────
+      // Exact columns confirmed from your Supabase schema screenshots:
+      // Original cols: user_id, media_id(text), media_type(text), updated_at
+      // SQL-added cols: show_id(int4), mal_id, tmdb_id, username, bookmark_status,
+      //   eng_title, default_title, original_title, romanji_title, japanese_title,
+      //   synonyms, country_name, genres, show_status, aired_date, broadcast_day_time,
+      //   source, rank, popularity, studio_name, producers_name, total_epi_num,
+      //   dub_epi_num, sub_epi_num, format, synopsis_context, overview_context,
+      //   mal_score, tmdb_average_score, content_rating, anime_duration_time,
+      //   tmdb_movie_tv_runtime, show_poster_link,
+      //   show_backdrop_landscape_image_link, external_link_mal, external_link_tmdb
 
       function buildBookmarkPayload(statuses) {
         const d = currentState.data || {};
         const isAnime = currentState.source === 'jikan';
 
-        // Country ISO → full name lookup
         const ISO = {
           US:'United States',GB:'United Kingdom',JP:'Japan',KR:'South Korea',
           CN:'China',FR:'France',DE:'Germany',IN:'India',IT:'Italy',CA:'Canada',
-          AU:'Australia',BR:'Brazil',MX:'Mexico',RU:'Russia',SE:'Sweden',
-          TH:'Thailand',TW:'Taiwan',HK:'Hong Kong',PH:'Philippines',ID:'Indonesia'
+          AU:'Australia',BR:'Brazil',MX:'Mexico',RU:'Russia',TH:'Thailand',
+          TW:'Taiwan',HK:'Hong Kong',PH:'Philippines',ID:'Indonesia'
         };
-        let country_name = 'Japan';
-        if (!isAnime) {
+        const country_name = isAnime ? 'Japan' : (() => {
           const iso = d.origin_country?.[0] || d.production_countries?.[0]?.iso_3166_1 || '';
-          country_name = ISO[iso] || iso || null;
-        }
+          return ISO[iso] || iso || null;
+        })();
 
         const genreArr = isAnime
           ? [...(d.genres||[]),...(d.themes||[]),...(d.demographics||[])].map(g=>g.name)
@@ -3201,66 +3190,57 @@ img { max-width: 100%; height: auto; display: block; }
         }
 
         return {
-          // ── Original table columns (existed before SQL upgrades) ──
+          // ── Original columns (must be present or insert fails) ──
           user_id:    currentState.currentUser.id,
-          media_id:   String(currentState.id),          // text — original PK-style column
-          media_type: isAnime ? 'jikan-anime'           // text — jikan-anime | tmdb-tv | tmdb-movie
-            : currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv',
-          show_status: isAnime                          // text column added by SQL
-            ? (d.status || null)
-            : (d.status || null),
+          media_id:   String(currentState.id),
+          media_type: isAnime ? 'jikan-anime' : currentState.type === 'movie' ? 'tmdb-movie' : 'tmdb-tv',
 
-          // ── New columns added by SQL ──
-          show_id:      currentState.id,               // int4
-          username:     currentState.currentUserProfile?.username || null,
-          mal_id:       isAnime  ? currentState.id : null,
-          tmdb_id:      !isAnime ? currentState.id : null,
+          // ── SQL-added columns ──
+          show_id:         currentState.id,
+          username:        currentState.currentUserProfile?.username || null,
+          mal_id:          isAnime  ? currentState.id : null,
+          tmdb_id:         !isAnime ? currentState.id : null,
           bookmark_status: statuses.join(', '),
+          show_status:     d.status || null,
 
-          // titles
-          eng_title:      isAnime ? (d.title_english||null)     : (d.title||d.name||null),
-          default_title:  isAnime ? (d.title||null)             : (d.title||d.name||null),
+          eng_title:      isAnime ? (d.title_english||null) : (d.title||d.name||null),
+          default_title:  isAnime ? (d.title||null)         : (d.title||d.name||null),
           original_title: isAnime ? null : (d.original_title||d.original_name||null),
           romanji_title:  isAnime && d.title !== d.title_english ? (d.title||null) : null,
-          japanese_title: isAnime ? (d.title_japanese||null)    : null,
-          synonyms:       isAnime && d.title_synonyms?.length   ? d.title_synonyms.join(', ') : null,
+          japanese_title: isAnime ? (d.title_japanese||null) : null,
+          synonyms:       isAnime && d.title_synonyms?.length ? d.title_synonyms.join(', ') : null,
 
-          // metadata
           country_name,
-          genres:              genreArr.length ? [...new Set(genreArr)].join(', ') : null,
+          genres:             genreArr.length ? [...new Set(genreArr)].join(', ') : null,
           aired_date,
-          broadcast_day_time:  isAnime ? (d.broadcast?.string||null) : null,
-          source:              isAnime ? (d.source||null) : null,   // manga / light novel / etc.
-          rank:                d.rank ?? null,
-          popularity:          d.popularity ? Math.round(d.popularity) : null,
-          studio_name:         isAnime
+          broadcast_day_time: isAnime ? (d.broadcast?.string||null) : null,
+          source:             isAnime ? (d.source||null) : null,
+          rank:               d.rank ?? null,
+          popularity:         d.popularity ? Math.round(d.popularity) : null,
+          studio_name:        isAnime
             ? (d.studios?.map(s=>s.name).join(', ')||null)
             : (d.production_companies?.[0]?.name || d.networks?.[0]?.name || null),
-          producers_name:      isAnime ? (d.producers?.map(p=>p.name).join(', ')||null) : null,
-          total_epi_num:       isAnime ? (d.episodes??null)           : (d.number_of_episodes??null),
-          sub_epi_num:         currentState.allAnimeData?.episodes_sub ?? null,
-          dub_epi_num:         currentState.allAnimeData?.episodes_dub ?? null,
-          format:              isAnime ? (d.type||null)               : (currentState.type==='movie'?'Movie':'Scripted'),
-          synopsis_context:    isAnime ? (d.synopsis||null)           : null,
-          overview_context:    !isAnime ? (d.overview||null)          : null,
-          mal_score:           isAnime  ? (d.score??null)             : null,
-          tmdb_average_score:  !isAnime ? (d.vote_average??null)      : null,
+          producers_name:     isAnime ? (d.producers?.map(p=>p.name).join(', ')||null) : null,
+          total_epi_num:      isAnime ? (d.episodes??null) : (d.number_of_episodes??null),
+          sub_epi_num:        currentState.allAnimeData?.episodes_sub ?? null,
+          dub_epi_num:        currentState.allAnimeData?.episodes_dub ?? null,
+          format:             isAnime ? (d.type||null) : (currentState.type==='movie'?'Movie':'Scripted'),
+          synopsis_context:   isAnime ? (d.synopsis||null) : null,
+          overview_context:   !isAnime ? (d.overview||null) : null,
+          mal_score:          isAnime  ? (d.score??null) : null,
+          tmdb_average_score: !isAnime ? (d.vote_average??null) : null,
           content_rating,
-          anime_duration_time:    isAnime ? (d.duration||null)        : null,
-          tmdb_movie_tv_runtime:  !isAnime
-            ? (currentState.type==='movie' ? (d.runtime??null) : (d.episode_run_time?.[0]??null))
-            : null,
+          anime_duration_time:   isAnime ? (d.duration||null) : null,
+          tmdb_movie_tv_runtime: !isAnime
+            ? (currentState.type==='movie' ? (d.runtime??null) : (d.episode_run_time?.[0]??null)) : null,
           show_poster_link: isAnime
             ? (d.images?.jpg?.image_url||null)
             : (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : null),
           show_backdrop_landscape_image_link: isAnime
             ? (d.images?.jpg?.large_image_url||null)
             : (d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null),
-          external_link_mal:  isAnime && d.mal_id
-            ? `https://myanimelist.net/anime/${d.mal_id}` : null,
-          external_link_tmdb: !isAnime
-            ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : null,
-
+          external_link_mal:  isAnime && d.mal_id ? `https://myanimelist.net/anime/${d.mal_id}` : null,
+          external_link_tmdb: !isAnime ? `https://www.themoviedb.org/${currentState.type}/${currentState.id}` : null,
           updated_at: new Date().toISOString()
         };
       }
@@ -3268,23 +3248,32 @@ img { max-width: 100%; height: auto; display: block; }
       async function fetchUserBookmarks() {
         if (!currentState.currentUser || !currentState.id) return;
         try {
-          // Query by show_id (int) first — covers rows inserted by our code.
-          // Also try media_id (text) for any legacy rows.
+          // Use show_id (int4) — the unique constraint column
           const { data, error } = await window.supabaseClient
             .from('user_bookmarks')
             .select('id, bookmark_status, show_id, media_id')
             .eq('user_id', currentState.currentUser.id)
-            .or(`show_id.eq.${currentState.id},media_id.eq.${currentState.id}`);
-          if (error) throw error;
+            .eq('show_id', currentState.id);
 
-          currentState.userBookmarks = data || [];
-          // Parse bookmark_status from the first matching row
-          const row = data?.[0];
+          if (error) {
+            // Fallback: query by media_id (text) for rows that predate show_id
+            const { data: d2, error: e2 } = await window.supabaseClient
+              .from('user_bookmarks')
+              .select('id, bookmark_status, show_id, media_id')
+              .eq('user_id', currentState.currentUser.id)
+              .eq('media_id', String(currentState.id));
+            if (e2) throw e2;
+            currentState.userBookmarks = d2 || [];
+          } else {
+            currentState.userBookmarks = data || [];
+          }
+
+          const row = currentState.userBookmarks[0];
           currentState.selectedStatuses = row?.bookmark_status
             ? row.bookmark_status.split(',').map(s => s.trim()).filter(Boolean)
             : [];
           updateBookmarkUI();
-        } catch (e) { console.error('[Bookmark] fetchUserBookmarks:', e); }
+        } catch (e) { console.error('[Bookmark] fetch error:', e); }
       }
 
       async function saveBookmarks() {
@@ -3292,29 +3281,33 @@ img { max-width: 100%; height: auto; display: block; }
         try {
           const payload = buildBookmarkPayload(currentState.selectedStatuses);
           const existingId = currentState.userBookmarks[0]?.id;
-
           let error;
+
           if (existingId) {
-            // Row exists — UPDATE in place (no upsert constraint needed)
+            // Row exists — UPDATE (exclude user_id from update to avoid RLS issues)
+            const { user_id, ...updatePayload } = payload;
             ({ error } = await window.supabaseClient
-              .from('user_bookmarks').update(payload).eq('id', existingId));
+              .from('user_bookmarks')
+              .update(updatePayload)
+              .eq('id', existingId)
+              .eq('user_id', currentState.currentUser.id));
           } else if (currentState.selectedStatuses.length > 0) {
-            // No row yet — INSERT
+            // No row — INSERT
             ({ error } = await window.supabaseClient
-              .from('user_bookmarks').insert(payload));
+              .from('user_bookmarks')
+              .insert(payload));
           } else {
-            // Nothing selected and no row — nothing to do
-            return;
+            return; // nothing to save
           }
 
           if (error) {
-            console.error('[Bookmark] Supabase error:', JSON.stringify(error));
+            console.error('[Bookmark] Supabase error:', error.code, error.message, error.details);
             showToast(`Save failed: ${error.message}`, 'error');
             return;
           }
           await fetchUserBookmarks();
         } catch (e) {
-          console.error('[Bookmark] saveBookmarks exception:', e);
+          console.error('[Bookmark] exception:', e);
           showToast('Failed to save bookmark', 'error');
         }
       }
@@ -3325,19 +3318,20 @@ img { max-width: 100%; height: auto; display: block; }
           const ids = currentState.userBookmarks.map(b => b.id).filter(Boolean);
           let error;
           if (ids.length) {
-            ({ error } = await window.supabaseClient.from('user_bookmarks').delete().in('id', ids));
+            ({ error } = await window.supabaseClient.from('user_bookmarks').delete()
+              .in('id', ids)
+              .eq('user_id', currentState.currentUser.id));
           } else {
-            // Fallback: delete by both possible identity columns
             ({ error } = await window.supabaseClient.from('user_bookmarks').delete()
               .eq('user_id', currentState.currentUser.id)
-              .or(`show_id.eq.${currentState.id},media_id.eq.${currentState.id}`));
+              .eq('show_id', currentState.id));
           }
           if (error) throw error;
           currentState.userBookmarks    = [];
           currentState.selectedStatuses = [];
           updateBookmarkUI();
           showToast('Removed from your list', 'remove');
-        } catch (e) { console.error('[Bookmark] removeBookmark:', e); }
+        } catch (e) { console.error('[Bookmark] remove error:', e); }
       }
 
       function updateBookmarkUI() {
@@ -3349,50 +3343,35 @@ img { max-width: 100%; height: auto; display: block; }
         );
         if (!currentState.currentUser) { text.textContent = 'Add to List'; return; }
         const n = currentState.selectedStatuses.length;
-        if (n === 0) text.textContent = 'Add to List';
+        if (n === 0)      text.textContent = 'Add to List';
         else if (n === 1) text.textContent = currentState.selectedStatuses[0].replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-        else text.textContent = 'Edit List';
+        else              text.textContent = 'Edit List';
       }
 
-      function showLoginAlert() {
+      let _toastTimer = null, _toastEl = null;
+      function showToast(message, type = 'success') {
+        if (_toastEl) { _toastEl.remove(); _toastEl = null; }
+        clearTimeout(_toastTimer);
+        const icons = {
+          success: '<i class="fa-solid fa-bookmark" style="color:#7ec8f7;"></i>',
+          error:   '<i class="fa-solid fa-triangle-exclamation" style="color:#fc8181;"></i>',
+          remove:  '<i class="fa-regular fa-bookmark" style="color:#94a3b8;"></i>',
+          info:    '<i class="fa-solid fa-circle-info" style="color:#7ec8f7;"></i>'
+        };
+        const toast = document.createElement('div');
+        toast.className = 'bookmark-toast bookmark-toast--in';
+        toast.innerHTML = `<div class="bookmark-toast-icon">${icons[type]||icons.info}</div><div class="bookmark-toast-msg">${message}</div><button class="bookmark-toast-close" onclick="this.closest('.bookmark-toast').remove()">×</button>`;
+        document.body.appendChild(toast);
+        _toastEl = toast;
+        _toastTimer = setTimeout(() => {
+          toast.classList.replace('bookmark-toast--in','bookmark-toast--out');
+          setTimeout(() => { toast.remove(); if(_toastEl===toast) _toastEl=null; }, 350);
+        }, 3000);
+      }
         const alert = document.getElementById('loginAlert'); 
         alert.classList.add('show');
         setTimeout(() => alert.classList.remove('show'), CONFIG.ALERT_AUTO_CLOSE_MS);
         document.getElementById('alertClose').onclick = () => alert.classList.remove('show');
-      }
-
-      // ── Toast notification — bottom-left, auto-dismiss 3s ─────────────────
-      let _toastTimer = null;
-      let _toastEl = null;
-
-      function showToast(message, type = 'success') {
-        // Remove any existing toast immediately
-        if (_toastEl) { _toastEl.remove(); _toastEl = null; }
-        clearTimeout(_toastTimer);
-
-        const iconMap = {
-          success: '<i class="fa-solid fa-bookmark" style="color:#7ec8f7;"></i>',
-          error:   '<i class="fa-solid fa-triangle-exclamation" style="color:#fc8181;"></i>',
-          remove:  '<i class="fa-regular fa-bookmark" style="color:#94a3b8;"></i>',
-          info:    '<i class="fa-solid fa-circle-info" style="color:#7ec8f7;"></i>',
-        };
-        const icon = iconMap[type] || iconMap.info;
-
-        const toast = document.createElement('div');
-        toast.className = 'bookmark-toast bookmark-toast--in';
-        toast.innerHTML = `
-          <div class="bookmark-toast-icon">${icon}</div>
-          <div class="bookmark-toast-msg">${message}</div>
-          <button class="bookmark-toast-close" onclick="this.closest('.bookmark-toast').remove()">×</button>
-        `;
-        document.body.appendChild(toast);
-        _toastEl = toast;
-
-        // Auto-dismiss after 3s
-        _toastTimer = setTimeout(() => {
-          toast.classList.replace('bookmark-toast--in', 'bookmark-toast--out');
-          setTimeout(() => { toast.remove(); if (_toastEl === toast) _toastEl = null; }, 350);
-        }, 3000);
       }
 
       async function loadSidebarContent() {
@@ -4069,82 +4048,64 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           container.innerHTML = '<p class="loading-text">Theme songs only available for anime</p>';
           return;
         }
-
         const malId = currentState.data?.mal_id || currentState.id;
         if (!malId) { container.innerHTML = '<p class="loading-text">No MAL ID available</p>'; return; }
-
         container.innerHTML = '<p class="loading-text" style="padding:20px 0;">Loading themes...</p>';
-
         try {
-          // ✅ CORRECT endpoint: filter[site]=MyAnimeList + filter[has]=resources
+          // ✅ CORRECT URL — filter[site]=MyAnimeList + filter[has]=resources
           const url = `https://api.animethemes.moe/anime?filter[has]=resources&filter[site]=MyAnimeList&filter[external_id]=${malId}&include=animethemes.song,animethemes.animethemeentries.videos`;
           const res = await fetch(url);
           if (!res.ok) throw new Error(`AnimThemes ${res.status}`);
           const json = await res.json();
           const animeEntry = (json.anime || [])[0];
-
           if (!animeEntry?.animethemes?.length) {
             container.innerHTML = '<p class="loading-text">No theme songs found for this anime</p>';
             return;
           }
-
           const allThemes = animeEntry.animethemes;
-          const ops = allThemes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence||0) - (b.sequence||0));
-          const eds = allThemes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence||0) - (b.sequence||0));
+          const ops = allThemes.filter(t => t.type === 'OP').sort((a,b) => (a.sequence||0)-(b.sequence||0));
+          const eds = allThemes.filter(t => t.type === 'ED').sort((a,b) => (a.sequence||0)-(b.sequence||0));
           const posterImg = currentState.data.images?.jpg?.image_url || '';
 
           function buildThemeCards(list, sectionType) {
             return list.map(theme => {
-              const seq       = theme.sequence || '';
-              const label     = `${sectionType}${seq}`;
+              const seq = theme.sequence || '';
+              const label = `${sectionType}${seq}`;
               const songTitle = theme.song?.title || label;
-              const artists   = (theme.song?.artists || []).map(a => a.name).join(', ');
-              const entries   = theme.animethemeentries || [];
-
+              const artists = (theme.song?.artists || []).map(a => a.name).join(', ');
+              const entries = theme.animethemeentries || [];
               const videoBlocks = entries.map(entry => {
                 const video = entry.videos?.[0];
                 if (!video?.link) return '';
                 const verTag  = entry.version && entry.version > 1 ? `<span class="theme-ver-tag">v${entry.version}</span>` : '';
                 const epRange = entry.episodes ? `<span class="theme-ep-range">eps ${entry.episodes}</span>` : '';
-                return `
-                  <div class="theme-video-entry">
-                    <div class="theme-video-meta">${verTag}${epRange}</div>
-                    <div class="video-wrapper">
-                      <video controls preload="none" ${posterImg ? `poster="${escapeHtml(posterImg)}"` : ''}>
-                        <source src="${escapeHtml(video.link)}" type="video/webm">
-                      </video>
-                    </div>
-                  </div>`;
-              }).join('');
-
-              if (!videoBlocks.trim()) return '';
-
-              return `
-                <div class="theme-card">
-                  <div class="theme-card-header">
-                    <div class="theme-card-label">${escapeHtml(label)}</div>
-                    <div class="theme-card-titles">
-                      <span class="theme-song-title">${escapeHtml(songTitle)}</span>
-                      ${artists ? `<span class="theme-artist"><i class="fa-solid fa-music" style="font-size:0.65rem;opacity:0.7;"></i> ${escapeHtml(artists)}</span>` : ''}
-                    </div>
+                return `<div class="theme-video-entry">
+                  <div class="theme-video-meta">${verTag}${epRange}</div>
+                  <div class="video-wrapper">
+                    <video controls preload="none"${posterImg ? ` poster="${escapeHtml(posterImg)}"` : ''}>
+                      <source src="${escapeHtml(video.link)}" type="video/webm">
+                    </video>
                   </div>
-                  ${videoBlocks}
                 </div>`;
+              }).join('');
+              if (!videoBlocks.trim()) return '';
+              return `<div class="theme-card">
+                <div class="theme-card-header">
+                  <div class="theme-card-label">${escapeHtml(label)}</div>
+                  <div class="theme-card-titles">
+                    <span class="theme-song-title">${escapeHtml(songTitle)}</span>
+                    ${artists ? `<span class="theme-artist"><i class="fa-solid fa-music" style="font-size:0.65rem;opacity:0.7;"></i> ${escapeHtml(artists)}</span>` : ''}
+                  </div>
+                </div>
+                ${videoBlocks}
+              </div>`;
             }).join('');
           }
 
           let html = '';
-          if (ops.length) {
-            html += `<div class="themes-section-heading"><i class="fa-solid fa-arrow-right-to-bracket" style="transform:rotate(-90deg);color:#7ec8f7;"></i> Opening Themes <span class="themes-count">${ops.length}</span></div>`;
-            html += buildThemeCards(ops, 'OP');
-          }
-          if (eds.length) {
-            html += `<div class="themes-section-heading" style="margin-top:20px;"><i class="fa-solid fa-arrow-right-from-bracket" style="transform:rotate(-90deg);color:#f6ad55;"></i> Ending Themes <span class="themes-count">${eds.length}</span></div>`;
-            html += buildThemeCards(eds, 'ED');
-          }
-
+          if (ops.length) html += `<div class="themes-section-heading"><i class="fa-solid fa-arrow-right-to-bracket" style="transform:rotate(-90deg);color:#7ec8f7;"></i> Opening Themes <span class="themes-count">${ops.length}</span></div>` + buildThemeCards(ops, 'OP');
+          if (eds.length) html += `<div class="themes-section-heading" style="margin-top:20px;"><i class="fa-solid fa-arrow-right-from-bracket" style="transform:rotate(-90deg);color:#f6ad55;"></i> Ending Themes <span class="themes-count">${eds.length}</span></div>` + buildThemeCards(eds, 'ED');
           container.innerHTML = html || '<p class="loading-text">No theme videos available</p>';
-
         } catch (e) {
           console.warn('AnimeThemes error:', e);
           container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>';
