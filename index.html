@@ -1618,60 +1618,59 @@ window.showAnikotoPopupById = function(mal_id) {
       document.getElementById('popupOverlay').addEventListener('click', function(e){ if(e.target===this) window.hidePopup(); });
 
       /* ── SCHEDULE (COMPLETE REBUILD) ── */
-           /* ── NEW SCHEDULE (4‑column, localStorage, episode count) ── */
+                 /* ── NEW SCHEDULE (4‑column, localStorage, episode count) ── */
       let scheduleData = null;          // { monday: [anime], tuesday: [...], ... }
       let currentDay = null;            // 'monday' ... 'sunday'
       let currentWeekOffset = 0;        // weeks from today's week start
       const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
       const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-      // ---------- Helper: fetch 3 pages for one day, deduplicate ----------
+      // ---------- Helper: fetch 3 pages for one day, with delays ----------
       async function fetchDaySchedules(day) {
-        const pages = await Promise.all([
-          fetchJikan('schedules', `filter=${day}&sfw=true&limit=25&page=1`),
-          fetchJikan('schedules', `filter=${day}&sfw=true&limit=25&page=2`),
-          fetchJikan('schedules', `filter=${day}&sfw=true&limit=25&page=3`)
-        ]);
-        const all = pages.flatMap(p => p.data || []);
-        // deduplicate by mal_id
+        const pagesToTry = [1, 2, 3];
+        let allAnime = [];
+
+        for (const page of pagesToTry) {
+          try {
+            const res = await fetchJikan('schedules', `filter=${day}&sfw=true&limit=25&page=${page}`);
+            if (res.data && res.data.length > 0) {
+              allAnime.push(...res.data);
+            }
+            // Wait 0.5s between pages to avoid rate limiting
+            await new Promise(r => setTimeout(r, 500));
+          } catch (err) {
+            console.warn(`Failed to fetch ${day} page ${page}:`, err);
+          }
+        }
+
+        // Deduplicate by mal_id
         const unique = new Map();
-        for (const anime of all) {
+        for (const anime of allAnime) {
           if (!unique.has(anime.mal_id)) unique.set(anime.mal_id, anime);
         }
-        return Array.from(unique.values());
+        const result = Array.from(unique.values());
+        console.log(`✅ ${day}: ${result.length} unique anime`);
+        return result;
       }
 
-      // ---------- Episode number calculation ----------
+      // ---------- Episode number calculation (unchanged) ----------
       function getEpisodeNumber(anime) {
-        // If finished airing, use total episodes
         if (anime.status === 'Finished Airing') return anime.episodes || '?';
-
-        // Need broadcast info
         const broadcast = anime.broadcast;
         if (!broadcast || !broadcast.time) return '?';
-
-        // Parse broadcast time (string like "Mondays at 23:00 (JST)")
         const timeMatch = broadcast.time.match(/(\d{1,2}):(\d{2})/);
         if (!timeMatch) return '?';
         const [_, hour, minute] = timeMatch;
         const broadcastHour = parseInt(hour);
         const broadcastMinute = parseInt(minute);
-
-        // Get first air date (aired.from)
         const firstAir = anime.aired?.from ? new Date(anime.aired.from) : null;
         if (!firstAir) return '?';
-
         const now = new Date();
-        // Find the most recent broadcast date that is <= now
         const currentDate = new Date(now);
-        // Set to broadcast time (JST, but we treat as local for simplicity)
         currentDate.setHours(broadcastHour, broadcastMinute, 0, 0);
-
-        // Calculate difference in weeks
         const diffMs = currentDate - firstAir;
         const weeksPassed = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-        let episode = weeksPassed + 1;  // first episode is week 0 → 1
-
+        let episode = weeksPassed + 1;
         if (anime.episodes && episode > anime.episodes) episode = anime.episodes;
         return episode;
       }
@@ -1685,14 +1684,12 @@ window.showAnikotoPopupById = function(mal_id) {
           return;
         }
 
-        // Sort by broadcast time (use broadcast.string)
         const sorted = [...animeList].sort((a, b) => {
           const timeA = a.broadcast?.time || '';
           const timeB = b.broadcast?.time || '';
           return timeA.localeCompare(timeB);
         });
 
-        // Build rows
         const rowsHtml = sorted.map(anime => {
           const episode = getEpisodeNumber(anime);
           const title = anime.title_english || anime.title;
@@ -1711,21 +1708,20 @@ window.showAnikotoPopupById = function(mal_id) {
           `;
         }).join('');
 
-        // Show first 7, rest hidden behind a "more" button
         const visibleCount = 7;
-        const visibleRows = rowsHtml.split('</a>').slice(0, visibleCount).join('</a>') + (rowsHtml.split('</a>').length > visibleCount ? '</a>' : '');
-        const hiddenRows = rowsHtml.split('</a>').slice(visibleCount).join('</a>');
-        const hasMore = sorted.length > visibleCount;
+        const rowsArray = rowsHtml.split('</a>').filter(x => x.trim());
+        const visibleRows = rowsArray.slice(0, visibleCount).join('</a>') + (rowsArray.length > visibleCount ? '</a>' : '');
+        const hiddenRows = rowsArray.slice(visibleCount).join('</a>');
+        const hasMore = rowsArray.length > visibleCount;
 
         container.innerHTML = `
           <div class="schedule-list">
             ${visibleRows}
             ${hasMore ? `<div class="schedule-more-wrapper" style="display:none;">${hiddenRows}</div>` : ''}
-            ${hasMore ? `<button class="schedule-more-btn">Show More (${sorted.length - visibleCount})</button>` : ''}
+            ${hasMore ? `<button class="schedule-more-btn">Show More (${rowsArray.length - visibleCount})</button>` : ''}
           </div>
         `;
 
-        // Attach event to "more" button
         const moreBtn = container.querySelector('.schedule-more-btn');
         if (moreBtn) {
           moreBtn.addEventListener('click', (e) => {
@@ -1733,18 +1729,17 @@ window.showAnikotoPopupById = function(mal_id) {
             if (wrapper) {
               const isHidden = wrapper.style.display === 'none';
               wrapper.style.display = isHidden ? 'block' : 'none';
-              moreBtn.textContent = isHidden ? 'Show Less' : `Show More (${sorted.length - visibleCount})`;
+              moreBtn.textContent = isHidden ? 'Show Less' : `Show More (${rowsArray.length - visibleCount})`;
             }
           });
         }
       }
 
-      // ---------- Build week days (mon‑sun) for date selector ----------
+      // ---------- Build week dates (Mon‑Sun) ----------
       function buildWeekDates() {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const currentDayOfWeek = today.getDay(); // 0 = sunday
-        // We want Monday as first day of week (adjust)
+        const currentDayOfWeek = today.getDay(); // 0 = Sunday
         let monday = new Date(today);
         const diffToMonday = (currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek);
         monday.setDate(today.getDate() + diffToMonday + currentWeekOffset * 7);
@@ -1757,7 +1752,7 @@ window.showAnikotoPopupById = function(mal_id) {
         return weekDates;
       }
 
-      // ---------- Update the day cards and highlight today ----------
+      // ---------- Update day cards ----------
       function updateDaySelector() {
         const weekDates = buildWeekDates();
         const today = new Date();
@@ -1765,7 +1760,7 @@ window.showAnikotoPopupById = function(mal_id) {
         const container = document.getElementById('eswDaysScroll');
         container.innerHTML = weekDates.map((date, idx) => {
           const isToday = date.toDateString() === todayStr;
-          const dayName = DAY_NAMES[date.getDay() === 0 ? 6 : date.getDay() - 1]; // map to Mon-Sun
+          const dayName = DAY_NAMES[date.getDay() === 0 ? 6 : date.getDay() - 1];
           const isActive = currentDay === DAYS[date.getDay() === 0 ? 6 : date.getDay() - 1];
           return `
             <div class="esw-day-card ${isToday ? 'today' : ''} ${isActive ? 'active' : ''}" data-day-index="${idx}">
@@ -1774,7 +1769,6 @@ window.showAnikotoPopupById = function(mal_id) {
             </div>
           `;
         }).join('');
-        // reattach click handlers
         document.querySelectorAll('#eswDaysScroll .esw-day-card').forEach(card => {
           card.addEventListener('click', (e) => {
             const idx = parseInt(card.dataset.dayIndex);
@@ -1785,17 +1779,17 @@ window.showAnikotoPopupById = function(mal_id) {
         });
       }
 
-      // ---------- Set current day, update UI, render ----------
+      // ---------- Set current day, render ----------
       function setCurrentDay(dayKey) {
         currentDay = dayKey;
-        updateDaySelector();   // refreshes active class
+        updateDaySelector();
         renderScheduleForDay(currentDay);
       }
 
-      // ---------- Main loader (localStorage + fetch all days) ----------
+      // ---------- Main loader (sequential fetch, localStorage) ----------
       async function loadSchedule() {
         const STORAGE_KEY = 'aniocean_schedule_cache';
-        const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+        const CACHE_TTL = 24 * 60 * 60 * 1000;
         const cached = localStorage.getItem(STORAGE_KEY);
         let needFetch = true;
 
@@ -1811,14 +1805,12 @@ window.showAnikotoPopupById = function(mal_id) {
         }
 
         if (needFetch) {
-          console.log('Fetching all schedule days (21 requests)...');
-          const dayPromises = DAYS.map(day => fetchDaySchedules(day));
-          const results = await Promise.all(dayPromises);
+          console.log('Fetching schedule one day at a time...');
           scheduleData = {};
-          DAYS.forEach((day, idx) => {
-            scheduleData[day] = results[idx];
-          });
-          // store in localStorage
+          for (const day of DAYS) {
+            scheduleData[day] = await fetchDaySchedules(day);
+            await new Promise(r => setTimeout(r, 500)); // delay between days
+          }
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
             data: scheduleData,
             timestamp: Date.now()
@@ -1826,11 +1818,14 @@ window.showAnikotoPopupById = function(mal_id) {
           console.log('Schedule cached for 24 hours');
         }
 
-        // Determine current day (based on local time, Monday-Sunday)
+        // Expose scheduleData globally for debugging
+        window.scheduleData = scheduleData;
+
+        // Determine current day (Monday‑Sunday)
         const now = new Date();
         let dayIndex = now.getDay(); // 0 = Sunday
         if (dayIndex === 0) dayIndex = 7;
-        const currentDayKey = DAYS[dayIndex - 1]; // days[0]=monday, days[6]=sunday
+        const currentDayKey = DAYS[dayIndex - 1];
         setCurrentDay(currentDayKey);
         updateClock();
         setInterval(updateClock, 60000);
@@ -1840,8 +1835,6 @@ window.showAnikotoPopupById = function(mal_id) {
       function previousWeek() {
         currentWeekOffset--;
         updateDaySelector();
-        const weekDates = buildWeekDates();
-        // keep same day of week? simpler: re-select current day key
         setCurrentDay(currentDay);
       }
       function nextWeek() {
@@ -1850,18 +1843,15 @@ window.showAnikotoPopupById = function(mal_id) {
         setCurrentDay(currentDay);
       }
 
-      // Clock update
       function updateClock() {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
         document.getElementById('eswClockText').textContent = timeStr;
       }
 
-      // Attach week navigation buttons
       document.getElementById('eswPrev').addEventListener('click', previousWeek);
       document.getElementById('eswNext').addEventListener('click', nextWeek);
 
-      // Helper to escape HTML
       function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -1871,6 +1861,7 @@ window.showAnikotoPopupById = function(mal_id) {
           return m;
         });
       }
+      
 
       function init() {
         loadHero();
