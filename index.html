@@ -1261,6 +1261,7 @@ window.showAnikotoPopupById = function(mal_id) {
 
       /* ── UPCOMING ── */
      /* ── UPCOMING (Movies + TV + Anime, 3 pages for anime) ── */
+/* ── UPCOMING (Movies + TV + Anime, 3 pages for anime) ── */
 let upcomingShows = [];
 
 async function loadUpcoming() {
@@ -1270,7 +1271,7 @@ async function loadUpcoming() {
   const tmdbMovies = await fetchTMDB('/movie/upcoming', 'language=en-US&page=1');
   const futureMovies = (tmdbMovies.results || []).filter(m => m.release_date && m.release_date > today);
   const movies = futureMovies.slice(0, 40).map(i => ({
-    id: `tmdb-up-${i.id}`,
+    id: `tmdb-movie-${i.id}`,                 // ✅ correct movie ID
     title: i.title,
     original_title: i.original_title || i.title,
     type: 'Movie',
@@ -1283,20 +1284,20 @@ async function loadUpcoming() {
     studio: '?',
     backdrop: tmdbBack(i.backdrop_path),
     duration: '2h 10m',
-    first_air_date: null // not used for movies
+    first_air_date: null
   }));
 
   // 2. Upcoming TV series (TMDB) – discover with first_air_date >= today
   const tvFuture = await fetchTMDB('/discover/tv', `first_air_date.gte=${today}&sort_by=first_air_date.asc&page=1`);
   const tvShows = (tvFuture.results || []).slice(0, 40).map(i => ({
-    id: `tmdb-up-tv-${i.id}`,
+    id: `tmdb-tv-${i.id}`,                    // ✅ correct TV ID
     title: i.name,
     original_title: i.original_name || i.name,
     type: 'TV',
     poster: tmdbImg(i.poster_path),
     score: (i.vote_average || 0).toFixed(1),
     genres: (i.genre_ids || []).map(id => GENRE_MAP[id] || id),
-    releaseDate: i.first_air_date || '',  // we'll treat this as release date
+    releaseDate: i.first_air_date || '',
     synopsis: i.overview || '',
     certification: 'PG-13',
     studio: '?',
@@ -1312,7 +1313,7 @@ async function loadUpcoming() {
     fetchJikan('top/anime', 'filter=upcoming&limit=25&page=3')
   ]);
   const allAnime = animePages.flatMap(page => page.data || []);
-  // Remove duplicates by mal_id (in case same anime appears on multiple pages)
+  // Remove duplicates by mal_id
   const uniqueAnime = [];
   const seen = new Set();
   for (const a of allAnime) {
@@ -1322,7 +1323,7 @@ async function loadUpcoming() {
     }
   }
   const anime = uniqueAnime.slice(0, 60).map(a => ({
-    id: `jikan-up-${a.mal_id}`,
+    id: `jikan-up-${a.mal_id}`,              // ✅ anime ID (works with infoUrl)
     title: a.title_english || a.title,
     original_title: a.title_japanese || a.title,
     type: 'Anime',
@@ -1337,11 +1338,11 @@ async function loadUpcoming() {
     first_air_date: null
   }));
 
-  // Combine all, remove any that still have a past release date (safety filter)
+  // Combine all, remove any that still have a past release date
   const allShows = [...movies, ...tvShows, ...anime];
   const now = new Date();
   const validShows = allShows.filter(show => {
-    if (!show.releaseDate) return true; // keep if no date (TBA)
+    if (!show.releaseDate) return true;
     const showDate = new Date(show.releaseDate);
     return showDate >= now;
   });
