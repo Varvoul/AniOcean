@@ -1836,7 +1836,7 @@ window.showAnikotoPopupById = function(mal_id) {
         const currentDayKey = DAYS[dayIndex - 1];
         setCurrentDay(currentDayKey);
         updateClock();
-        setInterval(updateClock, 60000);
+        setInterval(updateClock, 1000);
       }
 
       // Week navigation
@@ -1852,11 +1852,16 @@ window.showAnikotoPopupById = function(mal_id) {
       }
 
       function updateClock() {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
-        document.getElementById('eswClockText').textContent = timeStr;
-      }
-
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour12: true,          // 12‑hour AM/PM format
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  });
+  document.getElementById('eswClockText').textContent = timeStr;
+}
       document.getElementById('eswPrev').addEventListener('click', previousWeek);
       document.getElementById('eswNext').addEventListener('click', nextWeek);
 
