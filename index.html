@@ -1260,31 +1260,101 @@ window.showAnikotoPopupById = function(mal_id) {
       });
 
       /* ── UPCOMING ── */
-      let upcomingShows=[];
-      async function loadUpcoming() {
-        const [tmdbUp, jikanUp] = await Promise.all([
-          fetchTMDB('/movie/upcoming', 'language=en-US&page=1'),
-          fetchJikan('top/anime', 'filter=upcoming&limit=20')
-        ]);
-        upcomingShows = [
-          ...(tmdbUp.results||[]).slice(0,40).map(i => ({
-            id:`tmdb-up-${i.id}`, title:i.title, original_title:i.original_title||i.title,
-            type:'Movie', poster:tmdbImg(i.poster_path), score:(i.vote_average||0).toFixed(1),
-            genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id), releaseDate:i.release_date||'',
-            synopsis:i.overview||'', certification: i.adult?'18+':'PG-13',
-            studio:'?', backdrop:tmdbBack(i.backdrop_path), duration:'2h 10m'
-          })),
-          ...(jikanUp.data||[]).slice(0,40).map(a => ({
-            id:`jikan-up-${a.mal_id}`, title:a.title_english||a.title, original_title:a.title_japanese||a.title,
-            type:'Anime', poster:a.images?.jpg?.large_image_url||'',
-            score:(a.score||0).toFixed(1), genres:(a.genres||[]).map(g=>g.name),
-            releaseDate:(a.aired?.from||'').slice(0,10), synopsis:a.synopsis||'',
-            certification: a.rating||'PG-13', studio:(a.studios||[])[0]?.name||'?',
-            duration: a.duration||'?'
-          }))
-        ].slice(0,80);
-        renderUpcoming();
-      }
+     /* ── UPCOMING (Movies + TV + Anime, 3 pages for anime) ── */
+let upcomingShows = [];
+
+async function loadUpcoming() {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  // 1. Upcoming movies (TMDB) – filter only future releases
+  const tmdbMovies = await fetchTMDB('/movie/upcoming', 'language=en-US&page=1');
+  const futureMovies = (tmdbMovies.results || []).filter(m => m.release_date && m.release_date > today);
+  const movies = futureMovies.slice(0, 40).map(i => ({
+    id: `tmdb-up-${i.id}`,
+    title: i.title,
+    original_title: i.original_title || i.title,
+    type: 'Movie',
+    poster: tmdbImg(i.poster_path),
+    score: (i.vote_average || 0).toFixed(1),
+    genres: (i.genre_ids || []).map(id => GENRE_MAP[id] || id),
+    releaseDate: i.release_date || '',
+    synopsis: i.overview || '',
+    certification: i.adult ? '18+' : 'PG-13',
+    studio: '?',
+    backdrop: tmdbBack(i.backdrop_path),
+    duration: '2h 10m',
+    first_air_date: null // not used for movies
+  }));
+
+  // 2. Upcoming TV series (TMDB) – discover with first_air_date >= today
+  const tvFuture = await fetchTMDB('/discover/tv', `first_air_date.gte=${today}&sort_by=first_air_date.asc&page=1`);
+  const tvShows = (tvFuture.results || []).slice(0, 40).map(i => ({
+    id: `tmdb-up-tv-${i.id}`,
+    title: i.name,
+    original_title: i.original_name || i.name,
+    type: 'TV',
+    poster: tmdbImg(i.poster_path),
+    score: (i.vote_average || 0).toFixed(1),
+    genres: (i.genre_ids || []).map(id => GENRE_MAP[id] || id),
+    releaseDate: i.first_air_date || '',  // we'll treat this as release date
+    synopsis: i.overview || '',
+    certification: 'PG-13',
+    studio: '?',
+    backdrop: tmdbBack(i.backdrop_path),
+    duration: '45m/ep',
+    first_air_date: i.first_air_date
+  }));
+
+  // 3. Upcoming anime (Jikan) – fetch pages 1, 2 and 3 (limit=25 each)
+  const animePages = await Promise.all([
+    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=1'),
+    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=2'),
+    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=3')
+  ]);
+  const allAnime = animePages.flatMap(page => page.data || []);
+  // Remove duplicates by mal_id (in case same anime appears on multiple pages)
+  const uniqueAnime = [];
+  const seen = new Set();
+  for (const a of allAnime) {
+    if (!seen.has(a.mal_id)) {
+      seen.add(a.mal_id);
+      uniqueAnime.push(a);
+    }
+  }
+  const anime = uniqueAnime.slice(0, 60).map(a => ({
+    id: `jikan-up-${a.mal_id}`,
+    title: a.title_english || a.title,
+    original_title: a.title_japanese || a.title,
+    type: 'Anime',
+    poster: a.images?.jpg?.large_image_url || '',
+    score: (a.score || 0).toFixed(1),
+    genres: (a.genres || []).map(g => g.name),
+    releaseDate: (a.aired?.from || '').slice(0, 10),
+    synopsis: a.synopsis || '',
+    certification: a.rating || 'PG-13',
+    studio: (a.studios || [])[0]?.name || '?',
+    duration: a.duration || '?',
+    first_air_date: null
+  }));
+
+  // Combine all, remove any that still have a past release date (safety filter)
+  const allShows = [...movies, ...tvShows, ...anime];
+  const now = new Date();
+  const validShows = allShows.filter(show => {
+    if (!show.releaseDate) return true; // keep if no date (TBA)
+    const showDate = new Date(show.releaseDate);
+    return showDate >= now;
+  });
+
+  // Sort by release date (closest first) and limit to 80 items
+  validShows.sort((a, b) => {
+    if (!a.releaseDate) return 1;
+    if (!b.releaseDate) return -1;
+    return new Date(a.releaseDate) - new Date(b.releaseDate);
+  });
+  upcomingShows = validShows.slice(0, 80);
+  renderUpcoming();
+}
       function renderUpcoming() {
         document.getElementById('upcomingScroll').innerHTML = upcomingShows.map(s => `
           <a href="${infoUrl(s)}" class="show-card-horiz" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,500)">
