@@ -2774,7 +2774,8 @@ img { max-width: 100%; height: auto; display: block; }
             const m = mins % 60;
             duration = h > 0 ? `${h}h ${m}min` : `${m}min`;
           }
-          } else if (currentState.type === 'tv') {
+ 
+} else if (currentState.type === 'tv') {
   const runTimes = data.episode_run_time;
   if (runTimes?.length) {
     duration = `${runTimes[0]} min`;
@@ -2782,9 +2783,10 @@ img { max-width: 100%; height: auto; display: block; }
     duration = `${data.last_episode_to_air.runtime} min`;
   } else if (data.next_episode_to_air?.runtime) {
     duration = `${data.next_episode_to_air.runtime} min`;
-    ]
-  document.getElementById('durationValue').textContent = duration || '—';
+  }
 }
+
+        document.getElementById('durationValue').textContent = duration || '—';
         
         // Content rating
         let contentRating = '—';
