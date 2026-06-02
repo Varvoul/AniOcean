@@ -2782,7 +2782,8 @@ img { max-width: 100%; height: auto; display: block; }
     duration = `${data.last_episode_to_air.runtime} min`;
   } else if (data.next_episode_to_air?.runtime) {
     duration = `${data.next_episode_to_air.runtime} min`;
-  }
+    ]
+  document.getElementById('durationValue').textContent = duration || '—';
 }
         
         // Content rating
