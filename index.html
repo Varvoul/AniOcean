@@ -1308,10 +1308,12 @@ async function loadUpcoming() {
 
   // 3. Upcoming anime (Jikan) – fetch pages 1, 2 and 3 (limit=25 each)
   const animePages = await Promise.all([
-    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=1'),
-    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=2'),
-    fetchJikan('top/anime', 'filter=upcoming&limit=25&page=3')
-  ]);
+  fetchJikan('top/anime', 'filter=upcoming&limit=25&page=1'),
+  fetchJikan('top/anime', 'filter=upcoming&limit=25&page=2'),
+  fetchJikan('top/anime', 'filter=upcoming&limit=25&page=3'),
+  fetchJikan('top/anime', 'filter=upcoming&limit=25&page=4'),
+  fetchJikan('top/anime', 'filter=upcoming&limit=25&page=5')
+]);
   const allAnime = animePages.flatMap(page => page.data || []);
   // Remove duplicates by mal_id
   const uniqueAnime = [];
@@ -1322,7 +1324,7 @@ async function loadUpcoming() {
       uniqueAnime.push(a);
     }
   }
-  const anime = uniqueAnime.slice(0, 60).map(a => ({
+  const anime = uniqueAnime.slice(0, 100).map(a => ({
     id: `jikan-up-${a.mal_id}`,              // ✅ anime ID (works with infoUrl)
     title: a.title_english || a.title,
     original_title: a.title_japanese || a.title,
