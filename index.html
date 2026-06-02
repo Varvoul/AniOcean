@@ -943,29 +943,24 @@
 
       /* ── NEW ON ANIOCEAN ── */
      /* Store fetched data for popup lookup */
-window.anioceanData = {};
-
 async function loadNewAniocean() {
-  try {
-    const response = await fetchAnikoto('/recent-anime?page=1&per_page=30');
-    
-    if (!response.ok || !response.data || response.data.length === 0) {
-      document.getElementById('newAnioceanGrid').innerHTML = 
-        '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">No recent anime available</div>';
-      return;
+  const grid = document.getElementById('newAnioceanGrid');
+
+  // Helper to render the grid from an array of anime objects (Anikoto or Jikan format)
+  function renderAnimeList(animeList) {
+    if (!animeList || animeList.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">No recent anime available</div>';
+      return false;
     }
-    
-    const data = response.data;
-    const grid = document.getElementById('newAnioceanGrid');
-    
-    grid.innerHTML = data.map(anime => {
-      const studio = anime.terms_by_type?.studios?.[0] || '?';
+
+    grid.innerHTML = animeList.map(anime => {
+      const studio = anime.studio || '?';
       const rating = anime.rating || 'N/A';
-      const type = anime.terms_by_type?.type?.[0] || 'TV';
+      const type = anime.type || 'TV';
       const score = anime.score || 'N/A';
-      const mal_id = anime.mal_id || anime.id || '';
-      
-      // Store data for popup lookup
+      const mal_id = anime.mal_id;
+
+      // Store popup data
       window.anioceanData[mal_id] = {
         title: anime.title,
         slug: anime.slug,
@@ -976,13 +971,13 @@ async function loadNewAniocean() {
         rating: rating,
         description: anime.description || 'No description available.',
         year: anime.year || '?',
-        duration: anime.duration + 'm' || '?',
-        genres: anime.terms_by_type?.genre || [],
-        studios: anime.terms_by_type?.studios || [],
+        duration: anime.duration || '?',
+        genres: anime.genres || [],
+        studios: [studio],
         is_sub: anime.is_sub || 0,
         is_dub: anime.is_dub || 0
       };
-      
+
       return `
         <a href="/info/anime/jikan-${mal_id}/${anime.slug}" 
            class="aniocean-card" 
@@ -1007,13 +1002,90 @@ async function loadNewAniocean() {
         </a>
       `;
     }).join('');
-    
-    console.log(`✓ Loaded ${data.length} anime for "New on Aniocean"`);
-  } catch (error) {
-    console.error('✗ Error loading New on Aniocean:', error);
-    document.getElementById('newAnioceanGrid').innerHTML = 
-      '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Failed to load</div>';
+    return true;
   }
+
+  // ----- PRIMARY: Anikoto proxy -----
+  try {
+    const response = await fetchAnikoto('/recent-anime?page=1&per_page=30');
+    if (response.ok && response.data && response.data.length > 0) {
+      const data = response.data;
+      const formatted = data.map(anime => ({
+        mal_id: anime.mal_id || anime.id,
+        title: anime.title,
+        slug: anime.slug,
+        poster: anime.poster,
+        score: anime.score || 'N/A',
+        type: anime.terms_by_type?.type?.[0] || 'TV',
+        rating: anime.rating || 'N/A',
+        description: anime.description || 'No description available.',
+        year: anime.year || '?',
+        duration: anime.duration ? anime.duration + 'm' : '?',
+        genres: anime.terms_by_type?.genre || [],
+        studio: anime.terms_by_type?.studios?.[0] || '?',
+        is_sub: anime.is_sub || 0,
+        is_dub: anime.is_dub || 0
+      }));
+      if (renderAnimeList(formatted)) {
+        console.log(`✓ Loaded ${formatted.length} anime from Anikoto proxy for "New on Aniocean"`);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('Primary Anikoto source failed:', e);
+  }
+
+  // ----- FALLBACK: Jikan (current season, pages 1-3) -----
+  console.log('Falling back to Jikan for "New on Aniocean"');
+  try {
+    const pages = await Promise.all([
+      fetchJikan('seasons/now', 'limit=25&page=1'),
+      fetchJikan('seasons/now', 'limit=25&page=2'),
+      fetchJikan('seasons/now', 'limit=25&page=3')
+    ]);
+
+    const allAnime = pages.flatMap(page => page.data || []);
+    // Deduplicate by mal_id
+    const uniqueMap = new Map();
+    for (const a of allAnime) {
+      if (!uniqueMap.has(a.mal_id)) {
+        uniqueMap.set(a.mal_id, a);
+      }
+    }
+    const uniqueAnime = Array.from(uniqueMap.values());
+
+    if (uniqueAnime.length === 0) {
+      throw new Error('No anime data from Jikan');
+    }
+
+    // Convert Jikan format to our internal format
+    const formattedJikan = uniqueAnime.map(a => ({
+      mal_id: a.mal_id,
+      title: a.title_english || a.title,
+      slug: (a.title_english || a.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      poster: a.images?.jpg?.large_image_url || '',
+      score: (a.score || 0).toFixed(1),
+      type: 'TV',  // Jikan doesn't give a simple type; most are TV
+      rating: a.rating || 'PG-13',
+      description: a.synopsis || 'No description available.',
+      year: (a.aired?.from || '').slice(0, 4) || '?',
+      duration: a.duration || '?',
+      genres: (a.genres || []).map(g => g.name),
+      studio: (a.studios || [])[0]?.name || '?',
+      is_sub: 1,   // assume subbed
+      is_dub: 0
+    }));
+
+    if (renderAnimeList(formattedJikan)) {
+      console.log(`✓ Loaded ${formattedJikan.length} anime from Jikan (fallback) for "New on Aniocean"`);
+      return;
+    }
+  } catch (error) {
+    console.error('✗ Jikan fallback also failed:', error);
+  }
+
+  // Both sources failed
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Unable to load recent anime. Please try again later.</div>';
 }
 
       /* ── ANIKOTO STYLE POPUP ── */
