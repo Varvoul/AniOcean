@@ -1677,63 +1677,71 @@ window.showAnikotoPopupById = function(mal_id) {
 
       // ---------- Render schedule for a given day (from scheduleData) ----------
       function renderScheduleForDay(dayName) {
-        const container = document.getElementById('eswBody');
-        const animeList = scheduleData?.[dayName] || [];
-        if (!animeList.length) {
-          container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No episodes scheduled</div>';
-          return;
-        }
+  const container = document.getElementById('eswBody');
+  const animeList = scheduleData?.[dayName] || [];
+  if (!animeList.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No episodes scheduled</div>';
+    return;
+  }
 
-        const sorted = [...animeList].sort((a, b) => {
-          const timeA = a.broadcast?.time || '';
-          const timeB = b.broadcast?.time || '';
-          return timeA.localeCompare(timeB);
-        });
+  // Sort by broadcast time
+  const sorted = [...animeList].sort((a, b) => {
+    const timeA = a.broadcast?.time || '';
+    const timeB = b.broadcast?.time || '';
+    return timeA.localeCompare(timeB);
+  });
 
-        const rowsHtml = sorted.map(anime => {
-          const episode = getEpisodeNumber(anime);
-          const title = anime.title_english || anime.title;
-          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-          const watchUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
-          const poster = anime.images?.jpg?.image_url || '';
-          const broadcastTime = anime.broadcast?.time || 'TBA';
+  // Build rows
+  const rowsHtml = sorted.map(anime => {
+    const episode = getEpisodeNumber(anime);
+    const title = anime.title_english || anime.title;
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const watchUrl = `/info/anime/jikan-${anime.mal_id}/${slug}`;
+    const poster = anime.images?.jpg?.image_url || '';
+    const broadcastTime = anime.broadcast?.time || 'TBA';
 
-          return `
-            <a href="${watchUrl}" class="schedule-row">
-              <div class="schedule-time">${broadcastTime}</div>
-              <div class="schedule-poster"><img src="${poster}" loading="lazy" onerror="this.style.display='none'"></div>
-              <div class="schedule-title">${escapeHtml(title)}</div>
-              <div class="schedule-ep">EP ${episode}</div>
-            </a>
-          `;
-        }).join('');
+    return `
+      <a href="${watchUrl}" class="schedule-row">
+        <div class="schedule-time">${broadcastTime}</div>
+        <div class="schedule-poster"><img src="${poster}" loading="lazy" onerror="this.style.display='none'"></div>
+        <div class="schedule-title">${escapeHtml(title)}</div>
+        <div class="schedule-ep">EP ${episode}</div>
+      </a>
+    `;
+  }).join('');
 
-        const visibleCount = 7;
-        const rowsArray = rowsHtml.split('</a>').filter(x => x.trim());
-        const visibleRows = rowsArray.slice(0, visibleCount).join('</a>') + (rowsArray.length > visibleCount ? '</a>' : '');
-        const hiddenRows = rowsArray.slice(visibleCount).join('</a>');
-        const hasMore = rowsArray.length > visibleCount;
+  // Split rows into visible and hidden
+  const visibleCount = 7;
+  const rowsArray = rowsHtml.split('</a>').filter(r => r.trim());
+  const visibleRows = rowsArray.slice(0, visibleCount).join('</a>') + (rowsArray.length > visibleCount ? '</a>' : '');
+  const hiddenRows = rowsArray.slice(visibleCount).join('</a>');
+  const hasMore = rowsArray.length > visibleCount;
 
-        container.innerHTML = `
-          <div class="schedule-list">
-            ${visibleRows}
-            ${hasMore ? `<div class="schedule-more-wrapper" style="display:none;">${hiddenRows}</div>` : ''}
-            ${hasMore ? `<button class="schedule-more-btn">Show More (${rowsArray.length - visibleCount})</button>` : ''}
-          </div>
-        `;
+  container.innerHTML = `
+    <div class="schedule-list">
+      ${visibleRows}
+      ${hasMore ? `<div class="schedule-more-wrapper" style="display:none;">${hiddenRows}</div>` : ''}
+      ${hasMore ? `<button type="button" class="schedule-more-btn">Show More (${rowsArray.length - visibleCount})</button>` : ''}
+    </div>
+  `;
 
-        const moreBtn = container.querySelector('.schedule-more-btn');
-        if (moreBtn) {
-          moreBtn.addEventListener('click', (e) => {
-            const wrapper = container.querySelector('.schedule-more-wrapper');
-            if (wrapper) {
-              const isHidden = wrapper.style.display === 'none';
-              wrapper.style.display = isHidden ? 'block' : 'none';
-              moreBtn.textContent = isHidden ? 'Show Less' : `Show More (${rowsArray.length - visibleCount})`;
-            }
-          });
-        }
+  // Attach click handler with prevention of default action and propagation
+  const moreBtn = container.querySelector('.schedule-more-btn');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const wrapper = container.querySelector('.schedule-more-wrapper');
+      if (wrapper) {
+        const isHidden = wrapper.style.display === 'none';
+        wrapper.style.display = isHidden ? 'block' : 'none';
+        moreBtn.textContent = isHidden ? 'Show Less' : `Show More (${rowsArray.length - visibleCount})`;
       }
+    });
+  }
+}
+        
 
       // ---------- Build week dates (Mon‑Sun) ----------
       function buildWeekDates() {
