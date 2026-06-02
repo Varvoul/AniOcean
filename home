@@ -1415,39 +1415,52 @@ window.showAnikotoPopupById = function(mal_id) {
       }
 
       /* ── POPUP (FIXED) ── */
-      window.showPopup = function(e, id) {
-        clearTimeout(window.popupTimer);
-        const show = [...upcomingShows, ...trendingData, ...popularData].find(s=>s.id===id);
-        if(!show) return;
-        
-        const scoreLabel = show.type==='Anime'?'MAL':'TMDB';
-        const starIcon = '<i class="fas fa-star" style="color:var(--accent-gold)"></i>';
+     window.showPopup = function(e, id) {
+  clearTimeout(window.popupTimer);
+  const show = [...upcomingShows, ...trendingData, ...popularData].find(s => s.id === id);
+  if (!show) return;
 
-        const metaHtml = `
-          <span class="meta-pill">${show.type||''}</span>
-          <span class="meta-pill">${show.certification||'PG-13'}</span>
-          <span class="meta-pill">${scoreLabel} ${starIcon} ${show.score||'?'}</span>
-          <span class="meta-pill">${show.duration||show.episode_run_time?.[0] + 'm' ||'?'}</span>
-          <span class="meta-pill">${show.studio||'?'}</span>
-        `;
-        const genresHtml = (show.genres||[]).map(g =>
-          `<a href="/search?genre=${encodeURIComponent(g)}" class="genre-pill">${g}</a>`
-        ).join('');
+  // Check if this is an upcoming show
+  const isUpcoming = upcomingShows.some(s => s.id === id);
 
-        const synopsis = show.synopsis || show.overview || 'No description available.';
+  let buttonHtml = '';
+  if (isUpcoming) {
+    // Bookmark button – link to the info page (generates correct URL with slug)
+    buttonHtml = `<a class="watch-btn" href="${infoUrl(show)}"><i class="fas fa-bookmark"></i> Bookmark</a>`;
+  } else {
+    // Regular watch button
+    buttonHtml = `<a class="watch-btn" href="/watch/${show.id}"><i class="fas fa-play"></i> Watch Now</a>`;
+  }
 
-        document.getElementById('popupContent').innerHTML = `
-          <div class="modal-poster-wrap">${show.poster ? `<img src="${show.poster}" alt="${show.title}">` : ''}</div>
-          <div class="modal-title">${show.title||''}</div>
-          <div class="modal-subtitle">${show.original_title||show.title||''}</div>
-          <div class="meta-pills-row">${metaHtml}</div>
-          <div class="genre-pills-row">${genresHtml}</div>
-          <a class="watch-btn" href="/watch/${show.id}"><i class="fas fa-play"></i> Watch Now</a>
-          <div class="modal-synopsis">${synopsis}</div>
-        `;
-        document.getElementById('popupCard').classList.add('active');
-        document.getElementById('popupOverlay').style.pointerEvents='auto';
-      };
+  const scoreLabel = show.type === 'Anime' ? 'MAL' : 'TMDB';
+  const starIcon = '<i class="fas fa-star" style="color:var(--accent-gold)"></i>';
+
+  const metaHtml = `
+    <span class="meta-pill">${show.type || ''}</span>
+    <span class="meta-pill">${show.certification || 'PG-13'}</span>
+    <span class="meta-pill">${scoreLabel} ${starIcon} ${show.score || '?'}</span>
+    <span class="meta-pill">${show.duration || show.episode_run_time?.[0] + 'm' || '?'}</span>
+    <span class="meta-pill">${show.studio || '?'}</span>
+  `;
+  const genresHtml = (show.genres || []).map(g =>
+    `<a href="/search?genre=${encodeURIComponent(g)}" class="genre-pill">${g}</a>`
+  ).join('');
+
+  const synopsis = show.synopsis || show.overview || 'No description available.';
+
+  document.getElementById('popupContent').innerHTML = `
+    <div class="modal-poster-wrap">${show.poster ? `<img src="${show.poster}" alt="${show.title}">` : ''}</div>
+    <div class="modal-title">${show.title || ''}</div>
+    <div class="modal-subtitle">${show.original_title || show.title || ''}</div>
+    <div class="meta-pills-row">${metaHtml}</div>
+    <div class="genre-pills-row">${genresHtml}</div>
+    ${buttonHtml}
+    <div class="modal-synopsis">${synopsis}</div>
+  `;
+
+  document.getElementById('popupCard').classList.add('active');
+  document.getElementById('popupOverlay').style.pointerEvents = 'auto';
+};
       window.hidePopup = ()=>{
         document.getElementById('popupCard').classList.remove('active');
         document.getElementById('popupOverlay').style.pointerEvents='none';
