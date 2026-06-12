@@ -10,11 +10,10 @@
  *     If `shows` has data → render immediately, then refresh in background.
  *     If `shows` is empty (first visit ever) → fall through to live API calls.
  *
- * USAGE  (add before </body> in index.html and info.html):
- *   <script src="supabase-cache.js"></script>
- *
- * REQUIREMENT: supabase-js v2 must be loaded before this file, e.g.:
+ * LOAD ORDER (in every HTML page, before </body>):
  *   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ *   <script src="shared.js"></script>       ← sets window.supabaseClient
+ *   <script src="supabase-cache.js"></script>
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -22,27 +21,25 @@
   'use strict';
 
   // ── CONFIG ──────────────────────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://msazwxqbyxctdnwqrreb.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zYXp3eHFieXhjdGRud3FycmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDkzMzYsImV4cCI6MjA5MzEyNTMzNn0.jfaA3HMRabWWPJkPGK34HM-suUhde_L9JEU0YfGkpLY';
 
   /** Refresh interval in milliseconds (15 minutes) */
-  const REFRESH_MS    = 15 * 60 * 1000;
+  const REFRESH_MS = 15 * 60 * 1000;
 
   /** localStorage key that stores last-fetch timestamp */
-  const TS_KEY        = 'aniocean_cache_ts';
+  const TS_KEY = 'aniocean_cache_ts';
 
   // ── SUPABASE CLIENT ─────────────────────────────────────────────────────────
-  const supa = window.supabase
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
-    : null;
+  // Re-use the client that shared.js already created — no duplicate connection.
+  // shared.js sets window.supabaseClient synchronously at parse time, so it is
+  // always available by the time this IIFE runs.
+  const supa = window.supabaseClient || null;
 
   if (!supa) {
-    console.warn('[AniCache] supabase-js not loaded — caching disabled');
+    console.warn('[AniCache] window.supabaseClient not found — ensure shared.js loads before supabase-cache.js. Caching disabled.');
     return;
   }
 
-  // Expose so shared.js / info.html can also use the same client instance
-  window.supabaseClient = window.supabaseClient || supa;
+  console.log('[AniCache] Using shared Supabase client ✓');
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -64,7 +61,8 @@
   function resolveMediaId(raw) {
     if (raw.media_id) return raw.media_id;
     const id = raw.id || '';
-    if (id.startsWith('jikan-'))     return id.replace(/^jikan-(?:air|up|comp|tr|pop)-?/, 'jikan-');
+    if (id.startsWith('jikan-'))
+      return id.replace(/^jikan-(?:air|up|comp|tr|pop)-?/, 'jikan-');
     if (id.startsWith('tmdb-movie-') || id.startsWith('tmdb-mv-'))
       return 'tmdb-movie-' + id.replace(/^tmdb-(?:movie|mv)-/, '');
     if (id.startsWith('tmdb-tv-') || id.startsWith('tmdb-comp-') || id.startsWith('tmdb-tr-') || id.startsWith('tmdb-up-'))
@@ -100,7 +98,7 @@
 
     return {
       media_id:    mid,
-      show_id:     mid,                               // convenience alias
+      show_id:     mid,
       media_type:  mt,
       mal_id:      raw.mal_id   ? String(raw.mal_id)   : mal_id,
       tmdb_id:     raw.tmdb_id  ? String(raw.tmdb_id)  : tmdb_id,
@@ -116,21 +114,21 @@
       synonyms:        Array.isArray(raw.synonyms) ? raw.synonyms.join(', ') : raw.synonyms || null,
 
       // Description
-      synopsis:  raw.synopsis || null,
-      overview:  raw.overview || null,
+      synopsis: raw.synopsis || null,
+      overview: raw.overview || null,
 
       // Metadata
-      labels:       Array.isArray(raw.labels) ? raw.labels.join(', ') : raw.labels || null,
-      country_name: raw.country_name || null,
-      genres:       Array.isArray(raw.genres) ? raw.genres.join(', ') : raw.genres || null,
-      aired_date:   raw.aired_date   || raw.releaseDate || null,
+      labels:             Array.isArray(raw.labels) ? raw.labels.join(', ') : raw.labels || null,
+      country_name:       raw.country_name || null,
+      genres:             Array.isArray(raw.genres) ? raw.genres.join(', ') : raw.genres || null,
+      aired_date:         raw.aired_date   || raw.releaseDate || null,
       broadcast_day_time: raw.broadcast_day_time || raw.broadcast || null,
-      source:       raw.source  || null,
-      rank:         raw.rank    ? parseInt(raw.rank, 10)       : null,
-      popularity:   raw.popularity ? parseInt(raw.popularity, 10) : raw.members ? parseInt(raw.members, 10) : null,
+      source:             raw.source     || null,
+      rank:               raw.rank       ? parseInt(raw.rank, 10)       : null,
+      popularity:         raw.popularity ? parseInt(raw.popularity, 10) : raw.members ? parseInt(raw.members, 10) : null,
 
       // Production
-      studio_name:    Array.isArray(raw.studios) ? raw.studios.join(', ') : raw.studio_name || raw.studio || null,
+      studio_name:    Array.isArray(raw.studios)   ? raw.studios.join(', ')   : raw.studio_name   || raw.studio    || null,
       producers_name: Array.isArray(raw.producers) ? raw.producers.join(', ') : raw.producers_name || null,
 
       // Season
@@ -154,25 +152,26 @@
       outro_skip_end:   raw.outro_skip_end   || null,
 
       // Format & rating
-      format:          raw.format         || null,
-      mal_score:       raw.mal_score       || (raw.type === 'Anime' ? parseFloat(raw.score) || null : null),
-      tmdb_average_score: raw.tmdb_average_score || (raw.type !== 'Anime' ? parseFloat(raw.score) || null : null),
-      content_rating:  raw.content_rating  || raw.certification || raw.rating || null,
-      anime_duration_time: raw.anime_duration_time || (isAnime ? raw.duration || null : null),
+      format:                raw.format              || null,
+      mal_score:             raw.mal_score            || (raw.type === 'Anime' ? parseFloat(raw.score) || null : null),
+      tmdb_average_score:    raw.tmdb_average_score   || (raw.type !== 'Anime' ? parseFloat(raw.score) || null : null),
+      content_rating:        raw.content_rating       || raw.certification || raw.rating || null,
+      anime_duration_time:   raw.anime_duration_time  || (isAnime  ? raw.duration || null : null),
       tmdb_movie_tv_runtime: raw.tmdb_movie_tv_runtime || (!isAnime ? raw.duration || null : null),
-      rating_score:    parseFloat(raw.score) || null,   // generic score kept for media_cache compat
-      release_year:    raw.release_year    || (raw.releaseDate ? parseInt(raw.releaseDate.slice(0,4), 10) : null)
-                       || (raw.year ? parseInt(raw.year, 10) : null),
+      rating_score:          parseFloat(raw.score)    || null,
+      release_year:          raw.release_year
+                               || (raw.releaseDate ? parseInt(raw.releaseDate.slice(0, 4), 10) : null)
+                               || (raw.year        ? parseInt(raw.year, 10)                    : null),
 
       // Images
-      show_poster_link: raw.show_poster_link || raw.poster || null,
-      show_backdrop_landscape_image_link: raw.show_backdrop_landscape_image_link || raw.backdrop || null,
+      show_poster_link:                    raw.show_poster_link                    || raw.poster   || null,
+      show_backdrop_landscape_image_link:  raw.show_backdrop_landscape_image_link  || raw.backdrop || null,
       poster_path:   raw.poster   || null,
       backdrop_path: raw.backdrop || null,
 
       // Links
-      external_link:       raw.external_link       || raw.url  || null,
-      trailer_video_link:  raw.trailer_video_link  || raw.trailer || null,
+      external_link:      raw.external_link      || raw.url     || null,
+      trailer_video_link: raw.trailer_video_link  || raw.trailer || null,
     };
   }
 
@@ -198,9 +197,8 @@
     if (cacheErr) console.warn('[AniCache] media_cache upsert error:', cacheErr.message);
 
     // --- shows upsert (mirror) ---
-    // shows table has additional columns; filter to what it needs
+    // Remove media_cache-only columns before writing to shows
     const showRows = rows.map(r => {
-      // Remove media_cache-specific columns not in shows
       const { fetched_at, poster_path, backdrop_path, rating_score, ...rest } = r;
       return rest;
     });
@@ -216,14 +214,13 @@
    * Query the shows table and return an array of show objects in the same
    * shape that the render functions in index.html expect.
    *
-   * @param {object} filters  e.g. { media_type: 'anime', order: 'rank', limit: 20 }
+   * @param {object} opts  e.g. { media_type: 'anime', section: 'trending', limit: 20 }
    * @returns {Promise<Array>}
    */
   async function fetchFromShows({ media_type, limit = 30, order = 'popularity', section } = {}) {
     let q = supa.from('shows').select('*');
 
     if (media_type) {
-      // Accept comma-list: 'anime,tv'
       const types = media_type.split(',').map(t => t.trim());
       if (types.length === 1) {
         q = q.eq('media_type', types[0]);
@@ -232,7 +229,7 @@
       }
     }
 
-    // Section-specific filters
+    // Section-specific ordering / filtering
     if (section === 'trending') {
       q = q.order('popularity', { ascending: false });
     } else if (section === 'top_airing') {
@@ -252,30 +249,30 @@
     const { data, error } = await q;
     if (error) { console.warn('[AniCache] fetchFromShows error:', error.message); return []; }
 
-    // Normalise back to the shape render functions expect
+    // Normalise back to the shape index.html render functions expect
     return (data || []).map(r => ({
-      id:           r.media_id,
-      media_id:     r.media_id,
-      title:        r.eng_title || r.default_title,
-      type:         r.media_type === 'anime' ? 'Anime' : r.media_type === 'movie' ? 'Movie' : 'TV',
-      poster:       r.show_poster_link || r.poster_path,
-      backdrop:     r.show_backdrop_landscape_image_link || r.backdrop_path,
-      score:        (r.mal_score || r.tmdb_average_score || r.rating_score || 0).toFixed(1),
-      year:         String(r.release_year || ''),
-      genres:       r.genres ? r.genres.split(',').map(g => g.trim()) : [],
-      synopsis:     r.synopsis || r.overview || '',
-      overview:     r.overview || r.synopsis || '',
-      duration:     r.anime_duration_time || r.tmdb_movie_tv_runtime || '?',
+      id:            r.media_id,
+      media_id:      r.media_id,
+      title:         r.eng_title || r.default_title,
+      type:          r.media_type === 'anime' ? 'Anime' : r.media_type === 'movie' ? 'Movie' : 'TV',
+      poster:        r.show_poster_link || r.poster_path,
+      backdrop:      r.show_backdrop_landscape_image_link || r.backdrop_path,
+      score:         (r.mal_score || r.tmdb_average_score || r.rating_score || 0).toFixed(1),
+      year:          String(r.release_year || ''),
+      genres:        r.genres ? r.genres.split(',').map(g => g.trim()) : [],
+      synopsis:      r.synopsis || r.overview || '',
+      overview:      r.overview || r.synopsis || '',
+      duration:      r.anime_duration_time || r.tmdb_movie_tv_runtime || '?',
       certification: r.content_rating || 'PG-13',
-      studio:       r.studio_name,
-      mal_id:       r.mal_id,
-      tmdb_id:      r.tmdb_id,
-      episodes:     r.total_episodes,
-      status:       r.format || 'Airing',
-      quality:      'HD',
-      details:      r.tmdb_movie_tv_runtime || '1h 45m',
-      cert:         r.content_rating || 'PG-13',
-      releaseDate:  r.aired_date || '',
+      studio:        r.studio_name,
+      mal_id:        r.mal_id,
+      tmdb_id:       r.tmdb_id,
+      episodes:      r.total_episodes,
+      status:        r.format || 'Airing',
+      quality:       'HD',
+      details:       r.tmdb_movie_tv_runtime || '1h 45m',
+      cert:          r.content_rating || 'PG-13',
+      releaseDate:   r.aired_date || '',
       original_title: r.original_title,
     }));
   }
@@ -283,10 +280,8 @@
   // ── PUBLIC API ───────────────────────────────────────────────────────────────
 
   /**
-   * Call this with the raw results of any live-API fetch to persist them.
-   * Usage (inside any loadXxx function, after building the `combined` array):
-   *
-   *   window.AniCache.save(combined);
+   * Save raw show objects to both media_cache and shows tables.
+   *   window.AniCache.save(items)
    */
   async function save(items) {
     if (!Array.isArray(items)) items = [items];
@@ -294,21 +289,17 @@
   }
 
   /**
-   * Try to serve a section from the `shows` table.
-   * Returns [] if the table has no matching rows (fallback to live API).
-   *
-   * Usage example:
-   *   const cached = await window.AniCache.get({ media_type: 'anime', section: 'trending', limit: 20 });
-   *   if (cached.length) { renderTrending(cached); } else { /* live fetch *\/ }
+   * Read shows from the Supabase shows table.
+   *   const cached = await window.AniCache.get({ section: 'trending', limit: 20 });
    */
   async function get(opts) {
     return fetchFromShows(opts);
   }
 
   /**
-   * Wrapper for the 15-minute refresh gate.
-   * Call once at page load; it triggers a background refresh if the cache is stale.
-   * The `refreshFn` is the caller's function that does live API fetches + calls save().
+   * 15-minute refresh gate helper.
+   * Pass your live-fetch function; it only runs when the cache is stale.
+   *   window.AniCache.autoRefresh(myRefreshFn);
    */
   async function autoRefresh(refreshFn) {
     if (needsRefresh()) {
@@ -321,45 +312,44 @@
         console.warn('[AniCache] Refresh failed:', e);
       }
     } else {
-      const remaining = Math.round((REFRESH_MS - (now() - parseInt(localStorage.getItem(TS_KEY)||'0',10))) / 1000 / 60);
+      const remaining = Math.round(
+        (REFRESH_MS - (now() - parseInt(localStorage.getItem(TS_KEY) || '0', 10))) / 1000 / 60
+      );
       console.log(`[AniCache] Cache fresh — next refresh in ~${remaining} min`);
     }
   }
 
+  // ── UTILITY: build info URL ──────────────────────────────────────────────────
+  function buildInfoUrl(s) {
+    const id   = s.id || s.media_id || '';
+    const slug = (s.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (id.startsWith('jikan-'))      return `/info/anime/${id}/${slug}`;
+    if (id.startsWith('tmdb-movie-')) return `/info/movie/${id}/${slug}`;
+    if (id.startsWith('tmdb-tv-'))    return `/info/tv/${id}/${slug}`;
+    return `/info/${id}/${slug}`;
+  }
+
   // Expose globally
-  window.AniCache = { save, get, autoRefresh, needsRefresh, stampRefresh };
+  window.AniCache = { save, get, autoRefresh, needsRefresh, stampRefresh, buildInfoUrl };
 
   // ── AUTO-INTEGRATION PATCH FOR index.html ───────────────────────────────────
-  // This section monkey-patches the existing load functions so that:
-  //   a) After each live fetch, results are saved to Supabase.
-  //   b) Before each live fetch, we try to serve from Supabase first.
+  // Monkey-patches the load/render functions defined in the inline <script> of
+  // index.html so that:
+  //   a) Before each live fetch, we try to serve from the shows table first.
+  //   b) After each live fetch, results are saved back to Supabase.
   //
-  // It waits for DOMContentLoaded so the original functions are defined first.
+  // Uses DOMContentLoaded + setTimeout(0) so the inline script has already run
+  // and defined its functions by the time we wrap them.
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Give the inline <script> time to define its functions (same tick)
     setTimeout(patchIndexFunctions, 0);
   });
 
   function patchIndexFunctions() {
 
-    // ── Helper: wrap an existing function to save results after live fetch ──
-
-    function wrapSave(fnName, extractor) {
-      const orig = window[fnName];
-      if (typeof orig !== 'function') return;
-      window[fnName] = async function (...args) {
-        const result = await orig.apply(this, args);
-        try {
-          const items = extractor ? extractor(result) : result;
-          if (Array.isArray(items) && items.length) await save(items);
-        } catch (e) { console.warn(`[AniCache] post-save error in ${fnName}:`, e); }
-        return result;
-      };
-    }
-
-    // ── Cache-first wrapper: try shows table, fall back to live, then save ──
-
+    // ── Generic cache-first wrapper ──────────────────────────────────────────
+    // Tries the shows table first; falls back to the original live-fetch fn.
+    // If cache hits and cache is stale, also fires live fetch in the background.
     function wrapCacheFirst(fnName, getOpts, renderFn) {
       const origLoad = window[fnName];
       if (typeof origLoad !== 'function') return;
@@ -368,59 +358,43 @@
           const cached = await get(getOpts);
           if (cached.length) {
             renderFn(cached);
-            // Background refresh if stale
-            if (needsRefresh()) {
-              origLoad.apply(this, args).catch(() => {});
-            }
+            if (needsRefresh()) origLoad.apply(this, args).catch(() => {});
             return;
           }
-        } catch (e) { console.warn(`[AniCache] cache-first read error in ${fnName}:`, e); }
-        // Fallback to live
+        } catch (e) {
+          console.warn(`[AniCache] cache-first read error in ${fnName}:`, e);
+        }
         return origLoad.apply(this, args);
       };
     }
 
     // ── HERO ────────────────────────────────────────────────────────────────
-    // Hero uses heroData array + renderHero() — patch loadHero to save after fetch
+    // heroData is a scoped var inside index.html's IIFE so we can't set it
+    // directly. We always let the original loadHero run (it's fast enough)
+    // and save results afterwards to warm the cache.
     const origLoadHero = window.loadHero;
     if (typeof origLoadHero === 'function') {
       window.loadHero = async function () {
-        // Try cache first (all types, newest)
-        const cached = await get({ limit: 19, section: 'new_releases' }).catch(() => []);
-        if (cached.length >= 5) {
-          // heroData is a scoped variable; we use a custom event to pass data
-          const evt = new CustomEvent('aniocean:heroData', { detail: cached.slice(0, 19) });
-          document.dispatchEvent(evt);
-        }
-        // Always run live fetch in background to keep cache warm
         return origLoadHero.apply(this, arguments).then(async () => {
-          if (window.heroData && window.heroData.length) await save(window.heroData);
+          // heroData is scoped inside index.html — grab via the rendered slides
+          // instead, or save via the trendingData/popularData timeout below.
+          // Nothing to do here; hero data is also captured via New Releases save.
         }).catch(() => {});
       };
     }
 
     // ── TOP AIRING ──────────────────────────────────────────────────────────
+    // Cache-first, then save live results through renderTopAiring hook below.
     wrapCacheFirst(
       'loadTopAiring',
       { limit: 60, section: 'top_airing' },
-      (items) => {
-        if (typeof window.renderTopAiring === 'function') window.renderTopAiring(items);
-      }
+      (items) => { if (typeof window.renderTopAiring === 'function') window.renderTopAiring(items); }
     );
-    // Still save live results
-    const origTopAiring = window.loadTopAiring;
-    if (typeof origTopAiring === 'function') {
-      window.loadTopAiring = async function () {
-        await origTopAiring.apply(this, arguments);
-        // After render, topAiringScroll contains cards — data already stored
-      };
-    }
 
     // ── NEW RELEASES ────────────────────────────────────────────────────────
     const origNewReleases = window.loadNewReleases;
     if (typeof origNewReleases === 'function') {
       window.loadNewReleases = async function () {
-        // Try cache
         const cached = await get({ limit: 30, section: 'new_releases' }).catch(() => []);
         if (cached.length) {
           const anime  = cached.filter(s => s.type === 'Anime').slice(0, 10);
@@ -441,7 +415,7 @@
     const origTrending = window.loadTrending;
     if (typeof origTrending === 'function') {
       window.loadTrending = async function (period) {
-        // Cache first only for default 'today' period
+        // Only use cache for the default 'today' period
         if (!period || period === 'today') {
           const cached = await get({ limit: 20, section: 'trending' }).catch(() => []);
           if (cached.length) {
@@ -450,11 +424,15 @@
             const list = document.getElementById('trendingList');
             if (list) {
               list.innerHTML = cached.map(s => `
-                <a href="${buildInfoUrl(s)}" class="sidebar-list-item">
+                <a href="${buildInfoUrl(s)}" class="sidebar-list-item"
+                   onmouseenter="showPopup(event,'${s.id}')"
+                   onmouseleave="window.popupTimer=setTimeout(hidePopup,500)">
                   <span class="sidebar-rank">${s.rank}</span>
-                  <img class="sidebar-poster" src="${s.poster||''}" onerror="this.style.display='none'">
-                  <div class="sidebar-info"><h4>${s.title||''}</h4>
-                  <div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.type}</div></div>
+                  <img class="sidebar-poster" src="${s.poster || ''}" onerror="this.style.display='none'">
+                  <div class="sidebar-info">
+                    <h4>${s.title || ''}</h4>
+                    <div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.type}</div>
+                  </div>
                 </a>`).join('');
             }
             if (needsRefresh()) origTrending.apply(this, [period]).catch(() => {});
@@ -476,11 +454,15 @@
           const list = document.getElementById('popularList');
           if (list) {
             list.innerHTML = cached.map(s => `
-              <a href="${buildInfoUrl(s)}" class="sidebar-list-item">
+              <a href="${buildInfoUrl(s)}" class="sidebar-list-item"
+                 onmouseenter="showPopup(event,'${s.id}')"
+                 onmouseleave="window.popupTimer=setTimeout(hidePopup,500)">
                 <span class="sidebar-rank">${s.rank}</span>
-                <img class="sidebar-poster" src="${s.poster||''}">
-                <div class="sidebar-info"><h4>${s.title||''}</h4>
-                <div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.members||0} members</div></div>
+                <img class="sidebar-poster" src="${s.poster || ''}">
+                <div class="sidebar-info">
+                  <h4>${s.title || ''}</h4>
+                  <div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.members || 0} members</div>
+                </div>
               </a>`).join('');
           }
           if (needsRefresh()) origPopular.apply(this, arguments).catch(() => {});
@@ -505,9 +487,9 @@
       };
     }
 
-    // ── SAVE HOOK: after each live load, persist to Supabase ────────────────
-    // We hook into the render functions to capture the final arrays
+    // ── SAVE HOOKS: persist live results back to Supabase ───────────────────
 
+    // Hook renderTopAiring to save whatever array it receives
     const _origRenderTopAiring = window.renderTopAiring;
     if (typeof _origRenderTopAiring === 'function') {
       window.renderTopAiring = function (shows) {
@@ -516,6 +498,7 @@
       };
     }
 
+    // Hook renderUpcoming to save upcomingShows
     const _origRenderUpcoming = window.renderUpcoming;
     if (typeof _origRenderUpcoming === 'function') {
       window.renderUpcoming = function () {
@@ -526,15 +509,14 @@
       };
     }
 
-    // For trending/popular we hook after the innerHTML write by checking
-    // the data arrays that index.html maintains
+    // For trending/popular, save the global data arrays after live fetches finish
+    // (8 s gives enough time for all async fetches to complete on a normal connection)
     setTimeout(() => {
       if (window.trendingData && window.trendingData.length) save(window.trendingData).catch(() => {});
       if (window.popularData  && window.popularData.length)  save(window.popularData).catch(() => {});
-    }, 8000); // 8 s after page load — live fetches should be done by then
+    }, 8000);
 
-    // ── SCHEDULE — save anime items to cache ────────────────────────────────
-    // The schedule fetches Jikan anime; we save them after scheduleData is built
+    // ── SCHEDULE — save Jikan anime after scheduleData is built ─────────────
     const origLoadSchedule = window.loadSchedule;
     if (typeof origLoadSchedule === 'function') {
       window.loadSchedule = async function () {
@@ -543,17 +525,17 @@
           const all = Object.values(window.scheduleData).flat();
           if (all.length) {
             const mapped = all.map(a => ({
-              id: `jikan-${a.mal_id}`,
-              type: 'Anime',
-              title: a.title_english || a.title,
-              poster: a.images?.jpg?.image_url || '',
-              score: (a.score || 0).toFixed(1),
-              genres: (a.genres || []).map(g => g.name),
-              synopsis: a.synopsis || '',
-              duration: a.duration || '',
-              aired_date: a.aired?.from ? a.aired.from.slice(0, 10) : null,
+              id:                 `jikan-${a.mal_id}`,
+              type:               'Anime',
+              title:              a.title_english || a.title,
+              poster:             a.images?.jpg?.image_url || '',
+              score:              (a.score || 0).toFixed(1),
+              genres:             (a.genres || []).map(g => g.name),
+              synopsis:           a.synopsis || '',
+              duration:           a.duration || '',
+              aired_date:         a.aired?.from ? a.aired.from.slice(0, 10) : null,
               broadcast_day_time: a.broadcast ? `${a.broadcast.day} at ${a.broadcast.time} (JST)` : null,
-              studio_name: (a.studios || []).map(s => s.name).join(', '),
+              studio_name:        (a.studios || []).map(s => s.name).join(', '),
             }));
             await save(mapped).catch(() => {});
           }
@@ -561,18 +543,15 @@
       };
     }
 
+    // Stamp refresh time after all live fetches on first load (12 s timeout)
+    if (needsRefresh()) {
+      setTimeout(() => {
+        stampRefresh();
+        console.log('[AniCache] Initial cache stamp set ✓');
+      }, 12000);
+    }
+
     console.log('[AniCache] index.html functions patched ✓');
   }
-
-  // ── UTILITY: build info URL from a show object ───────────────────────────────
-  function buildInfoUrl(s) {
-    const id = s.id || s.media_id || '';
-    const slug = (s.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    if (id.startsWith('jikan-'))         return `/info/anime/${id}/${slug}`;
-    if (id.startsWith('tmdb-movie-'))    return `/info/movie/${id}/${slug}`;
-    if (id.startsWith('tmdb-tv-'))       return `/info/tv/${id}/${slug}`;
-    return `/info/${id}/${slug}`;
-  }
-  window.AniCache.buildInfoUrl = buildInfoUrl;
 
 })();
