@@ -16,6 +16,7 @@
   <!-- Shared CSS/JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/shared.js"></script>
+  <script src="/supabase-cache.js"></script>
   
   <!-- Page-specific CSS -->
   <style>
@@ -2583,17 +2584,99 @@ img { max-width: 100%; height: auto; display: block; }
 
       async function fetchShowData() {
         try {
-          if (currentState.source === 'jikan') await fetchJikanData();
-          else if (currentState.source === 'tmdb') await fetchTMDBData();
-          
+          // Build canonical media_id
+          const _src    = currentState.source;
+          const _id     = currentState.id;
+          const _type   = currentState.type; // 'anime'|'movie'|'tv'
+          const _mediaId = _src === 'jikan'
+            ? `jikan-${_id}`
+            : `tmdb-${_type}-${_id}`;
+
+          // 1. Try shows table first
+          if (window.AniCache) {
+            const dbShow = await window.AniCache.findShow(_mediaId).catch(()=>null);
+            if (dbShow) {
+              console.log('[AniCache] info: loaded from shows table', _mediaId);
+              // Hydrate currentState.data from DB so all render functions work
+              currentState.data = currentState.data || {};
+              Object.assign(currentState.data, {
+                title:            dbShow.eng_title || dbShow.default_title || dbShow.title,
+                title_english:    dbShow.eng_title,
+                title_japanese:   dbShow.japanese_title,
+                synopsis:         dbShow.synopsis || dbShow.overview,
+                overview:         dbShow.overview || dbShow.synopsis,
+                score:            dbShow.mal_score || dbShow.tmdb_average_score || dbShow.rating_score,
+                vote_average:     dbShow.tmdb_average_score,
+                status:           dbShow.show_status,
+                aired:            { from: dbShow.aired_date },
+                release_date:     dbShow.aired_date,
+                first_air_date:   dbShow.aired_date,
+                episodes:         dbShow.total_episodes,
+                duration:         dbShow.anime_duration_time || null,
+                episode_run_time: dbShow.tmdb_movie_tv_runtime ? [parseInt(dbShow.tmdb_movie_tv_runtime)] : [],
+                runtime:          dbShow.tmdb_movie_tv_runtime ? parseInt(dbShow.tmdb_movie_tv_runtime) : null,
+                rating:           dbShow.content_rating,
+                certification:    dbShow.content_rating,
+                studios:          dbShow.studio_name ? dbShow.studio_name.split(',').map(n=>({name:n.trim()})) : [],
+                genres:           dbShow.genres ? dbShow.genres.split(',').map(n=>({name:n.trim()})) : [],
+                popularity:       dbShow.popularity,
+                members:          dbShow.popularity,
+                rank:             dbShow.rank,
+                premiered:        dbShow.premiered,
+                images:           { jpg: { large_image_url: dbShow.poster, image_url: dbShow.poster } },
+                poster_path:      dbShow.poster_path || null,
+                backdrop_path:    dbShow.backdrop_path || null,
+              });
+              currentState.title = dbShow.eng_title || dbShow.default_title || dbShow.title || 'Unknown';
+
+              document.title = `${currentState.title} - Aniocean`;
+              renderHero(); renderStats(); renderSynopsis(); renderDetails();
+              renderSeasons(); renderTabs();
+
+              // If fresh enough, skip live API call
+              if (!window.AniCache.needsRefresh()) return;
+            }
+          }
+
+          // 2. Live API fetch
+          if (_src === 'jikan') await fetchJikanData();
+          else if (_src === 'tmdb') await fetchTMDBData();
+
           document.title = `${currentState.title} - Aniocean`;
-          renderHero(); 
-          renderStats(); 
-          renderSynopsis(); 
-          renderDetails();
-          renderSeasons(); // async — runs independently, no await needed
-          renderTabs();
-          
+          renderHero(); renderStats(); renderSynopsis(); renderDetails();
+          renderSeasons(); renderTabs();
+
+          // 3. Save to Supabase after API fetch (dedup handled inside AniCache.save)
+          if (window.AniCache && currentState.data) {
+            const d = currentState.data;
+            const isA = _src === 'jikan';
+            const saveRow = {
+              id:             _mediaId,
+              type:           isA ? 'Anime' : (_type === 'movie' ? 'Movie' : 'TV'),
+              title:          currentState.title,
+              mal_id:         d.mal_id ? String(d.mal_id) : null,
+              tmdb_id:        !isA ? String(_id) : null,
+              synopsis:       d.synopsis || null,
+              overview:       d.overview || null,
+              genres:         (d.genres || []).map(g => g?.name || g),
+              studios:        (d.studios || []).map(s => s?.name || s),
+              score:          d.score || d.vote_average || null,
+              show_status:    d.status || null,
+              poster:         d.images?.jpg?.large_image_url
+                              || (d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : null),
+              backdrop:       d.images?.jpg?.large_image_url
+                              || (d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null),
+              episodes:       d.episodes || null,
+              duration:       d.duration || (d.episode_run_time?.[0] ? `${d.episode_run_time[0]}m/ep` : null)
+                              || (d.runtime ? `${d.runtime} min` : null),
+              content_rating: d.rating || d.certification || null,
+              aired_date:     d.aired?.from || d.release_date || d.first_air_date || null,
+              popularity:     d.popularity || d.members || null,
+              rank:           d.rank || null,
+            };
+            window.AniCache.save([saveRow]).catch(()=>{});
+          }
+
         } catch (error) {
           console.error('Failed to fetch show data:', error);
           showError('Could not load show information. Please try again.');
@@ -3069,12 +3152,86 @@ img { max-width: 100%; height: auto; display: block; }
         }
       }
 
-      function renderTabs() {
-        loadCastData(); 
-        loadArtworkData(); 
-        loadTrailerData(); 
-        loadThemesData(); 
+      async function renderTabs() {
+        // Try show_details table first for tabs (1-hour TTL)
+        if (window.AniCache) {
+          const _src  = currentState.source;
+          const _id   = currentState.id;
+          const _type = currentState.type;
+          const _mid  = _src === 'jikan' ? `jikan-${_id}` : `tmdb-${_type}-${_id}`;
+          const dbDet = await window.AniCache.getDetails(_mid).catch(()=>null);
+          if (dbDet) {
+            console.log('[AniCache] show_details loaded from DB for', _mid);
+            if (dbDet.cast_crew)        _renderCastFromDB(dbDet.cast_crew);
+            if (dbDet.artwork)          _renderArtworkFromDB(dbDet.artwork);
+            if (dbDet.trailers)         _renderTrailersFromDB(dbDet.trailers);
+            if (dbDet.themes)           _renderThemesFromDB(dbDet.themes);
+            loadStatisticsData();
+            // Still load missing tabs from API if any are null
+            if (!dbDet.cast_crew)   loadCastData();
+            if (!dbDet.artwork)     loadArtworkData();
+            if (!dbDet.trailers)    loadTrailerData();
+            if (!dbDet.themes)      loadThemesData();
+            return;
+          }
+        }
+        // No DB data — load everything from API
+        loadCastData();
+        loadArtworkData();
+        loadTrailerData();
+        loadThemesData();
         loadStatisticsData();
+      }
+
+      // ── DB render helpers ──────────────────────────────────────────────
+      function _renderCastFromDB(castArr) {
+        const container = document.getElementById('castList');
+        if (!container || !castArr || !castArr.length) return;
+        container.innerHTML = castArr.map(c => `
+          <div class="cast-pair">
+            <div class="cast-item">
+              <div class="cast-img-wrap"><img src="${c.char_img||''}" onerror="this.src='/placeholder.jpg'"></div>
+              <div class="cast-info"><div class="cast-name">${c.char_name||''}</div><div class="cast-role">${c.role||''}</div></div>
+            </div>
+            <div class="cast-item cast-right">
+              <div class="cast-info" style="text-align:right"><div class="cast-name">${c.va_name||''}</div><div class="cast-role">${c.va_lang||''}</div></div>
+              <div class="cast-img-wrap"><img src="${c.va_img||''}" onerror="this.src='/placeholder.jpg'"></div>
+            </div>
+          </div>`).join('');
+      }
+
+      function _renderArtworkFromDB(artArr) {
+        const container = document.getElementById('artworkGrid');
+        if (!container || !artArr || !artArr.length) return;
+        container.innerHTML = artArr.map(a => `
+          <div class="artwork-item" onclick="window.open('${a.url||a.thumb}','_blank')">
+            <img src="${a.thumb||a.url}" loading="lazy" onerror="this.parentElement.style.display='none'">
+            <div class="artwork-label">${(a.type||'').toUpperCase()}</div>
+          </div>`).join('');
+      }
+
+      function _renderTrailersFromDB(trailerArr) {
+        const container = document.getElementById('trailerContainer');
+        if (!container || !trailerArr || !trailerArr.length) return;
+        container.innerHTML = trailerArr.map(t => `
+          <div class="trailer-item">
+            <iframe src="https://www.youtube.com/embed/${t.key||t.youtube_id}" frameborder="0" allowfullscreen loading="lazy"></iframe>
+            <div class="trailer-title">${t.name||t.title||''}</div>
+          </div>`).join('');
+      }
+
+      function _renderThemesFromDB(themeArr) {
+        const opContainer = document.getElementById('openingThemesList');
+        const edContainer = document.getElementById('endingThemesList');
+        if (!opContainer && !edContainer) return;
+        const ops = (themeArr||[]).filter(t => t.type==='OP');
+        const eds = (themeArr||[]).filter(t => t.type==='ED');
+        if (opContainer) opContainer.innerHTML = ops.length ? ops.map(t => `
+          <div class="theme-item"><span class="theme-badge">OP${t.num||''}</span><span class="theme-title">${t.title||''}</span>
+          ${t.video_url ? `<video controls src="${t.video_url}"></video>` : ''}</div>`).join('') : '<p class="loading-text">No opening themes</p>';
+        if (edContainer) edContainer.innerHTML = eds.length ? eds.map(t => `
+          <div class="theme-item"><span class="theme-badge">ED${t.num||''}</span><span class="theme-title">${t.title||''}</span>
+          ${t.video_url ? `<video controls src="${t.video_url}"></video>` : ''}</div>`).join('') : '<p class="loading-text">No ending themes</p>';
       }
 
       function initUI() {
@@ -3632,12 +3789,32 @@ img { max-width: 100%; height: auto; display: block; }
         const container = document.getElementById('hiddenGemList');
         const cacheKey = `sidebar_gems_${isAnime ? 'anime' : currentState.type}`;
         try {
-          // Check cache first (15 min TTL for sidebar)
+          // sessionStorage (15 min TTL)
           const cached = sessionStorage.getItem(cacheKey);
           if (cached) {
-            const { html, ts } = JSON.parse(cached);
-            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = html; return; }
+            const { html: ch, ts } = JSON.parse(cached);
+            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
+          // Supabase shows table
+          if (window.AniCache && !window.AniCache.needsRefresh()) {
+            const dbItems = await window.AniCache.get({
+              section: 'popular',
+              media_type: isAnime ? 'anime' : currentState.type,
+              limit: 17
+            }).catch(() => []);
+            if (dbItems.length) {
+              const htmlOut = dbItems.map((s, i) => renderSidebarItem(
+                isAnime
+                  ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score }
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                i + 1, isAnime
+              )).join('');
+              container.innerHTML = htmlOut;
+              try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+              return;
+            }
+          }
+          // Live API
           let items = [];
           if (isAnime) {
             const res = await fetchWithRetry('https://api.jikan.moe/v4/anime?min_score=8.0&order_by=popularity&sort=desc&limit=17');
@@ -3651,12 +3828,20 @@ img { max-width: 100%; height: auto; display: block; }
             const { results } = await res.json();
             items = results.slice(0, 17);
           }
-          const html = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime)).join('');
-          container.innerHTML = html;
-          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html, ts: Date.now() })); } catch(e) {}
-        } catch (e) { 
-          container.innerHTML = '<div class="loading-text">Failed to load</div>'; 
-          console.error('Hidden gems load error:', e); 
+          const htmlOut = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime)).join('');
+          container.innerHTML = htmlOut;
+          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+          // Save to Supabase
+          if (window.AniCache && items.length) {
+            const rows = items.map(item => isAnime
+              ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
+              : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, members:item.vote_count, show_status:currentState.type==='movie'?'Released':'Returning Series' }
+            );
+            window.AniCache.save(rows).catch(() => {});
+          }
+        } catch (e) {
+          container.innerHTML = '<div class="loading-text">Failed to load</div>';
+          console.error('Hidden gems load error:', e);
         }
       }
 
@@ -3666,25 +3851,52 @@ img { max-width: 100%; height: auto; display: block; }
         try {
           const cached = sessionStorage.getItem(cacheKey);
           if (cached) {
-            const { html, ts } = JSON.parse(cached);
-            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = html; return; }
+            const { html: ch, ts } = JSON.parse(cached);
+            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
+          // Supabase shows table
+          if (window.AniCache && !window.AniCache.needsRefresh()) {
+            const dbItems = await window.AniCache.get({
+              section: 'trending',
+              media_type: isAnime ? 'anime' : currentState.type,
+              limit: 19
+            }).catch(() => []);
+            if (dbItems.length) {
+              const htmlOut = dbItems.map((s, i) => renderSidebarItem(
+                isAnime
+                  ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score, rank: i+1 }
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                i + 1, isAnime, true
+              )).join('');
+              container.innerHTML = htmlOut;
+              try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+              return;
+            }
+          }
+          // Live API
           let items = [];
           if (isAnime) {
             const res = await fetchWithRetry('https://api.jikan.moe/v4/top/anime?limit=19');
-            const { data } = await res.json(); 
+            const { data } = await res.json();
             items = data.slice(0, 19);
           } else {
             const res = await fetch(`${CONFIG.TMDB_WORKER}/3/${currentState.type}/top_rated?page=1`);
-            const { results } = await res.json(); 
+            const { results } = await res.json();
             items = results.slice(0, 19);
           }
-          const html = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime, true)).join('');
-          container.innerHTML = html;
-          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html, ts: Date.now() })); } catch(e) {}
-        } catch (e) { 
-          container.innerHTML = '<div class="loading-text">Failed to load</div>'; 
-          console.error('Top ranking load error:', e); 
+          const htmlOut = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime, true)).join('');
+          container.innerHTML = htmlOut;
+          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+          if (window.AniCache && items.length) {
+            const rows = items.map(item => isAnime
+              ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
+              : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, show_status:currentState.type==='movie'?'Released':'Returning Series' }
+            );
+            window.AniCache.save(rows).catch(() => {});
+          }
+        } catch (e) {
+          container.innerHTML = '<div class="loading-text">Failed to load</div>';
+          console.error('Top ranking load error:', e);
         }
       }
 
@@ -3694,25 +3906,52 @@ img { max-width: 100%; height: auto; display: block; }
         try {
           const cached = sessionStorage.getItem(cacheKey);
           if (cached) {
-            const { html, ts } = JSON.parse(cached);
-            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = html; return; }
+            const { html: ch, ts } = JSON.parse(cached);
+            if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
+          // Supabase shows table
+          if (window.AniCache && !window.AniCache.needsRefresh()) {
+            const dbItems = await window.AniCache.get({
+              section: 'popular',
+              media_type: isAnime ? 'anime' : currentState.type,
+              limit: 21
+            }).catch(() => []);
+            if (dbItems.length) {
+              const htmlOut = dbItems.map((s, i) => renderSidebarItem(
+                isAnime
+                  ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score, favorites: s.popularity }
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                i + 1, isAnime
+              )).join('');
+              container.innerHTML = htmlOut;
+              try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+              return;
+            }
+          }
+          // Live API
           let items = [];
           if (isAnime) {
             const res = await fetchWithRetry('https://api.jikan.moe/v4/top/anime?filter=favorite&limit=21');
-            const { data } = await res.json(); 
+            const { data } = await res.json();
             items = data.slice(0, 21);
           } else {
             const res = await fetch(`${CONFIG.TMDB_WORKER}/3/${currentState.type}/popular?page=1`);
-            const { results } = await res.json(); 
+            const { results } = await res.json();
             items = results.slice(0, 21);
           }
-          const html = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime)).join('');
-          container.innerHTML = html;
-          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html, ts: Date.now() })); } catch(e) {}
-        } catch (e) { 
-          container.innerHTML = '<div class="loading-text">Failed to load</div>'; 
-          console.error('Most favourite load error:', e); 
+          const htmlOut = items.map((item, i) => renderSidebarItem(item, i + 1, isAnime)).join('');
+          container.innerHTML = htmlOut;
+          try { sessionStorage.setItem(cacheKey, JSON.stringify({ html: htmlOut, ts: Date.now() })); } catch(e) {}
+          if (window.AniCache && items.length) {
+            const rows = items.map(item => isAnime
+              ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members||item.favorites, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
+              : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, members:item.vote_count, show_status:currentState.type==='movie'?'Released':'Returning Series' }
+            );
+            window.AniCache.save(rows).catch(() => {});
+          }
+        } catch (e) {
+          container.innerHTML = '<div class="loading-text">Failed to load</div>';
+          console.error('Most favourite load error:', e);
         }
       }
 
@@ -4160,6 +4399,15 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             }
             
             // Build list layout matching image 3 style
+            // AniCache: capture cast for DB storage
+            window._lastCastData = chars.slice(0, 20).map(c => ({
+              char_name: c.character?.name || '',
+              char_img:  c.character?.images?.jpg?.image_url || '',
+              role:      c.role || 'Supporting',
+              va_name:   (c.voice_actors||[]).find(v=>v.language==='Japanese')?.person?.name || '',
+              va_img:    (c.voice_actors||[]).find(v=>v.language==='Japanese')?.person?.images?.jpg?.image_url || '',
+              va_lang:   'Japanese',
+            }));
             const castRows = chars.slice(0, 20).map(c => {
               const character = c.character;
               const charImg = character.images?.jpg?.image_url || character.images?.webp?.image_url || '';
@@ -4268,6 +4516,13 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           });
         });
       });
+      // AniCache: save cast to show_details
+      if (window.AniCache && window._lastCastData && window._lastCastData.length) {
+        const _mid = currentState.source==='jikan'
+          ? `jikan-${currentState.id}`
+          : `tmdb-${currentState.type}-${currentState.id}`;
+        window.AniCache.saveDetails(_mid, {cast_crew: window._lastCastData}).catch(()=>{});
+      }
 
       async function loadArtworkData() {
         const container = document.getElementById('artworkGrid');
@@ -4344,6 +4599,7 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         }
 
         const typeLabel = { poster: 'Poster', backdrop: 'Backdrop', logo: 'Logo' };
+        window._lastArtworkData = images.map(i => ({type:i.type, url:i.url, thumb:i.thumb}));
         container.innerHTML = images.map(img => `
           <div class="artwork-item artwork-item--${img.type}"
                onclick="document.getElementById('lightboxImg').src='${escapeHtml(img.url)}';document.getElementById('artworkLightbox').classList.add('show')">
@@ -4353,6 +4609,13 @@ function renderSunkenPagination(currentPage, totalPages, container) {
             <span class="artwork-type-badge">${typeLabel[img.type] || ''}</span>
           </div>
         `).join('');
+      // AniCache: save artwork to show_details
+      if (window.AniCache && window._lastArtworkData && window._lastArtworkData.length) {
+        const _mid = currentState.source==='jikan'
+          ? `jikan-${currentState.id}`
+          : `tmdb-${currentState.type}-${currentState.id}`;
+        window.AniCache.saveDetails(_mid, {artwork: window._lastArtworkData}).catch(()=>{});
+      }
       }
 
       async function loadTrailerData() {
@@ -4378,6 +4641,16 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           `;
         } else {
           container.innerHTML = '<p class="loading-text">No trailer available</p>';
+        }
+        // AniCache: save trailer to show_details
+        if (window.AniCache && trailerUrl) {
+          const _mid = currentState.source==='jikan'
+            ? `jikan-${currentState.id}`
+            : `tmdb-${currentState.type}-${currentState.id}`;
+          const ytKey = trailerUrl.replace(/.*embed[/]/, '').replace(/[?].*/, '');
+          window.AniCache.saveDetails(_mid, {
+            trailers: [{ key: ytKey, url: trailerUrl, name: currentState.title + ' - Trailer', site: 'YouTube' }]
+          }).catch(()=>{});
         }
       }
 
@@ -4407,6 +4680,13 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           }
 
           const allThemes = animeEntry.animethemes;
+          // AniCache: flatten themes for DB storage
+          window._lastThemesData = allThemes.map(t => ({
+            type:      t.type,
+            num:       t.sequence || 1,
+            title:     t.song?.title || '',
+            video_url: t.animethemeentries?.[0]?.videos?.[0]?.link || null,
+          }));
           const ops = allThemes.filter(t => t.type === 'OP').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
           const eds = allThemes.filter(t => t.type === 'ED').sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
           const posterImg = currentState.data.images?.jpg?.image_url || '';
@@ -4472,6 +4752,11 @@ function renderSunkenPagination(currentPage, totalPages, container) {
           console.warn('AnimeThemes error:', e);
           container.innerHTML = '<p class="loading-text">Failed to load theme songs</p>';
         }
+      }
+      // AniCache: save themes to show_details
+      if (window.AniCache && window._lastThemesData && window._lastThemesData.length) {
+        const _mid = `jikan-${currentState.id}`;
+        window.AniCache.saveDetails(_mid, {themes: window._lastThemesData}).catch(()=>{});
       }
 
       async function loadStatisticsData() {
