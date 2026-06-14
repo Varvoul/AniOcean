@@ -262,8 +262,26 @@
 
   async function _upsertShows(rows) {
     if (!rows.length) return;
-    // Clean: remove media_cache-only fields
-    const clean = rows.map(({ show_ref_id, media_type_raw, ...r }) => r);
+    // SHOWS columns that exist — strip anything media_cache-only
+    const SHOWS_ONLY = new Set([
+      'id','tmdb_id','imdb_id','mal_id','media_type','eng_title','poster_path',
+      'added_at','ani_id','backdrop_path','total_episodes','is_sub','is_dub',
+      'rating_score','release_year','show_id','media_id','aniko_id','default_title',
+      'original_title','romanji_title','japanese_title','synonyms','synopsis',
+      'overview','country_name','genres','aired_date','broadcast_day_time','source',
+      'rank','popularity','studio_name','producers_name','season_eng_title',
+      'season_slug','season_badge','season_num','season_backdrop_landscape_image_link',
+      'dub_epi','sub_epi','intro_skip_start','intro_skip_end','outro_skip_start',
+      'outro_skip_end','format','mal_score','tmdb_average_score','content_rating',
+      'anime_duration_time','tmdb_movie_tv_runtime','show_poster_link',
+      'show_backdrop_landscape_image_link','external_link','trailer_video_link',
+      'updated_at','labels','show_status','premiered','fetched_at',
+    ]);
+    const clean = rows.map(r => {
+      const out = {};
+      for (const [k,v] of Object.entries(r)) { if (SHOWS_ONLY.has(k)) out[k]=v; }
+      return out;
+    });
     const { error } = await supa.from('shows')
       .upsert(clean, { onConflict: 'media_id' });
     if (error) console.error('[AniCache] shows upsert:', error.message);
@@ -472,6 +490,14 @@
     const type  = r.media_type === 'anime' ? 'Anime' : r.media_type === 'movie' ? 'Movie' : 'TV';
     const poster = r.show_poster_link || r.poster_path || '';
     const backdrop = r.show_backdrop_landscape_image_link || r.backdrop_path || '';
+    // Handle genres: DB may return string, array, or null
+    const genresRaw = r.genres;
+    const genresArr = Array.isArray(genresRaw)
+      ? genresRaw.map(g => (typeof g === 'string' ? g : g?.name || String(g)).trim()).filter(Boolean)
+      : typeof genresRaw === 'string' && genresRaw
+        ? genresRaw.replace(/^[{\[\s]+|[}\]\s]+$/g,'').split(',').map(g=>g.trim().replace(/^"|"$/g,'')).filter(Boolean)
+        : [];
+
     return {
       id:           r.media_id,
       media_id:     r.media_id,
@@ -491,11 +517,12 @@
       show_backdrop_landscape_image_link: backdrop,
       poster_path:  poster,
       backdrop_path: backdrop,
-      score:        score ? score.toFixed(1) : '0.0',
+      score:        score,            // NUMBER — callers use .toFixed() themselves
+      scoreStr:     score ? score.toFixed(1) : '0.0',  // pre-formatted string
       rating_score: score,
       year:         String(r.release_year || ''),
       release_year: r.release_year,
-      genres:       r.genres ? r.genres.split(',').map(g=>g.trim()).filter(Boolean) : [],
+      genres:       genresArr,
       synopsis:     r.synopsis  || r.overview || '',
       overview:     r.overview  || r.synopsis || '',
       duration:     r.anime_duration_time || r.tmdb_movie_tv_runtime || '?',
