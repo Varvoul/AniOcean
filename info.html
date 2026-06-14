@@ -3815,7 +3815,7 @@ img { max-width: 100%; height: auto; display: block; }
               const htmlOut = dbItems.map((s, i) => renderSidebarItem(
                 isAnime
                   ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score }
-                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, poster: s.poster, vote_average: Number(s.score||0), score: Number(s.score||0) },
                 i + 1, isAnime
               )).join('');
               container.innerHTML = htmlOut;
@@ -3876,7 +3876,7 @@ img { max-width: 100%; height: auto; display: block; }
               const htmlOut = dbItems.map((s, i) => renderSidebarItem(
                 isAnime
                   ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score, rank: i+1 }
-                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, poster: s.poster, vote_average: Number(s.score||0), score: Number(s.score||0) },
                 i + 1, isAnime, true
               )).join('');
               container.innerHTML = htmlOut;
@@ -3933,7 +3933,7 @@ img { max-width: 100%; height: auto; display: block; }
               const htmlOut = dbItems.map((s, i) => renderSidebarItem(
                 isAnime
                   ? { mal_id: s.mal_id, title: s.title, images: { jpg: { image_url: s.poster } }, score: s.score, favorites: s.popularity }
-                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, vote_average: s.score },
+                  : { id: s.tmdb_id, title: s.title, name: s.title, _supaImg: s.poster, poster: s.poster, vote_average: Number(s.score||0), score: Number(s.score||0) },
                 i + 1, isAnime
               )).join('');
               container.innerHTML = htmlOut;
@@ -3971,8 +3971,14 @@ img { max-width: 100%; height: auto; display: block; }
 
       function renderSidebarItem(item, rank, isAnime, showRank = false) {
         const title = isAnime ? (item.title_english || item.title) : (item.title || item.name);
-        const poster = isAnime ? item.images?.jpg?.image_url : item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
-        const score = isAnime ? item.score : item.vote_average;
+        // Support pre-built full URL (_supaImg from DB cache) AND standard API paths
+        const poster = isAnime
+          ? (item.images?.jpg?.image_url || item._supaImg || item.poster || '')
+          : (item._supaImg || item.poster || (item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : ''));
+        const scoreRaw = isAnime
+          ? (item.score || item.rating_score || 0)
+          : (item.vote_average || item.score || item.rating_score || 0);
+        const score = scoreRaw;
         const type = isAnime ? item.type : currentState.type;
         const year = isAnime ? item.aired?.from?.slice(0,4) : (item.release_date || item.first_air_date)?.slice(0,4);
         const genres = (item.genres || []).slice(0, 2).map(g => g.name || g).join(', ');
@@ -4807,9 +4813,9 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         const container = document.getElementById('metricCards');
         const data = currentState.data;
         const isAnime = currentState.source === 'jikan';
-        const rank = isAnime ? data.rank : data.popularity;
-        const popularity = isAnime ? data.popularity : data.vote_count;
-        const members = isAnime ? data.members : data.popularity;
+        const rank       = isAnime ? (data.rank       || null) : (data.popularity  || null);
+        const popularity = isAnime ? (data.popularity || null) : (data.vote_count   || null);
+        const members    = isAnime ? (data.members    || null) : (data.popularity   || null);
         container.innerHTML = `
           <div class="metric-card"><div class="metric-value">${rank ? `#${rank}` : '—'}</div><div class="metric-label">Rank</div><div class="metric-trend up">↑ 2 this week</div></div>
           <div class="metric-card"><div class="metric-value">${formatNumber(popularity)}</div><div class="metric-label">Popularity</div><div class="metric-trend up">↑ 5%</div></div>
@@ -4824,10 +4830,12 @@ function renderSunkenPagination(currentPage, totalPages, container) {
         return div.innerHTML; 
       }
       
-      function formatNumber(num) { 
-        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'; 
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'K'; 
-        return num.toString(); 
+      function formatNumber(num) {
+        if (num == null || num === undefined || isNaN(num)) return '—';
+        const n = Number(num);
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+        return n.toString();
       }
       
       function showError(message) { 
