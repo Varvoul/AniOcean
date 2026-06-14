@@ -1565,6 +1565,8 @@ window.showAnikotoPopupById = function(mal_id) {
   clearTimeout(window.popupTimer);
   const show = [...upcomingShows, ...trendingData, ...popularData].find(s => s.id === id);
   if (!show) return;
+  // Save to media_cache (dedup prevents duplicates)
+  if (window.AniCache) window.AniCache.save([show]).catch(()=>{});
 
   // Check if this is an upcoming show
   const isUpcoming = upcomingShows.some(s => s.id === id);
@@ -1828,11 +1830,11 @@ window.showAnikotoPopupById = function(mal_id) {
 
         // Expose scheduleData globally for debugging
         window.scheduleData = scheduleData;
-        // Save all days to Supabase schedule table (dedup inside saveSchedule)
         if (window.AniCache && scheduleData) {
           for (const [, list] of Object.entries(scheduleData)) {
-            if (list && list.length) window.AniCache.saveSchedule(list).catch(()=>{});
+            if (list?.length) await window.AniCache.saveSchedule(list);
           }
+          await window.AniCache.stampSection('schedule');
         }
 
         // Determine current day (Monday‑Sunday)
@@ -1892,10 +1894,6 @@ window.showAnikotoPopupById = function(mal_id) {
         loadTrending('today');
         loadPopular();
         loadSchedule();
-        // Stamp refresh timestamp after all sections have had time to fetch+save
-        if (window.AniCache) {
-          setTimeout(() => { window.AniCache.stampRefresh(); console.log('[AniCache] Refresh stamped ✓'); }, 20000);
-        }
       }
       window.addEventListener('DOMContentLoaded', init);
     })();
