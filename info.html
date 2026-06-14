@@ -2633,8 +2633,8 @@ img { max-width: 100%; height: auto; display: block; }
               renderHero(); renderStats(); renderSynopsis(); renderDetails();
               renderSeasons(); renderTabs();
 
-              // If fresh enough, skip live API call
-              if (!window.AniCache.needsRefresh()) return;
+              // GLOBAL cache: skip live API if this show was recently fetched by any user
+              if (await window.AniCache.isSectionFresh(`info_${_mediaId}`)) return;
             }
           }
 
@@ -2652,6 +2652,7 @@ img { max-width: 100%; height: auto; display: block; }
             const isA = _src === 'jikan';
             const saveRow = {
               id:             _mediaId,
+              media_id:       _mediaId,
               type:           isA ? 'Anime' : (_type === 'movie' ? 'Movie' : 'TV'),
               title:          currentState.title,
               mal_id:         d.mal_id ? String(d.mal_id) : null,
@@ -2674,7 +2675,8 @@ img { max-width: 100%; height: auto; display: block; }
               popularity:     d.popularity || d.members || null,
               rank:           d.rank || null,
             };
-            window.AniCache.save([saveRow]).catch(()=>{});
+            await window.AniCache.save([saveRow]);
+            await window.AniCache.stampSection(`info_${_mediaId}`, 1);
           }
 
         } catch (error) {
@@ -3796,7 +3798,8 @@ img { max-width: 100%; height: auto; display: block; }
             if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
           // Supabase shows table
-          if (window.AniCache && !window.AniCache.needsRefresh()) {
+          const gemKey = `hidden_gems_${isAnime?'anime':currentState.type}`;
+          if (window.AniCache && await window.AniCache.isSectionFresh(gemKey)) {
             const dbItems = await window.AniCache.get({
               section: 'popular',
               media_type: isAnime ? 'anime' : currentState.type,
@@ -3837,7 +3840,8 @@ img { max-width: 100%; height: auto; display: block; }
               ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
               : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, members:item.vote_count, show_status:currentState.type==='movie'?'Released':'Returning Series' }
             );
-            window.AniCache.save(rows).catch(() => {});
+            await window.AniCache.save(rows);
+            await window.AniCache.stampSection(gemKey, rows.length);
           }
         } catch (e) {
           container.innerHTML = '<div class="loading-text">Failed to load</div>';
@@ -3855,7 +3859,8 @@ img { max-width: 100%; height: auto; display: block; }
             if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
           // Supabase shows table
-          if (window.AniCache && !window.AniCache.needsRefresh()) {
+          const rankKey = `top_ranking_${isAnime?'anime':currentState.type}`;
+          if (window.AniCache && await window.AniCache.isSectionFresh(rankKey)) {
             const dbItems = await window.AniCache.get({
               section: 'trending',
               media_type: isAnime ? 'anime' : currentState.type,
@@ -3892,7 +3897,8 @@ img { max-width: 100%; height: auto; display: block; }
               ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
               : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, show_status:currentState.type==='movie'?'Released':'Returning Series' }
             );
-            window.AniCache.save(rows).catch(() => {});
+            await window.AniCache.save(rows);
+            await window.AniCache.stampSection(rankKey, rows.length);
           }
         } catch (e) {
           container.innerHTML = '<div class="loading-text">Failed to load</div>';
@@ -3910,7 +3916,8 @@ img { max-width: 100%; height: auto; display: block; }
             if (Date.now() - ts < 15 * 60 * 1000) { container.innerHTML = ch; return; }
           }
           // Supabase shows table
-          if (window.AniCache && !window.AniCache.needsRefresh()) {
+          const favKey = `most_fav_${isAnime?'anime':currentState.type}`;
+          if (window.AniCache && await window.AniCache.isSectionFresh(favKey)) {
             const dbItems = await window.AniCache.get({
               section: 'popular',
               media_type: isAnime ? 'anime' : currentState.type,
@@ -3947,7 +3954,8 @@ img { max-width: 100%; height: auto; display: block; }
               ? { id:`jikan-${item.mal_id}`, type:'Anime', title:item.title_english||item.title, poster:item.images?.jpg?.large_image_url||'', score:item.score, members:item.members||item.favorites, genres:(item.genres||[]).map(g=>g.name), show_status:item.status||'Currently Airing', mal_id:item.mal_id }
               : { id:`tmdb-${currentState.type}-${item.id}`, type:currentState.type==='movie'?'Movie':'TV', title:item.title||item.name, poster:item.poster_path?`https://image.tmdb.org/t/p/w185${item.poster_path}`:'', score:item.vote_average, members:item.vote_count, show_status:currentState.type==='movie'?'Released':'Returning Series' }
             );
-            window.AniCache.save(rows).catch(() => {});
+            await window.AniCache.save(rows);
+            await window.AniCache.stampSection(favKey, rows.length);
           }
         } catch (e) {
           container.innerHTML = '<div class="loading-text">Failed to load</div>';
