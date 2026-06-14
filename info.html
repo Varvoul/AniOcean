@@ -2618,7 +2618,13 @@ img { max-width: 100%; height: auto; display: block; }
                 rating:           dbShow.content_rating,
                 certification:    dbShow.content_rating,
                 studios:          dbShow.studio_name ? dbShow.studio_name.split(',').map(n=>({name:n.trim()})) : [],
-                genres:           dbShow.genres ? dbShow.genres.split(',').map(n=>({name:n.trim()})) : [],
+                genres:           (() => {
+                  const g = dbShow.genres;
+                  if (!g) return [];
+                  if (Array.isArray(g)) return g.map(n=>({name:String(typeof n==='object'?n?.name:n).trim()}));
+                  const str = String(g).replace(/^[{["\s]+|[}\]"\s]+$/g,'');
+                  return str.split(',').map(n=>({name:n.trim().replace(/^"|"$/g,'')})).filter(x=>x.name);
+                })(),
                 popularity:       dbShow.popularity,
                 members:          dbShow.popularity,
                 rank:             dbShow.rank,
@@ -2784,8 +2790,8 @@ img { max-width: 100%; height: auto; display: block; }
         document.getElementById('showTitle').textContent = currentState.title;
         
         const metaParts = [];
-        const score = isAnime ? data.score : data.vote_average;
-        if (score) metaParts.push(`★ ${score.toFixed(1)}`);
+        const score = isAnime ? data.score : (data.vote_average || data.score);
+        if (score != null) metaParts.push(`★ ${typeof score==='string' ? score : Number(score).toFixed(1)}`);
         metaParts.push(data.type || typeNameMap[currentState.type] || currentState.type);
         const studio = getFirstStudio(data, isAnime);
         if (studio) metaParts.push(studio);
@@ -3986,7 +3992,7 @@ img { max-width: 100%; height: auto; display: block; }
           <img class="sidebar-poster" src="${poster}" alt="${title}" loading="lazy" onerror="this.style.display='none'">
           <div class="sidebar-info">
             <h4>${escapeHtml(title)}</h4>
-            <div class="side-meta">⭐ ${score?.toFixed(1) || 'N/A'} · ${type}${year ? ` · ${year}` : ''}</div>
+            <div class="side-meta">⭐ ${(typeof score==="string" ? score : Number(score||0).toFixed(1)) || 'N/A'} · ${type}${year ? ` · ${year}` : ''}</div>
           </div>
         </a>`;
       }
