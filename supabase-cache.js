@@ -315,10 +315,17 @@
         return out;
       });
       await _upsertCache(volatileOnly);
-      const { error } = await supa.from('shows')
-        .upsert(volatileOnly.map(({fetched_at,...r})=>r), { onConflict: 'media_id' });
-      if (error) console.error('[AniCache] shows stale update:', error.message);
-      else console.log(`[AniCache] ✓ Updated ${stale.length} stale rows`);
+      // Use UPDATE (not upsert) — avoids NOT NULL violations on partial rows
+      const updatePromises = volatileOnly.map(r => {
+        const { media_id, fetched_at, ...fields } = r;
+        // Always include updated_at; include fetched_at if present
+        if (fetched_at) fields.fetched_at = fetched_at;
+        return supa.from('shows').update(fields).eq('media_id', media_id);
+      });
+      const results = await Promise.all(updatePromises);
+      const errs = results.filter(r => r.error).map(r => r.error.message);
+      if (errs.length) console.error('[AniCache] shows update errors:', errs.join(', '));
+      else console.log(`[AniCache] ✓ Updated ${stale.length} stale rows in shows`);
     }
   }
 
@@ -379,12 +386,31 @@
           .order('popularity', { ascending: false });
         break;
 
+      case 'hidden_gem':
+        // Good score but NOT the most popular — genuinely underrated/hidden
+        // Filter score > 7.4, then sort by score DESC but EXCLUDE zero-score rows
+        q = q.gt('rating_score', 7.4)
+          .gt('popularity', 0)
+          .order('rating_score',  { ascending: false, nullsFirst: false })
+          .order('popularity',    { ascending: true,  nullsFirst: false });
+        break;
+
+      case 'top_ranking':
+        // Highest rated — sort purely by score DESC
+        q = q.gt('rating_score', 0)
+          .order('rating_score', { ascending: false, nullsFirst: false })
+          .order('popularity',   { ascending: false, nullsFirst: false });
+        break;
+
       case 'trending':
         q = q.order('popularity', { ascending: false });
         break;
 
       case 'popular':
-        q = q.order('popularity', { ascending: false });
+        // Most Favourite — sort by popularity/members DESC
+        q = q.gt('popularity', 0)
+          .order('popularity',   { ascending: false, nullsFirst: false })
+          .order('rating_score', { ascending: false, nullsFirst: false });
         break;
 
       default:
