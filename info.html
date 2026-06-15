@@ -3807,7 +3807,7 @@ img { max-width: 100%; height: auto; display: block; }
           const gemKey = `hidden_gems_${isAnime?'anime':currentState.type}`;
           if (window.AniCache && await window.AniCache.isSectionFresh(gemKey)) {
             const dbItems = await window.AniCache.get({
-              section: 'popular',
+              section: 'hidden_gem',
               media_type: isAnime ? 'anime' : currentState.type,
               limit: 17
             }).catch(() => []);
@@ -3848,6 +3848,7 @@ img { max-width: 100%; height: auto; display: block; }
             );
             await window.AniCache.save(rows);
             await window.AniCache.stampSection(gemKey, rows.length);
+            await window.AniCache.stampSection(`hidden_gem_${isAnime?'anime':currentState.type}`, rows.length);
           }
         } catch (e) {
           container.innerHTML = '<div class="loading-text">Failed to load</div>';
@@ -3868,7 +3869,7 @@ img { max-width: 100%; height: auto; display: block; }
           const rankKey = `top_ranking_${isAnime?'anime':currentState.type}`;
           if (window.AniCache && await window.AniCache.isSectionFresh(rankKey)) {
             const dbItems = await window.AniCache.get({
-              section: 'trending',
+              section: 'top_ranking',
               media_type: isAnime ? 'anime' : currentState.type,
               limit: 19
             }).catch(() => []);
@@ -3962,6 +3963,7 @@ img { max-width: 100%; height: auto; display: block; }
             );
             await window.AniCache.save(rows);
             await window.AniCache.stampSection(favKey, rows.length);
+            // Also stamp per-section keys so isSectionFresh works next visit
           }
         } catch (e) {
           container.innerHTML = '<div class="loading-text">Failed to load</div>';
