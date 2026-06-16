@@ -1328,28 +1328,61 @@ window.showAnikotoPopupById = function(mal_id) {
       document.getElementById('topAiringRight').addEventListener('click',()=> document.getElementById('topAiringScroll').scrollBy({left:400,behavior:'smooth'}));
 
       /* ── NEW RELEASES ── */
+      // Dedup anime array by mal_id — prevents same show appearing twice
+      function dedupAnime(arr) {
+        const seen = new Set();
+        return arr.filter(a => {
+          const key = String(a.mal_id || a.id || '');
+          if (!key || seen.has(key)) return false;
+          seen.add(key); return true;
+        });
+      }
+
       let allReleases = {all:[], anime:[], movie:[], tv:[]};
       async function loadNewReleases() {
+        // GLOBAL cache-first — but only use if we have enough anime (≥3)
+        if (window.AniCache && await window.AniCache.isSectionFresh('new_releases')) {
+          const cached = await window.AniCache.get({section:'new_releases', limit:40});
+          const cachedAnime = cached.filter(s=>s.type==='Anime');
+          if (cached.length && cachedAnime.length >= 3) {
+            const anime  = cachedAnime.slice(0,10).map(s=>({...s,duration:s.duration||'?',status:s.show_status||'Airing',rating:s.certification||'none',quality:'HD'}));
+            const movies = cached.filter(s=>s.type==='Movie').slice(0,10).map(s=>({...s,details:s.duration||'1h 45m',cert:s.certification||'PG-13',quality:'HD'}));
+            const tv     = cached.filter(s=>s.type==='TV').slice(0,10).map(s=>({...s,details:'S?',cert:s.certification||'PG-13',quality:'HD'}));
+            allReleases  = {all:[...anime,...movies,...tv].slice(0,30), anime, movie:movies, tv};
+            renderNewReleases('all'); return;
+          }
+        }
+        // Live API fetch — always fetch all three in parallel
         const [nowMovies, onAirTv, jikanNow] = await Promise.all([
           fetchTMDB('/movie/now_playing', 'language=en-US&page=1'),
           fetchTMDB('/tv/on_the_air', 'language=en-US&page=1'),
-          fetchJikan('seasons/now', 'limit=20')
+          fetchJikan('seasons/now', 'limit=25')
         ]);
         const movies = (nowMovies.results||[]).slice(0,10).map(i => ({
-          id:`tmdb-mv-${i.id}`, title:i.title, poster:tmdbImg(i.poster_path), type:'Movie',
-          score:(i.vote_average||0).toFixed(1), details:'1h 45m', cert:'PG-13', quality:'HD'
+          id:`tmdb-movie-${i.id}`, title:i.title, poster:tmdbImg(i.poster_path), type:'Movie',
+          score:(i.vote_average||0).toFixed(1), details:'1h 45m', cert:'PG-13', quality:'HD',
+          show_status:'Released', genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id), synopsis:i.overview||'',
         }));
         const tv = (onAirTv.results||[]).slice(0,10).map(i => ({
           id:`tmdb-tv-${i.id}`, title:i.name, poster:tmdbImg(i.poster_path), type:'TV',
-          score:(i.vote_average||0).toFixed(1), details: 'S?', cert:'PG-13', quality:'HD'
+          score:(i.vote_average||0).toFixed(1), details:'S?', cert:'PG-13', quality:'HD',
+          show_status:'Returning Series',
         }));
-        const anime = (jikanNow.data||[]).slice(0,10).map(a => ({
-          id:`jikan-${a.mal_id}`, title:a.title, poster:a.images?.jpg?.large_image_url||'', type:'Anime',
-          score:(a.score||0).toFixed(1), duration: a.duration||'?', status: a.status||'Airing',
-          rating: a.rating||'none', quality:'HD'
+        // Deduplicate anime by mal_id to prevent same show appearing twice
+        const rawAnime = (jikanNow.data||[]).map(a => ({
+          id:`jikan-${a.mal_id}`, title:a.title_english||a.title,
+          poster:a.images?.jpg?.large_image_url||'', type:'Anime',
+          score:(a.score||0).toFixed(1), duration:a.duration||'?',
+          status:a.status||'Currently Airing', show_status:a.status||'Currently Airing',
+          rating:a.rating||'none', quality:'HD', mal_id:a.mal_id,
+          genres:(a.genres||[]).map(g=>g.name), synopsis:a.synopsis||'',
         }));
-        allReleases = { all: [...movies,...tv,...anime].slice(0,30), anime, movie:movies, tv };
+        const anime = dedupAnime(rawAnime).slice(0,10);
+        // All tab: anime first so the Anime filter tab is never empty
+        const allItems = [...anime, ...movies, ...tv];
+        allReleases = { all: allItems.slice(0,30), anime, movie:movies, tv };
         renderNewReleases('all');
+        if (window.AniCache) { await window.AniCache.save(allItems); await window.AniCache.stampSection('new_releases', allItems.length); }
       }
       function renderNewReleases(filter) {
         const grid = document.getElementById('newReleasesGrid');
@@ -1408,28 +1441,50 @@ window.showAnikotoPopupById = function(mal_id) {
       /* ── UPCOMING ── */
       let upcomingShows=[];
       async function loadUpcoming() {
-        const [tmdbUp, jikanUp] = await Promise.all([
+        // GLOBAL cache-first — only use if we have enough anime
+        if (window.AniCache && await window.AniCache.isSectionFresh('upcoming')) {
+          const cached = await window.AniCache.get({section:'upcoming', limit:80});
+          const cachedAnime = cached.filter(s=>s.type==='Anime');
+          if (cached.length && cachedAnime.length >= 3) {
+            upcomingShows = cached.map(s=>({...s,releaseDate:s.aired_date||s.releaseDate||s.year||'TBA'}));
+            renderUpcoming(); return;
+          }
+        }
+        // Live API — fetch upcoming movies AND upcoming anime seasons (two Jikan endpoints)
+        const [tmdbUp, jikanUpTop, jikanUpSeason] = await Promise.all([
           fetchTMDB('/movie/upcoming', 'language=en-US&page=1'),
-          fetchJikan('top/anime', 'filter=upcoming&limit=20')
+          fetchJikan('top/anime', 'filter=upcoming&limit=40'),
+          fetchJikan('seasons/upcoming', 'limit=25')
         ]);
-        upcomingShows = [
-          ...(tmdbUp.results||[]).slice(0,40).map(i => ({
-            id:`tmdb-up-${i.id}`, title:i.title, original_title:i.original_title||i.title,
-            type:'Movie', poster:tmdbImg(i.poster_path), score:(i.vote_average||0).toFixed(1),
-            genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id), releaseDate:i.release_date||'',
-            synopsis:i.overview||'', certification: i.adult?'18+':'PG-13',
-            studio:'?', backdrop:tmdbBack(i.backdrop_path), duration:'2h 10m'
-          })),
-          ...(jikanUp.data||[]).slice(0,40).map(a => ({
-            id:`jikan-up-${a.mal_id}`, title:a.title_english||a.title, original_title:a.title_japanese||a.title,
-            type:'Anime', poster:a.images?.jpg?.large_image_url||'',
-            score:(a.score||0).toFixed(1), genres:(a.genres||[]).map(g=>g.name),
-            releaseDate:(a.aired?.from||'').slice(0,10), synopsis:a.synopsis||'',
-            certification: a.rating||'PG-13', studio:(a.studios||[])[0]?.name||'?',
-            duration: a.duration||'?'
-          }))
-        ].slice(0,80);
+        // Merge both Jikan sources and dedup by mal_id
+        const allJikanAnime = [
+          ...(jikanUpTop.data||[]),
+          ...(jikanUpSeason.data||[])
+        ];
+        const rawAnime = allJikanAnime.map(a => ({
+          id:`jikan-${a.mal_id}`, title:a.title_english||a.title,
+          original_title:a.title_japanese||a.title,
+          type:'Anime', poster:a.images?.jpg?.large_image_url||'',
+          score:(a.score||0).toFixed(1), genres:(a.genres||[]).map(g=>g.name),
+          releaseDate:(a.aired?.from||'').slice(0,10), synopsis:a.synopsis||'',
+          certification:a.rating||'PG-13', studio:(a.studios||[])[0]?.name||'?',
+          duration:a.duration||'?', mal_id:a.mal_id,
+          show_status:a.status||'Not yet aired',
+          backdrop:a.images?.jpg?.large_image_url||'',
+        }));
+        const animeItems = dedupAnime(rawAnime).slice(0,50);
+        const movieItems = (tmdbUp.results||[]).slice(0,40).map(i => ({
+          id:`tmdb-movie-${i.id}`, title:i.title, original_title:i.original_title||i.title,
+          type:'Movie', poster:tmdbImg(i.poster_path), score:(i.vote_average||0).toFixed(1),
+          genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id), releaseDate:i.release_date||'',
+          synopsis:i.overview||'', certification:i.adult?'18+':'PG-13',
+          studio:'?', backdrop:tmdbBack(i.backdrop_path), duration:'2h 10m',
+          show_status:'Planned',
+        }));
+        // Anime first in upcoming slider
+        upcomingShows = [...animeItems, ...movieItems].slice(0,80);
         renderUpcoming();
+        if (window.AniCache) { await window.AniCache.save(upcomingShows); await window.AniCache.stampSection('upcoming', upcomingShows.length); }
       }
       function renderUpcoming() {
         document.getElementById('upcomingScroll').innerHTML = upcomingShows.map(s => `
@@ -1532,32 +1587,54 @@ window.showAnikotoPopupById = function(mal_id) {
       /* ── POPULAR ── */
       let popularData = [];
       async function loadPopular() {
+        // GLOBAL cache-first — only use if we have enough anime (≥5)
+        if (window.AniCache && await window.AniCache.isSectionFresh('popular')) {
+          const cached = await window.AniCache.get({section:'popular', limit:20});
+          const cachedAnime = cached.filter(s=>s.type==='Anime');
+          if (cachedAnime.length >= 5) {
+            // Anime first, then movies
+            const animeItems = cachedAnime.slice(0,10).map((s,i)=>({...s,rank:i+1,members:s.popularity||s.members||0}));
+            const movieItems = cached.filter(s=>s.type!=='Anime').slice(0,7).map((s,i)=>({...s,rank:animeItems.length+i+1,members:s.popularity||s.members||0}));
+            popularData = [...animeItems,...movieItems];
+            document.getElementById('popularList').innerHTML = popularData.map(s=>`
+              <a href="${infoUrl(s)}" class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,500)">
+                <span class="sidebar-rank">${s.rank}</span>
+                <img class="sidebar-poster" src="${s.poster}">
+                <div class="sidebar-info"><h4>${s.title}</h4><div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.members} members</div></div>
+              </a>`).join('');
+            return;
+          }
+        }
+        // Live API — 10 anime + 7 movies, anime FIRST
         const [tmdb, jikan] = await Promise.all([
           fetchTMDB('/discover/movie', 'sort_by=vote_count.desc&vote_count.gte=1000&language=en-US&page=1'),
-          fetchJikan('top/anime', 'filter=bypopularity&limit=7')
+          fetchJikan('top/anime', 'filter=bypopularity&limit=15')
         ]);
-        const data = [
-          ...(tmdb.results||[]).slice(0,7).map(i => ({
-            id:`tmdb-pop-${i.id}`, title:i.title, poster:tmdbImg(i.poster_path,'w185'), type:'Movie',
-            score:(i.vote_average||0).toFixed(1), members:i.vote_count,
-            genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id),
-            overview:i.overview||''
-          })),
-          ...(jikan.data||[]).map(a => ({
-            id:`jikan-pop-${a.mal_id}`, title:a.title, poster:a.images?.jpg?.large_image_url||'',
-            type:'Anime', score:(a.score||0).toFixed(1), members:a.members,
-            genres:(a.genres||[]).map(g=>g.name),
-            synopsis:a.synopsis||''
-          }))
-        ].sort((a,b)=>b.members-a.members).slice(0,13);
-        data.forEach((item,i)=>item.rank=i+1);
+        // Dedup anime by mal_id, take top 10
+        const rawAnime = (jikan.data||[]).map(a => ({
+          id:`jikan-${a.mal_id}`, title:a.title, poster:a.images?.jpg?.large_image_url||'',
+          type:'Anime', score:(a.score||0).toFixed(1), members:a.members||0,
+          genres:(a.genres||[]).map(g=>g.name), synopsis:a.synopsis||'',
+          mal_id:a.mal_id, show_status:a.status||'Currently Airing',
+        }));
+        const animeItems = dedupAnime(rawAnime).slice(0,10);
+        const movieItems = (tmdb.results||[]).slice(0,7).map(i => ({
+          id:`tmdb-movie-${i.id}`, title:i.title, poster:tmdbImg(i.poster_path,'w185'), type:'Movie',
+          score:(i.vote_average||0).toFixed(1), members:i.vote_count||0,
+          genres:(i.genre_ids||[]).map(id=>GENRE_MAP[id]||id),
+          overview:i.overview||'', synopsis:i.overview||'', show_status:'Released',
+        }));
+        // Anime FIRST, then movies — assign ranks
+        const data = [...animeItems, ...movieItems];
+        data.forEach((item,i) => item.rank = i+1);
         popularData = data;
-        document.getElementById('popularList').innerHTML = data.map(s => `
+        document.getElementById('popularList').innerHTML = data.map(s=>`
           <a href="${infoUrl(s)}" class="sidebar-list-item" onmouseenter="showPopup(event,'${s.id}')" onmouseleave="window.popupTimer=setTimeout(hidePopup,500)">
             <span class="sidebar-rank">${s.rank}</span>
             <img class="sidebar-poster" src="${s.poster}">
             <div class="sidebar-info"><h4>${s.title}</h4><div class="side-meta"><i class="fas fa-star"></i> ${s.score} · ${s.members} members</div></div>
           </a>`).join('');
+        if (window.AniCache) { await window.AniCache.save(data); await window.AniCache.stampSection('popular', data.length); }
       }
 
       /* ── POPUP (FIXED) ── */
