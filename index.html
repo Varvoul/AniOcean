@@ -1961,16 +1961,20 @@ window.showAnikotoPopupById = function(mal_id) {
       }
       
 
-      function init() {
+      async function init() {
+        // Hero fires first (highest visual priority)
         loadHero();
-        loadTopAiring();
-        loadNewReleases();
-        loadNewAniocean(); // Load new section
-        loadUpcoming();
-        loadCompleted(1);
-        loadTrending('today');
-        loadPopular();
-        loadSchedule();
+        // All sections load in PARALLEL — same as info page
+        await Promise.all([
+          loadTopAiring(),
+          loadNewReleases(),
+          loadNewAniocean(),
+          loadUpcoming(),
+          loadCompleted(1),
+          loadTrending('today'),
+          loadPopular(),
+          loadSchedule(),
+        ]);
       }
       window.addEventListener('DOMContentLoaded', init);
     })();
